@@ -1557,4 +1557,1799 @@
                         if (!db.objectStoreNames.contains(STORE_DOCS)) {
                             db.createObjectStore(STORE_DOCS, { keyPath: 'id' });
                         }
-                        if (!db.objectStoreNames.contains(STORE
+                        if (!db.objectStoreNames.contains(STORE_FOLDERS)) {
+                            db.createObjectStore(STORE_FOLDERS, { keyPath: 'id' });
+                        }
+                        if (!db.objectStoreNames.contains(STORE_PREFS)) {
+                            db.createObjectStore(STORE_PREFS, { keyPath: 'key' });
+                        }
+                    };
+                    req.onsuccess = () => resolve(req.result);
+                    req.onerror = () => {
+                        idbAvailable = false;
+                        reject(req.error);
+                    };
+                } catch (err) {
+                    idbAvailable = false;
+                    reject(err);
+                }
+            });
+        }
+
+        function syncFallbackStorage() {
+            if (idbAvailable) return;
+            try {
+                localStorage.setItem('regdocdb_v1_folders', JSON.stringify(folders));
+                localStorage.setItem('regdocdb_v1_documents', JSON.stringify(documents));
+            } catch (e) {
+                if (!quotaWarned) {
+                    quotaWarned = true;
+                    showToast('本機暫存空間已滿，請立即匯出 JSON 備份以防遺失', 'error');
+                }
+            }
+        }
+
+        async function dbGetAll(storeName) {
+            try {
+                const db = await openDB();
+                return await new Promise((resolve) => {
+                    const tx = db.transaction(storeName, 'readonly');
+                    const req = tx.objectStore(storeName).getAll();
+                    req.onsuccess = () => resolve(req.result || []);
+                    req.onerror = () => resolve([]);
+                });
+            } catch (e) {
+                try {
+                    const key = storeName === STORE_FOLDERS ? 'regdocdb_v1_folders' : 'regdocdb_v1_documents';
+                    const raw = localStorage.getItem(key);
+                    return raw ? JSON.parse(raw) : [];
+                } catch (err) {
+                    return [];
+                }
+            }
+        }
+
+        async function dbPut(storeName, item) {
+            if (!idbAvailable) {
+                syncFallbackStorage();
+                return;
+            }
+            try {
+                const db = await openDB();
+                await new Promise((resolve, reject) => {
+                    const tx = db.transaction(storeName, 'readwrite');
+                    tx.objectStore(storeName).put(item);
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = () => reject(tx.error);
+                });
+            } catch (e) {
+                idbAvailable = false;
+                syncFallbackStorage();
+            }
+        }
+
+        async function dbDelete(storeName, key) {
+            if (!idbAvailable) {
+                syncFallbackStorage();
+                return;
+            }
+            try {
+                const db = await openDB();
+                await new Promise((resolve, reject) => {
+                    const tx = db.transaction(storeName, 'readwrite');
+                    tx.objectStore(storeName).delete(key);
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = () => reject(tx.error);
+                });
+            } catch (e) {
+                idbAvailable = false;
+                syncFallbackStorage();
+            }
+        }
+
+        async function savePreference(key, value) {
+            try {
+                localStorage.setItem('regdocdb_pref_' + key, JSON.stringify(value));
+            } catch (e) {}
+            if (!idbAvailable) return;
+            try {
+                const db = await openDB();
+                await new Promise((resolve) => {
+                    const tx = db.transaction(STORE_PREFS, 'readwrite');
+                    tx.objectStore(STORE_PREFS).put({ key, value });
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = () => resolve();
+                });
+            } catch (e) {}
+        }
+
+        async function loadPreference(key, fallback) {
+            try {
+                const db = await openDB();
+                const val = await new Promise((resolve) => {
+                    const tx = db.transaction(STORE_PREFS, 'readonly');
+                    const req = tx.objectStore(STORE_PREFS).get(key);
+                    req.onsuccess = () => resolve(req.result ? req.result.value : null);
+                    req.onerror = () => resolve(null);
+                });
+                if (val !== null && val !== undefined) return val;
+            } catch (e) {}
+            try {
+                const raw = localStorage.getItem('regdocdb_pref_' + key);
+                return raw !== null ? JSON.parse(raw) : fallback;
+            } catch (e) {
+                return fallback;
+            }
+        }
+
+        /* =========================================================
+           4. 瀏覽器歷史紀錄同步（攔截手機實體／系統返回鍵，逐層返回不跳出網頁）
+           ========================================================= */
+        function pushNavigationState() {
+            if (isHandlingPopState) return;
+            try {
+                const state = {
+                    activeFolderId,
+                    activeDocId,
+                    isStarredPageActive,
+                    globalQuery
+                };
+                window.history.pushState(state, '');
+            } catch (e) {}
+        }
+
+        function initHistoryNavigation() {
+            try {
+                window.history.replaceState({
+                    activeFolderId: null,
+                    activeDocId: null,
+                    isStarredPageActive: false,
+                    globalQuery: ''
+                }, '');
+            } catch (e) {}
+
+            window.addEventListener('popstate', (e) => {
+                isHandlingPopState = true;
+                try {
+                    const pop = document.getElementById('fabPopover');
+                    if (pop && !pop.classList.contains('hidden')) {
+                        pop.classList.add('hidden');
+                    }
+
+                    if (e.state) {
+                        activeDocId = e.state.activeDocId || null;
+                        activeFolderId = e.state.activeFolderId || null;
+                        isStarredPageActive = Boolean(e.state.isStarredPageActive);
+                        globalQuery = e.state.globalQuery || '';
+                    } else {
+                        if (activeDocId) {
+                            activeDocId = null;
+                        } else if (isStarredPageActive) {
+                            isStarredPageActive = false;
+                        } else if (activeFolderId || globalQuery) {
+                            activeFolderId = null;
+                            globalQuery = '';
+                        }
+                    }
+
+                    isEditingDocText = false;
+                    if (activeDocId) {
+                        renderReaderPage(activeDocId, readerQuery);
+                    } else {
+                        renderCurrentView();
+                    }
+                } finally {
+                    isHandlingPopState = false;
+                }
+            });
+        }
+
+        /* =========================================================
+           5. 文字排版清理（消除 PDF 強制硬折行與頁首頁尾干擾）
+           ========================================================= */
+        function reflowRegulationText(rawText) {
+            if (!rawText) return '';
+            const rawLines = rawText.replace(/\r\n/g, '\n').split('\n');
+            const cleanedLines = [];
+
+            // 過濾常見 PDF 頁碼與頁眉雜訊（如「- 7 -」或單獨出現的規章章節頁眉）
+            for (const line of rawLines) {
+                const trimmed = line.trim();
+                if (!trimmed) continue;
+                if (/^[-－—]\s*\d+\s*[-－—]$/.test(trimmed)) continue;
+                if (/^第\s*\d+\s*頁(\s*\/\s*共\s*\d+\s*頁)?$/.test(trimmed)) continue;
+                cleanedLines.push(trimmed);
+            }
+
+            if (cleanedLines.length === 0) return '';
+
+            // 判斷是否為「必須強制換行」的新段落或條款開頭
+            const newParagraphRegex = /^(第\s*[一二三四五六七八九十百千0-9]+\s*[條章節款目](?:之[一二三四五六七八九十0-9]+)?|[一二三四五六七八九十]+、|（[一二三四五六七八九十0-9]+）|\([一二三四五六七八九十0-9]+\)|[0-9]+[、.．]|[①②③④⑤⑥⑦⑧⑨⑩]|附則|說明|主旨|依據|公告事項|辦法)：?/;
+
+            let result = '';
+            for (let i = 0; i < cleanedLines.length; i++) {
+                const curr = cleanedLines[i];
+                if (i === 0) {
+                    result = curr;
+                    continue;
+                }
+
+                const prev = cleanedLines[i - 1];
+                const isNewPara = newParagraphRegex.test(curr);
+                const prevEndedSentence = /[。；：！？]$/.test(prev);
+
+                if (isNewPara || prevEndedSentence) {
+                    result += '\n' + curr;
+                } else {
+                    // 接續上一行被 PDF 切斷的句子（中文字之間不加空白，英數字之間保留一格）
+                    const needSpace = /[A-Za-z0-9]$/.test(prev) && /^[A-Za-z0-9]/.test(curr);
+                    result += (needSpace ? ' ' : '') + curr;
+                }
+            }
+
+            return result.trim();
+        }
+
+        function splitIntoArticles(pageText) {
+            const reflowed = reflowRegulationText(pageText);
+            const lines = reflowed.split('\n');
+            const blocks = [];
+            let current = [];
+            const headerRegex = /^\s*第\s*[一二三四五六七八九十百千0-9]+\s*條(?:之[一二三四五六七八九十0-9]+)?/;
+
+            for (const line of lines) {
+                if (headerRegex.test(line) && current.length > 0) {
+                    const joined = current.join('\n').trim();
+                    if (joined) blocks.push(joined);
+                    current = [line];
+                } else {
+                    current.push(line);
+                }
+            }
+            if (current.length > 0) {
+                const joined = current.join('\n').trim();
+                if (joined) blocks.push(joined);
+            }
+            return blocks.length > 0 ? blocks : [reflowed];
+        }
+
+        function extractClauseKey(blockText, pageNum, blockIdx) {
+            const firstLine = (blockText || '').split('\n')[0].trim();
+            const m = firstLine.match(/^(第\s*[一二三四五六七八九十百千0-9]+\s*條(?:之[一二三四五六七八九十0-9]+)?)/);
+            if (m) {
+                return m[1].replace(/\s+/g, '');
+            }
+            return `P${pageNum}-B${blockIdx}`;
+        }
+
+        /* =========================================================
+           6. 輔助函式
+           ========================================================= */
+        function extractCoreName(filename) {
+            let name = filename.replace(/\.(pdf|txt|md|jpg|jpeg|png|webp)$/i, '');
+            name = name.replace(/^[\d]+[-_.\s]+[\d]*[-_.\s]*/, '');
+            name = name.replace(/[-_（(](上傳內部資訊網|範例|修正|最新|\d{6,8}).*$/g, '');
+            return name.trim() || filename.replace(/\.(pdf|txt|md|jpg|jpeg|png|webp)$/i, '').trim();
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function parseKeywords(q) {
+            return Array.from(new Set(q.trim().split(/\s+/).filter(Boolean)));
+        }
+
+        function highlightKeywords(text, keywords) {
+            const safe = escapeHtml(text);
+            if (!keywords || keywords.length === 0) return safe;
+            const escaped = keywords.map(k => escapeHtml(k).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+            const regex = new RegExp(`(${escaped.join('|')})`, 'gi');
+            return safe.replace(regex, '<mark class="hl-match">$1</mark>');
+        }
+
+        function showToast(msg, type = 'normal') {
+            const box = document.getElementById('toastBox');
+            box.textContent = msg;
+            box.className = 'toast-box show' + (type !== 'normal' ? ' ' + type : '');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => box.classList.remove('show'), 2500);
+        }
+
+        function setProgress(visible, text = '', percent = 0) {
+            const panel = document.getElementById('progressPanel');
+            if (!visible) {
+                panel.classList.add('hidden');
+                return;
+            }
+            panel.classList.remove('hidden');
+            document.getElementById('progressText').textContent = text;
+            document.getElementById('progressFill').style.width = `${Math.min(100, Math.max(0, percent))}%`;
+        }
+
+        function showConfirmModal(title, desc, confirmLabel = '確定', isDanger = true) {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('confirmModal');
+                document.getElementById('modalTitle').textContent = title;
+                document.getElementById('modalDesc').textContent = desc;
+                const confirmBtn = document.getElementById('modalConfirmBtn');
+                confirmBtn.textContent = confirmLabel;
+                confirmBtn.className = 'modal-btn ' + (isDanger ? 'confirm-danger' : 'confirm-primary');
+                modal.classList.remove('hidden');
+
+                const cancelBtn = document.getElementById('modalCancelBtn');
+
+                const cleanup = (res) => {
+                    modal.classList.add('hidden');
+                    cancelBtn.removeEventListener('click', onCancel);
+                    confirmBtn.removeEventListener('click', onConfirm);
+                    resolve(res);
+                };
+                const onCancel = () => cleanup(false);
+                const onConfirm = () => cleanup(true);
+
+                cancelBtn.addEventListener('click', onCancel);
+                confirmBtn.addEventListener('click', onConfirm);
+            });
+        }
+
+        function openFolderInputModal(title, desc, defaultVal = '') {
+            return new Promise((resolve) => {
+                const modal = document.getElementById('folderInputModal');
+                const input = document.getElementById('folderNameInput');
+                const cancelBtn = document.getElementById('cancelFolderModalBtn');
+                const confirmBtn = document.getElementById('confirmFolderModalBtn');
+
+                document.getElementById('folderModalTitle').textContent = title;
+                document.getElementById('folderModalDesc').textContent = desc;
+                input.value = defaultVal;
+                modal.classList.remove('hidden');
+                setTimeout(() => input.focus(), 40);
+
+                const cleanup = (val) => {
+                    modal.classList.add('hidden');
+                    cancelBtn.removeEventListener('click', onCancel);
+                    confirmBtn.removeEventListener('click', onConfirm);
+                    input.removeEventListener('keydown', onKey);
+                    resolve(val);
+                };
+
+                const onCancel = () => cleanup(null);
+                const onConfirm = () => {
+                    const trimmed = input.value.trim();
+                    if (!trimmed) {
+                        showToast('請輸入資料夾名稱', 'error');
+                        return;
+                    }
+                    cleanup(trimmed);
+                };
+                const onKey = (e) => {
+                    if (e.key === 'Enter') onConfirm();
+                };
+
+                cancelBtn.addEventListener('click', onCancel);
+                confirmBtn.addEventListener('click', onConfirm);
+                input.addEventListener('keydown', onKey);
+            });
+        }
+
+        async function copyToClipboard(text) {
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(text);
+                    return true;
+                }
+            } catch (e) {}
+            try {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                ta.style.position = 'fixed';
+                ta.style.left = '-9999px';
+                document.body.appendChild(ta);
+                ta.select();
+                const ok = document.execCommand('copy');
+                document.body.removeChild(ta);
+                return ok;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        /* =========================================================
+           7. 圖片純取文字與 PDF / TXT 解析引擎
+           ========================================================= */
+        async function runTesseractOCR(imageSource, labelPrefix) {
+            setProgress(true, `${labelPrefix} 準備繁中 OCR 辨識引擎...`, 12);
+            const loaded = await ensureTesseractLoaded();
+            if (!loaded || !window.Tesseract) {
+                return '（目前為離線或受限網路環境，無法下載 OCR 模型；您可點擊上方「編輯」圖示手動輸入文字）';
+            }
+            try {
+                const result = await Tesseract.recognize(imageSource, 'chi_tra+eng', {
+                    logger: (m) => {
+                        if (m.status === 'recognizing text') {
+                            const pct = Math.round((m.progress || 0) * 100);
+                            setProgress(true, `${labelPrefix} 擷取文字中 (${pct}%)...`, pct);
+                        } else if (m.status) {
+                            setProgress(true, `${labelPrefix} 載入繁中辨識模型中...`, 25);
+                        }
+                    }
+                });
+                const raw = (result && result.data && result.data.text) ? result.data.text : '';
+                const cleaned = raw
+                    .replace(/([\u4e00-\u9fa5])\s+([\u4e00-\u9fa5])/g, '$1$2')
+                    .replace(/\n{3,}/g, '\n\n')
+                    .trim();
+                return cleaned || '（未辨識到清晰文字，可點擊閱讀頁上方的「編輯」圖示手動補充）';
+            } catch (err) {
+                console.error('OCR 錯誤:', err);
+                return '（圖片文字辨識失敗，請確認網路連線或點擊上方「編輯」手動補充）';
+            }
+        }
+
+        async function parseAnyFile(file, index, total) {
+            const lower = file.name.toLowerCase();
+            const prefix = `[${index + 1}/${total}] ${file.name}`;
+
+            if (file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(lower)) {
+                const objectUrl = URL.createObjectURL(file);
+                try {
+                    const extractedText = await runTesseractOCR(objectUrl, prefix);
+                    return {
+                        isOcr: true,
+                        pages: [{
+                            pageNumber: 1,
+                            text: extractedText
+                        }]
+                    };
+                } finally {
+                    URL.revokeObjectURL(objectUrl);
+                }
+            }
+
+            if (lower.endsWith('.pdf')) {
+                setProgress(true, `${prefix} 載入 PDF 解析引擎...`, 10);
+                const pdfReady = await ensurePdfJsLoaded();
+                if (!pdfReady || !window.pdfjsLib) {
+                    return {
+                        isOcr: false,
+                        pages: [{
+                            pageNumber: 1,
+                            text: '（目前為離線或受限網路環境，無法載入 PDF 解析元件；建議連網後重新匯入或改傳 .txt 純文字檔）'
+                        }]
+                    };
+                }
+
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                const pages = [];
+                let usedOcr = false;
+
+                for (let p = 1; p <= pdf.numPages; p++) {
+                    setProgress(true, `${prefix} 讀取第 ${p}/${pdf.numPages} 頁...`, Math.round((p / pdf.numPages) * 85));
+                    const page = await pdf.getPage(p);
+                    const content = await page.getTextContent();
+
+                    let lastY = null;
+                    let lineText = '';
+                    const lines = [];
+                    for (const item of content.items) {
+                        const y = item.transform ? item.transform[5] : null;
+                        if (lastY !== null && y !== null && Math.abs(y - lastY) > 6) {
+                            lines.push(lineText.trim());
+                            lineText = item.str;
+                        } else {
+                            lineText += item.str;
+                        }
+                        lastY = y;
+                    }
+                    if (lineText.trim()) lines.push(lineText.trim());
+                    let extracted = lines.join('\n').trim();
+
+                    if (extracted.length < 15) {
+                        const ocrReady = await ensureTesseractLoaded();
+                        if (ocrReady && window.Tesseract) {
+                            usedOcr = true;
+                            const viewport = page.getViewport({ scale: 1.7 });
+                            const canvas = document.createElement('canvas');
+                            canvas.width = viewport.width;
+                            canvas.height = viewport.height;
+                            const ctx = canvas.getContext('2d');
+                            await page.render({ canvasContext: ctx, viewport }).promise;
+                            extracted = await runTesseractOCR(canvas, `${prefix} 第${p}頁(掃描)`);
+                            canvas.width = 0;
+                            canvas.height = 0;
+                        }
+                    }
+
+                    pages.push({
+                        pageNumber: p,
+                        text: extracted || '（此頁無文字內容）'
+                    });
+                }
+                return { isOcr: usedOcr, pages };
+            }
+
+            setProgress(true, `${prefix} 讀取純文字內容...`, 60);
+            const rawText = await file.text();
+            return {
+                isOcr: false,
+                pages: [{
+                    pageNumber: 1,
+                    text: rawText.replace(/\r\n/g, '\n').trim() || '（無文字內容）'
+                }]
+            };
+        }
+
+        async function processBatchFiles(fileList, targetFolderId, forceOverwriteDocId = null) {
+            const files = Array.from(fileList || []);
+            if (files.length === 0) return;
+
+            const folderId = targetFolderId || UNCATEGORIZED_FOLDER_ID;
+            const todayStr = new Date().toLocaleDateString('zh-TW');
+            let added = 0;
+            let updated = 0;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                try {
+                    const parsed = await parseAnyFile(file, i, files.length);
+                    const core = extractCoreName(file.name);
+
+                    let existing = null;
+                    if (forceOverwriteDocId) {
+                        existing = documents.find(d => d.id === forceOverwriteDocId) || null;
+                    } else {
+                        existing = documents.find(d => extractCoreName(d.title) === core) || null;
+                    }
+
+                    if (existing) {
+                        existing.title = file.name;
+                        existing.coreName = core;
+                        existing.isOcr = parsed.isOcr;
+                        existing.pages = parsed.pages;
+                        existing.updatedAt = todayStr;
+                        existing.isRecentlyUpdated = true;
+                        await dbPut(STORE_DOCS, existing);
+                        updated++;
+                    } else {
+                        const newDoc = {
+                            id: 'doc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+                            folderId,
+                            title: file.name,
+                            coreName: core,
+                            isOcr: parsed.isOcr,
+                            starredClauses: [],
+                            updatedAt: todayStr,
+                            isRecentlyUpdated: false,
+                            pages: parsed.pages
+                        };
+                        documents.push(newDoc);
+                        await dbPut(STORE_DOCS, newDoc);
+                        added++;
+                    }
+                } catch (err) {
+                    console.error('匯入錯誤:', file.name, err);
+                    showToast(`匯入失敗：${file.name}`, 'error');
+                }
+            }
+
+            setProgress(false);
+            sortDocuments();
+            renderCurrentView();
+
+            if (forceOverwriteDocId && activeDocId === forceOverwriteDocId) {
+                renderReaderPage(forceOverwriteDocId, readerQuery);
+            }
+
+            if (updated > 0 && added > 0) {
+                showToast(`新增 ${added} 份、覆蓋更新 ${updated} 份（已保留法條星號）`, 'success');
+            } else if (updated > 0) {
+                showToast(`已覆蓋更新 ${updated} 份文件（法條星號已保留）`, 'success');
+            } else if (added > 0) {
+                showToast(`成功匯入 ${added} 份文件`, 'success');
+            }
+        }
+
+        /* 永遠維持法規原本編號與名稱順序，不因打星號改變排列 */
+        function sortDocuments() {
+            documents.sort((a, b) => a.title.localeCompare(b.title, 'zh-Hant', { numeric: true }));
+        }
+
+        /* =========================================================
+           8. 字級切換控制
+           ========================================================= */
+        function applyFontScale(scale) {
+            const valid = ['normal', 'large', 'xlarge'].includes(scale) ? scale : 'large';
+            document.documentElement.setAttribute('data-font-scale', valid);
+            savePreference('font_scale', valid);
+            document.querySelectorAll('.font-pill-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-font-btn') === valid);
+            });
+        }
+
+        /* =========================================================
+           9. 蒐集所有已打星號的「單條法條」清單
+           ========================================================= */
+        function getAllStarredClauseItems() {
+            const items = [];
+            for (const doc of documents) {
+                const starredSet = new Set(Array.isArray(doc.starredClauses) ? doc.starredClauses : []);
+                if (starredSet.size === 0) continue;
+
+                for (const page of doc.pages) {
+                    const blocks = splitIntoArticles(page.text);
+                    blocks.forEach((blockText, bIdx) => {
+                        const clauseKey = extractClauseKey(blockText, page.pageNumber, bIdx);
+                        if (starredSet.has(clauseKey)) {
+                            items.push({
+                                docId: doc.id,
+                                docTitle: doc.title,
+                                folderName: getFolderNameById(doc.folderId),
+                                pageNumber: page.pageNumber,
+                                clauseKey,
+                                text: blockText
+                            });
+                        }
+                    });
+                }
+            }
+            return items;
+        }
+
+        function updateStarredCollectionCountBadges() {
+            const total = getAllStarredClauseItems().length;
+            const badge = document.getElementById('starredClauseTotalBadge');
+            if (badge) badge.textContent = `${total} 條`;
+            const headerStarBtn = document.getElementById('headerStarPageBtn');
+            if (headerStarBtn) {
+                headerStarBtn.classList.toggle('active', isStarredPageActive && !activeDocId);
+            }
+        }
+
+        /* =========================================================
+           10. 視圖渲染與全站懸浮球狀態同步
+           ========================================================= */
+        function getFolderNameById(fid) {
+            const f = folders.find(item => item.id === fid);
+            return f ? f.name : '未分類 / 一般法規';
+        }
+
+        function buildFolderOptionsHtml(selectedId) {
+            return folders.map(f =>
+                `<option value="${escapeHtml(f.id)}" ${f.id === selectedId ? 'selected' : ''}>${escapeHtml(f.name)}</option>`
+            ).join('');
+        }
+
+        function syncFabUIWithMode() {
+            const fabBadge = document.getElementById('fabBadge');
+            const fabModeLabel = document.getElementById('fabModeLabel');
+            const fabInput = document.getElementById('fabSearchInput');
+            const fabClearBtn = document.getElementById('fabClearBtn');
+            const fabNavRow = document.getElementById('fabNavRow');
+
+            if (activeDocId) {
+                fabModeLabel.textContent = '⋮⋮ 文內關鍵字搜尋（可拖曳）';
+                fabInput.placeholder = '輸入文內關鍵字...';
+                fabInput.value = readerQuery;
+                fabClearBtn.classList.toggle('hidden', readerQuery.trim().length === 0);
+
+                const hasKw = parseKeywords(readerQuery).length > 0;
+                fabNavRow.classList.toggle('hidden', !hasKw);
+                fabBadge.classList.toggle('hidden', !hasKw);
+                if (hasKw) {
+                    fabBadge.textContent = readerMatches.length;
+                }
+            } else if (isStarredPageActive) {
+                fabModeLabel.textContent = '⋮⋮ 搜尋已收藏法條（可拖曳）';
+                fabInput.placeholder = '篩選已收藏的重點法條...';
+                fabInput.value = globalQuery;
+                fabClearBtn.classList.toggle('hidden', globalQuery.trim().length === 0);
+                fabNavRow.classList.add('hidden');
+
+                if (globalQuery.trim().length > 0) {
+                    fabBadge.classList.remove('hidden');
+                    fabBadge.textContent = getFilteredStarredClauses().length;
+                } else {
+                    fabBadge.classList.add('hidden');
+                }
+            } else {
+                fabModeLabel.textContent = '⋮⋮ 跨資料夾搜尋（可拖曳）';
+                fabInput.placeholder = '跨資料夾搜尋法規、公文...';
+                fabInput.value = globalQuery;
+                fabClearBtn.classList.toggle('hidden', globalQuery.trim().length === 0);
+                fabNavRow.classList.add('hidden');
+
+                if (globalQuery.trim().length > 0) {
+                    fabBadge.classList.remove('hidden');
+                    fabBadge.textContent = getFilteredDocuments(null).length;
+                } else {
+                    fabBadge.classList.add('hidden');
+                }
+            }
+        }
+
+        function renderCurrentView() {
+            updateStarredCollectionCountBadges();
+            const hasSearch = globalQuery.trim().length > 0;
+
+            if (activeDocId) {
+                document.getElementById('homeFolderView').classList.add('hidden');
+                document.getElementById('docListView').classList.add('hidden');
+                document.getElementById('starredClausesView').classList.add('hidden');
+                document.getElementById('readerView').classList.remove('hidden');
+                syncFabUIWithMode();
+                return;
+            }
+
+            document.getElementById('readerView').classList.add('hidden');
+
+            if (isStarredPageActive) {
+                document.getElementById('homeFolderView').classList.add('hidden');
+                document.getElementById('docListView').classList.add('hidden');
+                document.getElementById('starredClausesView').classList.remove('hidden');
+                renderStarredClausesView();
+                syncFabUIWithMode();
+                return;
+            }
+
+            document.getElementById('starredClausesView').classList.add('hidden');
+
+            if (hasSearch) {
+                document.getElementById('homeFolderView').classList.add('hidden');
+                document.getElementById('docListView').classList.remove('hidden');
+                document.getElementById('folderHeaderBar').classList.add('hidden');
+                document.getElementById('searchResultBar').classList.remove('hidden');
+                renderFilteredDocList(null);
+                syncFabUIWithMode();
+                return;
+            }
+
+            if (activeFolderId) {
+                const folder = folders.find(f => f.id === activeFolderId);
+                if (!folder) {
+                    activeFolderId = null;
+                    renderCurrentView();
+                    return;
+                }
+                document.getElementById('homeFolderView').classList.add('hidden');
+                document.getElementById('docListView').classList.remove('hidden');
+                document.getElementById('folderHeaderBar').classList.remove('hidden');
+                document.getElementById('searchResultBar').classList.add('hidden');
+
+                document.getElementById('activeFolderTitle').textContent = folder.name;
+                renderFilteredDocList(folder.id);
+                syncFabUIWithMode();
+                return;
+            }
+
+            document.getElementById('docListView').classList.add('hidden');
+            document.getElementById('homeFolderView').classList.remove('hidden');
+            renderFolderGrid();
+            syncFabUIWithMode();
+        }
+
+        function renderFolderGrid() {
+            const grid = document.getElementById('folderGridContainer');
+            document.getElementById('folderSummaryText').textContent = `資料夾分類（共 ${folders.length} 個）`;
+            grid.innerHTML = '';
+
+            const folderSvg = `<svg width="20" height="20" style="width:20px;height:20px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>`;
+            const trashSvg = `<svg width="16" height="16" style="width:16px;height:16px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>`;
+
+            for (const folder of folders) {
+                const count = documents.filter(d => d.folderId === folder.id).length;
+                const isDefaultUncat = folder.id === UNCATEGORIZED_FOLDER_ID;
+                const badgeClass = isDefaultUncat ? 'default-cat' : (folder.kind === 'official' ? 'official' : '');
+
+                const card = document.createElement('div');
+                card.className = 'folder-card';
+
+                card.innerHTML = `
+                    <div class="folder-card-left">
+                        <div class="folder-icon-badge ${badgeClass}">${folderSvg}</div>
+                        <div class="folder-info">
+                            <div class="folder-name">${escapeHtml(folder.name)}</div>
+                            <div class="folder-count">${count} 份文件</div>
+                        </div>
+                    </div>
+                    ${!isDefaultUncat ? `<button type="button" class="folder-del-btn del-btn" title="刪除資料夾" aria-label="刪除資料夾">${trashSvg}</button>` : ''}
+                `;
+
+                card.addEventListener('click', () => {
+                    activeFolderId = folder.id;
+                    pushNavigationState();
+                    renderCurrentView();
+                });
+
+                const delBtn = card.querySelector('.del-btn');
+                if (delBtn) {
+                    delBtn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const desc = count > 0
+                            ? `確定要刪除資料夾「${folder.name}」嗎？裡面的 ${count} 份文件會自動安全移至「未分類 / 一般法規」，不會遺失。`
+                            : `確定要刪除空白資料夾「${folder.name}」嗎？`;
+                        const ok = await showConfirmModal('刪除資料夾', desc, '確定刪除', true);
+                        if (ok) {
+                            for (const d of documents) {
+                                if (d.folderId === folder.id) {
+                                    d.folderId = UNCATEGORIZED_FOLDER_ID;
+                                    await dbPut(STORE_DOCS, d);
+                                }
+                            }
+                            await dbDelete(STORE_FOLDERS, folder.id);
+                            folders = folders.filter(f => f.id !== folder.id);
+                            renderCurrentView();
+                            showToast(count > 0 ? `已刪除資料夾，${count} 份文件已移至未分類` : `已刪除資料夾「${folder.name}」`);
+                        }
+                    });
+                }
+
+                grid.appendChild(card);
+            }
+        }
+
+        function getFilteredStarredClauses() {
+            const all = getAllStarredClauseItems();
+            const keywords = parseKeywords(globalQuery);
+            if (keywords.length === 0) return all;
+            return all.filter(item => {
+                const hay = (item.docTitle + '\n' + item.folderName + '\n' + item.text).toLowerCase();
+                return keywords.every(kw => hay.includes(kw.toLowerCase()));
+            });
+        }
+
+        function renderStarredClausesView() {
+            const container = document.getElementById('starredClausesContainer');
+            const items = getFilteredStarredClauses();
+            const keywords = parseKeywords(globalQuery);
+
+            document.getElementById('starredClausesSub').textContent =
+                keywords.length > 0
+                    ? `篩選結果：共 ${items.length} 條收藏法條`
+                    : `共 ${items.length} 條已收藏法條（點擊法條可直接跳回原法規位置）`;
+
+            container.innerHTML = '';
+
+            if (items.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'empty-state';
+                empty.textContent = keywords.length > 0
+                    ? '找不到符合關鍵字的已收藏法條'
+                    : '尚未收藏任何單條法條。\n進入任一法規閱讀頁後，點擊每條右上方「☆」即可加入此分頁！';
+                container.appendChild(empty);
+                return;
+            }
+
+            const copySvg = `<svg width="16" height="16" style="width:16px;height:16px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>`;
+            const checkSvg = `<svg width="16" height="16" style="width:16px;height:16px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`;
+
+            for (const item of items) {
+                const card = document.createElement('div');
+                card.className = 'starred-clause-card';
+                card.innerHTML = `
+                    <div class="starred-clause-header">
+                        <span class="starred-clause-source" title="點擊跳轉至此法規原位置">
+                            ${escapeHtml(item.docTitle)}（第 ${item.pageNumber} 頁）
+                        </span>
+                        <div class="starred-clause-actions">
+                            <button type="button" class="article-mini-btn copy-btn" title="複製此條">${copySvg}</button>
+                            <button type="button" class="article-mini-btn star-btn starred" title="取消收藏此條">★</button>
+                        </div>
+                    </div>
+                    <div class="starred-clause-text">${highlightKeywords(item.text, keywords)}</div>
+                `;
+
+                const jumpToOrigin = () => {
+                    openReaderView(item.docId, globalQuery, item.clauseKey);
+                };
+
+                card.querySelector('.starred-clause-source').addEventListener('click', jumpToOrigin);
+                card.querySelector('.starred-clause-text').addEventListener('click', jumpToOrigin);
+
+                const copyBtn = card.querySelector('.copy-btn');
+                copyBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const ok = await copyToClipboard(item.text);
+                    if (ok) {
+                        copyBtn.innerHTML = checkSvg;
+                        copyBtn.classList.add('copied');
+                        showToast('已複製此條法規', 'success');
+                        setTimeout(() => {
+                            copyBtn.innerHTML = copySvg;
+                            copyBtn.classList.remove('copied');
+                        }, 1500);
+                    }
+                });
+
+                const unstarBtn = card.querySelector('.star-btn');
+                unstarBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const doc = documents.find(d => d.id === item.docId);
+                    if (doc && Array.isArray(doc.starredClauses)) {
+                        doc.starredClauses = doc.starredClauses.filter(k => k !== item.clauseKey);
+                        await dbPut(STORE_DOCS, doc);
+                        renderCurrentView();
+                        showToast('已從重要法條收藏移除');
+                    }
+                });
+
+                container.appendChild(card);
+            }
+        }
+
+        function buildMatchSnippet(doc, keywords) {
+            if (!keywords || keywords.length === 0) return '';
+            const blocks = doc.pages.flatMap(p => splitIntoArticles(p.text));
+            let bestText = '';
+            let maxHits = 0;
+
+            for (const block of blocks) {
+                const lower = block.toLowerCase();
+                let hits = 0;
+                for (const kw of keywords) {
+                    if (lower.includes(kw.toLowerCase())) hits++;
+                }
+                if (hits > maxHits) {
+                    maxHits = hits;
+                    bestText = block;
+                }
+            }
+
+            const targetText = bestText || doc.pages.map(p => reflowRegulationText(p.text)).join('\n');
+            const lowerTarget = targetText.toLowerCase();
+            let firstIdx = -1;
+            for (const kw of keywords) {
+                const idx = lowerTarget.indexOf(kw.toLowerCase());
+                if (idx !== -1 && (firstIdx === -1 || idx < firstIdx)) firstIdx = idx;
+            }
+            if (firstIdx === -1) return '';
+
+            const start = Math.max(0, firstIdx - 28);
+            const end = Math.min(targetText.length, firstIdx + 95);
+            const slice = (start > 0 ? '...' : '') + targetText.slice(start, end) + (end < targetText.length ? '...' : '');
+            return highlightKeywords(slice, keywords);
+        }
+
+        function getFilteredDocuments(folderIdOrNull) {
+            const keywords = parseKeywords(globalQuery);
+            return documents.filter(doc => {
+                if (folderIdOrNull && doc.folderId !== folderIdOrNull) return false;
+                if (keywords.length === 0) return true;
+                const folderName = getFolderNameById(doc.folderId);
+                const haystack = (folderName + '\n' + doc.title + '\n' + doc.pages.map(p => reflowRegulationText(p.text)).join('\n')).toLowerCase();
+                return keywords.every(kw => haystack.includes(kw.toLowerCase()));
+            });
+        }
+
+        function renderFilteredDocList(folderIdOrNull) {
+            const container = document.getElementById('docListContainer');
+            const keywords = parseKeywords(globalQuery);
+            const filtered = getFilteredDocuments(folderIdOrNull);
+
+            if (folderIdOrNull) {
+                document.getElementById('activeFolderSub').textContent = `共 ${filtered.length} 份文件`;
+            } else {
+                document.getElementById('searchResultSummary').textContent = `跨資料夾搜尋結果：共 ${filtered.length} 筆`;
+            }
+
+            container.innerHTML = '';
+
+            if (filtered.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'empty-state';
+                empty.textContent = folderIdOrNull
+                    ? '此資料夾尚無文件，可點擊右上角「批次上傳」或從其他資料夾移動過來'
+                    : '找不到符合條件的法規或公文';
+                container.appendChild(empty);
+                return;
+            }
+
+            for (const doc of filtered) {
+                const card = document.createElement('div');
+                card.className = 'doc-card';
+                const snippetHtml = buildMatchSnippet(doc, keywords);
+                const starCount = Array.isArray(doc.starredClauses) ? doc.starredClauses.length : 0;
+
+                card.innerHTML = `
+                    <div class="doc-card-body">
+                        <div class="doc-card-title">${highlightKeywords(doc.title, keywords)}</div>
+                        <div class="doc-card-meta">
+                            <select class="folder-move-select" title="變更所屬資料夾" aria-label="變更所屬資料夾">
+                                ${buildFolderOptionsHtml(doc.folderId)}
+                            </select>
+                            ${starCount > 0 ? `<span class="badge-tag badge-star-count">★ ${starCount} 條收藏</span>` : ''}
+                            ${doc.isOcr ? '<span class="badge-tag badge-ocr">圖片轉純文字</span>' : ''}
+                            <span>${doc.pages.length} 頁</span>
+                            <span>・</span>
+                            <span>${escapeHtml(doc.updatedAt)}</span>
+                            ${doc.isRecentlyUpdated ? '<span class="badge-tag badge-updated">已更新</span>' : ''}
+                        </div>
+                        ${snippetHtml ? `<div class="doc-card-snippet">${snippetHtml}</div>` : ''}
+                    </div>
+                `;
+
+                const moveSelect = card.querySelector('.folder-move-select');
+                moveSelect.addEventListener('click', (e) => e.stopPropagation());
+                moveSelect.addEventListener('change', async (e) => {
+                    e.stopPropagation();
+                    doc.folderId = e.target.value;
+                    await dbPut(STORE_DOCS, doc);
+                    renderCurrentView();
+                    showToast(`已移動至「${getFolderNameById(doc.folderId)}」`, 'success');
+                });
+
+                card.addEventListener('click', () => {
+                    openReaderView(doc.id, globalQuery);
+                });
+
+                container.appendChild(card);
+            }
+        }
+
+        /* =========================================================
+           11. 閱讀頁（智慧斷行重組 + 單條星號收藏 + 迷你複製鈕）
+           ========================================================= */
+        function renderReaderContent(doc, searchStr, targetClauseKey = null) {
+            const container = document.getElementById('readerContentContainer');
+            container.innerHTML = '';
+            const keywords = parseKeywords(searchStr);
+            if (!Array.isArray(doc.starredClauses)) doc.starredClauses = [];
+
+            const copySvg = `<svg width="16" height="16" style="width:16px;height:16px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>`;
+            const checkSvg = `<svg width="16" height="16" style="width:16px;height:16px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`;
+
+            if (isEditingDocText) {
+                const textareas = [];
+                for (const page of doc.pages) {
+                    const pageSec = document.createElement('div');
+                    pageSec.className = 'page-section';
+
+                    if (doc.pages.length > 1) {
+                        const div = document.createElement('div');
+                        div.className = 'page-divider';
+                        div.textContent = `編輯第 ${page.pageNumber} 頁 / 共 ${doc.pages.length} 頁`;
+                        pageSec.appendChild(div);
+                    }
+
+                    const card = document.createElement('div');
+                    card.className = 'article-card';
+                    const ta = document.createElement('textarea');
+                    ta.className = 'inline-edit-textarea';
+                    ta.value = reflowRegulationText(page.text);
+                    card.appendChild(ta);
+                    textareas.push({ page, ta });
+                    pageSec.appendChild(card);
+                    container.appendChild(pageSec);
+                }
+
+                const actionBar = document.createElement('div');
+                actionBar.className = 'inline-edit-actions';
+                actionBar.innerHTML = `
+                    <button type="button" id="cancelEditDocBtn" class="modal-btn cancel">取消</button>
+                    <button type="button" id="saveEditDocBtn" class="modal-btn confirm-primary">儲存修改</button>
+                `;
+                container.appendChild(actionBar);
+
+                document.getElementById('cancelEditDocBtn').addEventListener('click', () => {
+                    isEditingDocText = false;
+                    renderReaderContent(doc, readerQuery);
+                });
+
+                document.getElementById('saveEditDocBtn').addEventListener('click', async () => {
+                    for (const item of textareas) {
+                        item.page.text = item.ta.value;
+                    }
+                    doc.updatedAt = new Date().toLocaleDateString('zh-TW');
+                    doc.isRecentlyUpdated = true;
+                    await dbPut(STORE_DOCS, doc);
+                    sortDocuments();
+                    isEditingDocText = false;
+                    document.getElementById('readerDocMetaText').textContent = `共 ${doc.pages.length} 頁・更新日期：${doc.updatedAt}`;
+                    document.getElementById('readerUpdatedBadge').classList.remove('hidden');
+                    renderReaderContent(doc, readerQuery);
+                    showToast('已儲存校正後的內文', 'success');
+                });
+                return;
+            }
+
+            let targetElementToScroll = null;
+
+            for (const page of doc.pages) {
+                const pageSec = document.createElement('div');
+                pageSec.className = 'page-section';
+
+                if (doc.pages.length > 1) {
+                    const div = document.createElement('div');
+                    div.className = 'page-divider';
+                    div.textContent = `第 ${page.pageNumber} 頁 / 共 ${doc.pages.length} 頁`;
+                    pageSec.appendChild(div);
+                }
+
+                const articles = splitIntoArticles(page.text);
+                articles.forEach((blockText, bIdx) => {
+                    const clauseKey = extractClauseKey(blockText, page.pageNumber, bIdx);
+                    const isClauseStarred = doc.starredClauses.includes(clauseKey);
+
+                    const card = document.createElement('article');
+                    card.className = 'article-card' + (isClauseStarred ? ' clause-starred' : '');
+                    card.setAttribute('data-clause-key', clauseKey);
+
+                    card.innerHTML = `
+                        <div class="article-card-actions">
+                            <button type="button" class="article-mini-btn star-btn ${isClauseStarred ? 'starred' : ''}" title="收藏此條至重要法條分頁" aria-label="收藏此條">${isClauseStarred ? '★' : '☆'}</button>
+                            <button type="button" class="article-mini-btn copy-btn" title="複製此段" aria-label="複製此段">${copySvg}</button>
+                        </div>
+                        <div class="article-text">${highlightKeywords(blockText, keywords)}</div>
+                    `;
+
+                    if (targetClauseKey && clauseKey === targetClauseKey) {
+                        targetElementToScroll = card;
+                    }
+
+                    const starBtn = card.querySelector('.star-btn');
+                    starBtn.addEventListener('click', async () => {
+                        const idx = doc.starredClauses.indexOf(clauseKey);
+                        if (idx === -1) {
+                            doc.starredClauses.push(clauseKey);
+                            starBtn.textContent = '★';
+                            starBtn.classList.add('starred');
+                            card.classList.add('clause-starred');
+                            showToast('已收錄至「重要法條收藏分頁」★', 'success');
+                        } else {
+                            doc.starredClauses.splice(idx, 1);
+                            starBtn.textContent = '☆';
+                            starBtn.classList.remove('starred');
+                            card.classList.remove('clause-starred');
+                            showToast('已取消此條收藏');
+                        }
+                        await dbPut(STORE_DOCS, doc);
+                        updateStarredCollectionCountBadges();
+                    });
+
+                    const copyBtn = card.querySelector('.copy-btn');
+                    copyBtn.addEventListener('click', async () => {
+                        const ok = await copyToClipboard(blockText);
+                        if (ok) {
+                            copyBtn.innerHTML = checkSvg;
+                            copyBtn.classList.add('copied');
+                            showToast('已複製此段文字', 'success');
+                            setTimeout(() => {
+                                copyBtn.innerHTML = copySvg;
+                                copyBtn.classList.remove('copied');
+                            }, 1600);
+                        }
+                    });
+
+                    pageSec.appendChild(card);
+                });
+
+                container.appendChild(pageSec);
+            }
+
+            readerMatches = Array.from(container.querySelectorAll('mark.hl-match'));
+            if (keywords.length > 0) {
+                if (readerMatches.length > 0) {
+                    currentMatchIdx = 0;
+                    highlightActiveMatch(0, false);
+                } else {
+                    currentMatchIdx = -1;
+                    document.getElementById('fabMatchCounter').textContent = '第 0 / 0 筆';
+                }
+            } else {
+                currentMatchIdx = -1;
+            }
+            syncFabUIWithMode();
+
+            if (targetElementToScroll) {
+                setTimeout(() => {
+                    targetElementToScroll.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    targetElementToScroll.classList.add('clause-jump-highlight');
+                    setTimeout(() => targetElementToScroll.classList.remove('clause-jump-highlight'), 2200);
+                }, 60);
+            }
+        }
+
+        function highlightActiveMatch(index, shouldScroll = true) {
+            if (readerMatches.length === 0) return;
+            const total = readerMatches.length;
+            currentMatchIdx = ((index % total) + total) % total;
+
+            readerMatches.forEach((el, idx) => {
+                el.classList.toggle('active-match', idx === currentMatchIdx);
+            });
+
+            document.getElementById('fabMatchCounter').textContent = `第 ${currentMatchIdx + 1} / ${total} 筆`;
+
+            if (shouldScroll) {
+                readerMatches[currentMatchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        function renderReaderPage(docId, initialQuery = '', targetClauseKey = null) {
+            const doc = documents.find(d => d.id === docId);
+            if (!doc) return;
+
+            activeDocId = docId;
+            isEditingDocText = false;
+            readerQuery = initialQuery || '';
+
+            document.getElementById('readerDocTitle').textContent = doc.title;
+            document.getElementById('readerDocMetaText').textContent = `共 ${doc.pages.length} 頁・更新日期：${doc.updatedAt}`;
+            document.getElementById('readerOcrBadge').classList.toggle('hidden', !doc.isOcr);
+            document.getElementById('readerUpdatedBadge').classList.toggle('hidden', !doc.isRecentlyUpdated);
+
+            const folderSelect = document.getElementById('readerFolderSelect');
+            folderSelect.innerHTML = buildFolderOptionsHtml(doc.folderId);
+
+            renderCurrentView();
+            renderReaderContent(doc, readerQuery, targetClauseKey);
+
+            if (readerQuery.trim().length > 0) {
+                toggleFabPopover(true);
+            } else {
+                toggleFabPopover(false);
+            }
+
+            if (!targetClauseKey) {
+                if (readerMatches.length > 0) {
+                    highlightActiveMatch(0, true);
+                } else {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }
+        }
+
+        function openReaderView(docId, initialQuery = '', targetClauseKey = null) {
+            activeDocId = docId;
+            pushNavigationState();
+            renderReaderPage(docId, initialQuery, targetClauseKey);
+        }
+
+        function closeReaderView() {
+            if (window.history.state && window.history.state.activeDocId) {
+                window.history.back();
+            } else {
+                activeDocId = null;
+                isEditingDocText = false;
+                renderCurrentView();
+                if (!document.getElementById('fabPopover').classList.contains('hidden')) {
+                    positionPopoverNearFab();
+                }
+            }
+        }
+
+        /* =========================================================
+           12. 全站通用可自由拖曳懸浮球與懸浮搜尋窗（Pointer Events 統一相容）
+           ========================================================= */
+        function clampPosition(x, y, elWidth, elHeight) {
+            const margin = 8;
+            const maxX = Math.max(margin, window.innerWidth - elWidth - margin);
+            const maxY = Math.max(margin, window.innerHeight - elHeight - margin);
+            return {
+                x: Math.min(Math.max(margin, x), maxX),
+                y: Math.min(Math.max(margin, y), maxY)
+            };
+        }
+
+        function positionPopoverNearFab() {
+            const fab = document.getElementById('fabCircleBtn');
+            const pop = document.getElementById('fabPopover');
+            if (pop.classList.contains('hidden')) return;
+
+            const fabRect = fab.getBoundingClientRect();
+            const popRect = pop.getBoundingClientRect();
+            const popW = popRect.width || 292;
+            const popH = popRect.height || 110;
+
+            let targetX = fabRect.right - popW;
+            if (targetX < 12) targetX = fabRect.left;
+
+            let targetY = fabRect.top - popH - 10;
+            if (targetY < 56) {
+                targetY = fabRect.bottom + 10;
+            }
+
+            const clamped = clampPosition(targetX, targetY, popW, popH);
+            pop.style.left = `${clamped.x}px`;
+            pop.style.top = `${clamped.y}px`;
+        }
+
+        function toggleFabPopover(open) {
+            const pop = document.getElementById('fabPopover');
+            if (open) {
+                syncFabUIWithMode();
+                pop.classList.remove('hidden');
+                positionPopoverNearFab();
+                setTimeout(() => document.getElementById('fabSearchInput').focus(), 40);
+            } else {
+                pop.classList.add('hidden');
+            }
+        }
+
+        function initDraggableFloatingControls() {
+            const fab = document.getElementById('fabCircleBtn');
+            const pop = document.getElementById('fabPopover');
+            const popHandle = document.getElementById('fabDragHandle');
+
+            loadPreference('fab_pos', null).then((savedPos) => {
+                if (savedPos && typeof savedPos.x === 'number' && typeof savedPos.y === 'number') {
+                    const c = clampPosition(savedPos.x, savedPos.y, 50, 50);
+                    fab.style.right = 'auto';
+                    fab.style.bottom = 'auto';
+                    fab.style.left = `${c.x}px`;
+                    fab.style.top = `${c.y}px`;
+                }
+            });
+
+            // 使用 Pointer Events 統一處理手機觸控與滑鼠，確保輕點與拖曳100%穩定
+            let pointerId = null;
+            let isDragging = false;
+            let startX = 0;
+            let startY = 0;
+            let startLeft = 0;
+            let startTop = 0;
+            const DRAG_THRESHOLD = 8;
+
+            fab.addEventListener('pointerdown', (e) => {
+                if (e.button !== undefined && e.button !== 0) return;
+                pointerId = e.pointerId;
+                isDragging = false;
+                const rect = fab.getBoundingClientRect();
+                startX = e.clientX;
+                startY = e.clientY;
+                startLeft = rect.left;
+                startTop = rect.top;
+                try { fab.setPointerCapture(e.pointerId); } catch (err) {}
+            });
+
+            fab.addEventListener('pointermove', (e) => {
+                if (pointerId !== e.pointerId) return;
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+
+                if (!isDragging && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
+                    isDragging = true;
+                }
+
+                if (isDragging) {
+                    const c = clampPosition(startLeft + dx, startTop + dy, 50, 50);
+                    fab.style.right = 'auto';
+                    fab.style.bottom = 'auto';
+                    fab.style.left = `${c.x}px`;
+                    fab.style.top = `${c.y}px`;
+                    if (!pop.classList.contains('hidden')) {
+                        positionPopoverNearFab();
+                    }
+                }
+            });
+
+            const finishFabPointer = (e) => {
+                if (pointerId !== e.pointerId) return;
+                try { fab.releasePointerCapture(e.pointerId); } catch (err) {}
+                pointerId = null;
+
+                if (isDragging) {
+                    isDragging = false;
+                    const rect = fab.getBoundingClientRect();
+                    savePreference('fab_pos', { x: rect.left, y: rect.top });
+                } else {
+                    const isHidden = pop.classList.contains('hidden');
+                    toggleFabPopover(isHidden);
+                }
+            };
+
+            fab.addEventListener('pointerup', finishFabPointer);
+            fab.addEventListener('pointercancel', () => {
+                pointerId = null;
+                isDragging = false;
+            });
+
+            // 展開後的搜尋視窗拖曳手把
+            let popPointerId = null;
+            let popDragging = false;
+            let popStartX = 0;
+            let popStartY = 0;
+            let popOrigLeft = 0;
+            let popOrigTop = 0;
+
+            popHandle.addEventListener('pointerdown', (e) => {
+                if (e.target.closest('#fabCloseBtn')) return;
+                popPointerId = e.pointerId;
+                popDragging = false;
+                const rect = pop.getBoundingClientRect();
+                popStartX = e.clientX;
+                popStartY = e.clientY;
+                popOrigLeft = rect.left;
+                popOrigTop = rect.top;
+                try { popHandle.setPointerCapture(e.pointerId); } catch (err) {}
+            });
+
+            popHandle.addEventListener('pointermove', (e) => {
+                if (popPointerId !== e.pointerId) return;
+                const dx = e.clientX - popStartX;
+                const dy = e.clientY - popStartY;
+                if (!popDragging && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
+                    popDragging = true;
+                }
+                if (popDragging) {
+                    const rect = pop.getBoundingClientRect();
+                    const c = clampPosition(popOrigLeft + dx, popOrigTop + dy, rect.width, rect.height);
+                    pop.style.left = `${c.x}px`;
+                    pop.style.top = `${c.y}px`;
+                }
+            });
+
+            const finishPopPointer = (e) => {
+                if (popPointerId !== e.pointerId) return;
+                try { popHandle.releasePointerCapture(e.pointerId); } catch (err) {}
+                popPointerId = null;
+                popDragging = false;
+            };
+
+            popHandle.addEventListener('pointerup', finishPopPointer);
+            popHandle.addEventListener('pointercancel', finishPopPointer);
+
+            window.addEventListener('resize', () => {
+                const rect = fab.getBoundingClientRect();
+                const c = clampPosition(rect.left, rect.top, 50, 50);
+                fab.style.right = 'auto';
+                fab.style.bottom = 'auto';
+                fab.style.left = `${c.x}px`;
+                fab.style.top = `${c.y}px`;
+                if (!pop.classList.contains('hidden')) {
+                    positionPopoverNearFab();
+                }
+            });
+        }
+
+        /* =========================================================
+           13. JSON 備份匯出與還原匯入
+           ========================================================= */
+        function exportJsonBackup() {
+            const payload = {
+                exportedAt: new Date().toISOString(),
+                folders,
+                documents
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const dateTag = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+            a.href = url;
+            a.download = `法規公文備份_${dateTag}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('已匯出純文字備份檔', 'success');
+        }
+
+        async function importJsonBackup(file) {
+            if (!file) return;
+            try {
+                const text = await file.text();
+                const parsed = JSON.parse(text);
+
+                if (Array.isArray(parsed.folders)) {
+                    for (const f of parsed.folders) {
+                        if (f && f.id && f.name) {
+                            if (!folders.some(existing => existing.id === f.id)) {
+                                folders.push(f);
+                            }
+                            await dbPut(STORE_FOLDERS, f);
+                        }
+                    }
+                }
+
+                const docList = Array.isArray(parsed.documents)
+                    ? parsed.documents
+                    : (Array.isArray(parsed.regulations) ? parsed.regulations : []);
+
+                let count = 0;
+                for (const item of docList) {
+                    if (item && item.title && Array.isArray(item.pages)) {
+                        const targetFid = (item.folderId && folders.some(f => f.id === item.folderId))
+                            ? item.folderId
+                            : UNCATEGORIZED_FOLDER_ID;
+
+                        const cleanPages = item.pages.map((p, idx) => ({
+                            pageNumber: p.pageNumber || (idx + 1),
+                            text: p.text || ''
+                        }));
+
+                        const doc = {
+                            id: item.id || ('doc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7)),
+                            folderId: targetFid,
+                            title: String(item.title),
+                            coreName: item.coreName || extractCoreName(String(item.title)),
+                            isOcr: Boolean(item.isOcr || item.docType === 'image'),
+                            starredClauses: Array.isArray(item.starredClauses) ? item.starredClauses : [],
+                            updatedAt: item.updatedAt || item.uploadedAt || new Date().toLocaleDateString('zh-TW'),
+                            isRecentlyUpdated: Boolean(item.isRecentlyUpdated),
+                            pages: cleanPages
+                        };
+
+                        const idx = documents.findIndex(d => d.id === doc.id);
+                        if (idx !== -1) documents[idx] = doc;
+                        else documents.push(doc);
+                        await dbPut(STORE_DOCS, doc);
+                        count++;
+                    }
+                }
+                sortDocuments();
+                renderCurrentView();
+                showToast(`已成功還原 ${count} 份文件`, 'success');
+            } catch (e) {
+                showToast('備份檔案格式不正確', 'error');
+            }
+        }
+
+        /* =========================================================
+           14. 應用程式初始化與所有事件綁定
+           ========================================================= */
+        async function initApp() {
+            const savedFont = await loadPreference('font_scale', 'large');
+            applyFontScale(savedFont);
+
+            const storedFolders = await dbGetAll(STORE_FOLDERS);
+            if (storedFolders.length > 0) {
+                folders = storedFolders;
+                if (!folders.some(f => f.id === UNCATEGORIZED_FOLDER_ID)) {
+                    const uncat = DEFAULT_FOLDERS[0];
+                    folders.unshift(uncat);
+                    await dbPut(STORE_FOLDERS, uncat);
+                }
+            } else {
+                folders = [...DEFAULT_FOLDERS];
+                for (const f of folders) {
+                    await dbPut(STORE_FOLDERS, f);
+                }
+            }
+
+            const storedDocs = await dbGetAll(STORE_DOCS);
+            if (storedDocs.length > 0) {
+                documents = storedDocs.map(d => ({
+                    ...d,
+                    starredClauses: Array.isArray(d.starredClauses) ? d.starredClauses : [],
+                    folderId: (d.folderId && folders.some(f => f.id === d.folderId)) ? d.folderId : UNCATEGORIZED_FOLDER_ID
+                }));
+            } else {
+                documents = [...SAMPLE_DOCS];
+                for (const d of documents) {
+                    await dbPut(STORE_DOCS, d);
+                }
+            }
+
+            sortDocuments();
+            initHistoryNavigation();
+            renderCurrentView();
+            initDraggableFloatingControls();
+
+            // 頂部標題點擊回到封面
+            document.getElementById('brandHomeBtn').addEventListener('click', () => {
+                activeDocId = null;
+                activeFolderId = null;
+                isStarredPageActive = false;
+                globalQuery = '';
+                pushNavigationState();
+                renderCurrentView();
+            });
+
+            // 重要法條收藏分頁入口（封面卡片 + 頂部 ★ 圖示）
+            const openStarredCollectionPage = () => {
+                activeDocId = null;
+                activeFolderId = null;
+                isStarredPageActive = true;
+                globalQuery = '';
+                pushNavigationState();
+                renderCurrentView();
+            };
+
+            document.getElementById('openStarredPageCard').addEventListener('click', openStarredCollectionPage);
+            document.getElementById('headerStarPageBtn').addEventListener('click', () => {
+                if (isStarredPageActive && !activeDocId) {
+                    isStarredPageActive = false;
+                    pushNavigationState();
+                    renderCurrentView();
+                } else {
+                    openStarredCollectionPage();
+                }
+            });
+
+            document.getElementById('backFromStarredBtn').addEventListener('click', () => {
+                if (window.history.state && window.history.state.isStarredPageActive) {
+                    window.history.back();
+                } else {
+                    isStarredPageActive = false;
+                    renderCurrentView();
+                }
+            });
+
+            // 搜尋結果列一鍵清除篩選
+            document.getElementById('resetGlobalFilterBtn').addEventListener('click', () => {
+                globalQuery = '';
+                renderCurrentView();
+                toggleFabPopover(false);
+            });
+
+            // 字級切換
+            document.querySelectorAll('.font-pill-btn').forEach(btn => {
+                btn.addEventListener('click', () => applyFontScale(btn.getAttribute('data-font-btn')));
+            });
+
+            // 匯出與匯入備份
+            document.getElementById('exportBackupBtn').addEventListener('click', exportJsonBackup);
+            document.getElementById('importBackupInput').addEventListener('change', async (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    await importJsonBackup(e.target.files[0]);
+                }
+                e.target.value = '';
+            });
+
+            // 封面「新增資料夾」圖示按鈕
+            document.getElementById('openNewFolderModalBtn').addEventListener('click', async () => {
+                const name = await openFolderInputModal('新增資料夾', '請輸入新的分類資料夾名稱：');
+                if (name) {
+                    const newFolder = {
+                        id: 'folder-' + Date.now(),
+                        name,
+                        kind: name.includes('公文') ? 'official' : 'normal'
+                    };
+                    folders.push(newFolder);
+                    await dbPut(STORE_FOLDERS, newFolder);
+                    renderCurrentView();
+                    showToast(`已建立資料夾「${name}」`, 'success');
+                }
+            });
+
+            // 封面單一精簡批次上傳小圖示（自動歸入「未分類 / 一般法規」）
+            document.getElementById('coverBatchFileInput').addEventListener('change', async (e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                    await processBatchFiles(e.target.files, UNCATEGORIZED_FOLDER_ID);
+                    activeFolderId = UNCATEGORIZED_FOLDER_ID;
+                    pushNavigationState();
+                    renderCurrentView();
+                }
+                e.target.value = '';
+            });
+
+            // 資料夾內返回封面與批次上傳
+            document.getElementById('backToFoldersBtn').addEventListener('click', () => {
+                if (window.history.state && window.history.state.activeFolderId) {
+                    window.history.back();
+                } else {
+                    activeFolderId = null;
+                    renderCurrentView();
+                }
+            });
+
+            document.getElementById('batchFileInput').addEventListener('change', async (e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                    await processBatchFiles(e.target.files, activeFolderId || UNCATEGORIZED_FOLDER_ID);
+                }
+                e.target.value = '';
+            });
+
+            // 閱讀模式工具列事件
+            document.getElementById('backFromReaderBtn').addEventListener('click', closeReaderView);
+
+            document.getElementById('readerFolderSelect').addEventListener('change', async (e) => {
+                const doc = documents.find(d => d.id === activeDocId);
+                if (!doc) return;
+                doc.folderId = e.target.value;
+                activeFolderId = doc.folderId;
+                await dbPut(STORE_DOCS, doc);
+                showToast(`已移動至「${getFolderNameById(doc.folderId)}」`, 'success');
+            });
+
+            document.getElementById('copyFullDocBtn').addEventListener('click', async () => {
+                const doc = documents.find(d => d.id === activeDocId);
+                if (!doc) return;
+                const fullText = `${doc.title}\n\n` + doc.pages.map(p => reflowRegulationText(p.text)).join('\n\n');
+                const ok = await copyToClipboard(fullText);
+                if (ok) {
+                    const btn = document.getElementById('copyFullDocBtn');
+                    const icon = document.getElementById('copyFullDocIcon');
+                    btn.classList.remove('primary');
+                    btn.classList.add('success-solid');
+                    icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>';
+                    showToast('已複製全文', 'success');
+                    setTimeout(() => {
+                        btn.classList.remove('success-solid');
+                        btn.classList.add('primary');
+                        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>';
+                    }, 1800);
+                }
+            });
+
+            document.getElementById('toggleEditDocBtn').addEventListener('click', () => {
+                const doc = documents.find(d => d.id === activeDocId);
+                if (!doc) return;
+                isEditingDocText = !isEditingDocText;
+                renderReaderContent(doc, readerQuery);
+            });
+
+            document.getElementById('singleUpdateInput').addEventListener('change', async (e) => {
+                const doc = documents.find(d => d.id === activeDocId);
+                if (doc && e.target.files && e.target.files[0]) {
+                    await processBatchFiles([e.target.files[0]], doc.folderId, doc.id);
+                }
+                e.target.value = '';
+            });
+
+            document.getElementById('readerDeleteBtn').addEventListener('click', async () => {
+                const doc = documents.find(d => d.id === activeDocId);
+                if (!doc) return;
+                const ok = await showConfirmModal(
+                    '整份刪除此法規',
+                    `確定要刪除《${doc.title}》嗎？刪除後無法復原。`,
+                    '確定刪除',
+                    true
+                );
+                if (ok) {
+                    await dbDelete(STORE_DOCS, doc.id);
+                    documents = documents.filter(d => d.id !== doc.id);
+                    showToast('已整份刪除此文件');
+                    closeReaderView();
+                }
+            });
+
+            // 全站懸浮搜尋視窗事件
+            document.getElementById('fabCloseBtn').addEventListener('click', () => {
+                toggleFabPopover(false);
+            });
+
+            const fabInput = document.getElementById('fabSearchInput');
+            fabInput.addEventListener('input', () => {
+                if (activeDocId) {
+                    readerQuery = fabInput.value;
+                    const doc = documents.find(d => d.id === activeDocId);
+                    if (doc) {
+                        renderReaderContent(doc, readerQuery);
+                        if (readerMatches.length > 0) highlightActiveMatch(0, true);
+                    }
+                } else {
+                    globalQuery = fabInput.value;
+                    renderCurrentView();
+                    positionPopoverNearFab();
+                }
+            });
+
+            document.getElementById('fabClearBtn').addEventListener('click', () => {
+                fabInput.value = '';
+                if (activeDocId) {
+                    readerQuery = '';
+                    const doc = documents.find(d => d.id === activeDocId);
+                    if (doc) renderReaderContent(doc, '');
+                } else {
+                    globalQuery = '';
+                    renderCurrentView();
+                    positionPopoverNearFab();
+                }
+                fabInput.focus();
+            });
+
+            document.getElementById('fabPrevBtn').addEventListener('click', () => {
+                highlightActiveMatch(currentMatchIdx - 1, true);
+            });
+
+            document.getElementById('fabNextBtn').addEventListener('click', () => {
+                highlightActiveMatch(currentMatchIdx + 1, true);
+            });
+
+            ensurePdfJsLoaded();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
+    </script>
+</body>
+</html>
