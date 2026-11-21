@@ -6,7 +6,7 @@
     <title>法規與公文檢索系統</title>
     <style>
         /* =========================================================
-           1. 純原生 CSS 設計系統（零外部框架依賴、高對比、防破版）
+           1. 純原生 CSS 設計系統（零外部框架依賴、高對比、層級分明）
            ========================================================= */
         :root {
             --bg-page: #f4f6f9;
@@ -35,7 +35,7 @@
             --radius-md: 10px;
             --radius-sm: 8px;
             --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
-            --shadow-float: 0 10px 25px -5px rgba(15, 23, 42, 0.28), 0 8px 10px -6px rgba(15, 23, 42, 0.16);
+            --shadow-bar: 0 -4px 16px rgba(15, 23, 42, 0.08);
 
             /* 動態閱讀字級變數 */
             --reader-font-size: 20px;
@@ -235,12 +235,12 @@
         }
 
         /* =========================================================
-           3. 主容器（底部預留安全空間避開懸浮球與系統列）
+           3. 主容器（底部預留固定搜尋列空間）
            ========================================================= */
         .main-container {
             max-width: 920px;
             margin: 0 auto;
-            padding: 12px 12px 160px 12px;
+            padding: 12px 12px 92px 12px;
         }
 
         .progress-panel {
@@ -677,11 +677,6 @@
         }
 
         .starred-clause-text {
-            font-size: var(--reader-font-size);
-            line-height: var(--reader-line-height);
-            color: var(--text-primary);
-            white-space: pre-wrap;
-            word-break: break-word;
             cursor: pointer;
         }
 
@@ -694,10 +689,11 @@
             color: var(--text-muted);
             font-size: 15px;
             line-height: 1.6;
+            white-space: pre-line;
         }
 
         /* =========================================================
-           6. 閱讀模式（純圖示工具列 + 單條星號與複製）
+           6. 閱讀模式（層級視覺化：編章節大標 vs 條號 vs 款目縮排）
            ========================================================= */
         .reader-header-card {
             background-color: var(--bg-card);
@@ -762,6 +758,30 @@
             margin: 0 0 6px 4px;
         }
 
+        /* 第一層大標：編、章、節、款、附則獨立橫幅 */
+        .chapter-banner {
+            background-color: #e0e7ff;
+            border-left: 5px solid var(--brand-primary);
+            color: #1e3a8a;
+            padding: 10px 14px;
+            margin: 14px 0 8px 0;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            font-size: calc(var(--reader-font-size) + 1px);
+            font-weight: 800;
+            line-height: 1.45;
+            word-break: break-word;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .chapter-banner.sub-section {
+            background-color: var(--brand-soft);
+            border-left: 4px solid #3b82f6;
+            color: #1e40af;
+            font-size: var(--reader-font-size);
+            padding: 8px 12px;
+            margin: 10px 0 8px 0;
+        }
+
         .article-card {
             background-color: var(--bg-card);
             border: 1px solid var(--border-light);
@@ -823,12 +843,48 @@
             background-color: var(--success-soft);
         }
 
-        .article-text {
+        /* 條文內部分層排版（條號標題、本文段落、款、目縮排） */
+        .clause-structured-body {
             font-size: var(--reader-font-size);
             line-height: var(--reader-line-height);
             color: var(--text-primary);
-            white-space: pre-wrap;
             word-break: break-word;
+        }
+
+        .clause-article-heading {
+            display: inline-block;
+            font-weight: 800;
+            color: var(--brand-primary);
+            background-color: var(--brand-soft);
+            border: 1px solid var(--brand-border);
+            padding: 1px 8px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: calc(var(--reader-font-size) - 1px);
+        }
+
+        .clause-line-main {
+            margin-bottom: 6px;
+        }
+
+        .clause-line-lvl1 {
+            padding-left: 1.5em;
+            text-indent: -1.5em;
+            margin-bottom: 5px;
+        }
+
+        .clause-line-lvl2 {
+            padding-left: 2.8em;
+            text-indent: -1.6em;
+            margin-bottom: 4px;
+            color: #1e293b;
+        }
+
+        .clause-line-lvl3 {
+            padding-left: 4em;
+            text-indent: -1.4em;
+            margin-bottom: 4px;
+            color: #334155;
         }
 
         .inline-edit-textarea {
@@ -867,86 +923,29 @@
         }
 
         /* =========================================================
-           7. 全站通用可自由拖曳懸浮球與懸浮搜尋窗（FAB & Popover）
+           7. 固定式底部搜尋橫條（不漂浮、不跑位、直接可打字）
            ========================================================= */
-        .fab-circle-btn {
+        .bottom-search-dock {
             position: fixed;
-            right: 16px;
-            bottom: 105px;
-            z-index: 999;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background-color: var(--brand-primary);
-            color: #ffffff;
-            box-shadow: var(--shadow-float);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            touch-action: none;
-            user-select: none;
-            -webkit-user-select: none;
-            cursor: pointer;
-        }
-
-        .fab-circle-btn:active {
-            transform: scale(0.95);
-        }
-
-        .fab-badge {
-            position: absolute;
-            top: -4px;
-            left: -4px;
-            min-width: 20px;
-            height: 20px;
-            padding: 0 5px;
-            border-radius: 10px;
-            background-color: #ea580c;
-            color: #ffffff;
-            font-size: 11px;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
-        }
-
-        .fab-popover {
-            position: fixed;
-            z-index: 1000;
-            width: 292px;
-            max-width: calc(100vw - 24px);
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 80;
             background-color: rgba(255, 255, 255, 0.98);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: 8px 10px 10px 10px;
-            box-shadow: var(--shadow-float);
+            border-top: 1px solid var(--border-color);
+            box-shadow: var(--shadow-bar);
+            padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)) 12px;
+        }
+
+        .bottom-search-inner {
+            max-width: 920px;
+            margin: 0 auto;
             display: flex;
-            flex-direction: column;
+            align-items: center;
             gap: 8px;
         }
 
-        .fab-drag-handle {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding-bottom: 4px;
-            border-bottom: 1px dashed var(--border-light);
-            cursor: grab;
-            touch-action: none;
-            user-select: none;
-            color: var(--text-muted);
-            font-size: 11px;
-            font-weight: 700;
-        }
-
-        .fab-popover-top {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .fab-search-input-wrap {
+        .dock-input-wrap {
             position: relative;
             flex: 1;
             min-width: 0;
@@ -954,84 +953,85 @@
             align-items: center;
         }
 
-        .fab-search-input {
+        .dock-search-icon {
+            position: absolute;
+            left: 10px;
+            color: var(--text-muted);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .dock-search-input {
             width: 100%;
-            height: 38px;
-            padding: 0 28px 0 10px;
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-sm);
+            height: 40px;
+            padding: 0 32px 0 34px;
+            border: 1.5px solid var(--border-color);
+            border-radius: var(--radius-md);
             font-size: 15px;
             color: var(--text-primary);
             background-color: #f8fafc;
             outline: none;
+            transition: border-color 0.15s, background-color 0.15s;
         }
 
-        .fab-search-input:focus {
+        .dock-search-input:focus {
             background-color: #ffffff;
             border-color: var(--brand-primary);
         }
 
-        .fab-clear-btn {
+        .dock-clear-btn {
             position: absolute;
-            right: 6px;
-            width: 20px;
-            height: 20px;
+            right: 7px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
             background-color: #e2e8f0;
             color: var(--text-secondary);
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .fab-close-btn {
-            width: 26px;
-            height: 26px;
-            border-radius: 6px;
-            background-color: var(--bg-subtle);
-            color: var(--text-secondary);
-            display: inline-flex;
+        .dock-reader-nav {
+            display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 5px;
             flex-shrink: 0;
         }
 
-        .fab-nav-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 6px;
-            padding-top: 6px;
-            border-top: 1px solid var(--border-light);
-        }
-
-        .fab-counter {
+        .dock-counter {
             font-size: 12px;
-            font-weight: 700;
+            font-weight: 800;
             color: #9a3412;
             background-color: #fff7ed;
             border: 1px solid #fed7aa;
-            padding: 3px 8px;
-            border-radius: 6px;
+            padding: 0 8px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            display: inline-flex;
+            align-items: center;
             white-space: nowrap;
         }
 
-        .fab-nav-btns {
-            display: flex;
+        .dock-step-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-sm);
+            background-color: var(--bg-subtle);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 800;
+            display: inline-flex;
             align-items: center;
-            gap: 4px;
+            justify-content: center;
         }
 
-        .fab-step-btn {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--text-primary);
-            background-color: var(--bg-subtle);
-            border: 1px solid var(--border-light);
-            padding: 5px 10px;
-            border-radius: 6px;
+        .dock-step-btn:active {
+            background-color: #e2e8f0;
         }
 
         /* =========================================================
@@ -1049,7 +1049,7 @@
             border-radius: 20px;
             font-size: 14px;
             font-weight: 600;
-            box-shadow: var(--shadow-float);
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
             white-space: nowrap;
             max-width: calc(100vw - 24px);
             overflow: hidden;
@@ -1088,7 +1088,7 @@
             padding: 18px;
             width: 100%;
             max-width: 350px;
-            box-shadow: var(--shadow-float);
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
         }
 
         .modal-title {
@@ -1221,7 +1221,7 @@
                         </svg>
                     </button>
 
-                    <!-- 首頁單一精簡批次上傳小圖示（自動歸入未分類，可隨時移動） -->
+                    <!-- 首頁單一精簡批次上傳小圖示 -->
                     <div class="icon-btn primary" title="批次上傳法規／公文（自動歸入未分類）" aria-label="批次上傳法規或公文">
                         <svg width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
@@ -1281,7 +1281,7 @@
             <div id="docListContainer" class="doc-list"></div>
         </section>
 
-        <!-- 視圖 C：重要法條收藏分頁（專收所有打星號的單條法條） -->
+        <!-- 視圖 C：重要法條收藏分頁 -->
         <section id="starredClausesView" class="hidden">
             <div class="folder-toolbar-card">
                 <div class="folder-toolbar-left">
@@ -1300,7 +1300,7 @@
             <div id="starredClausesContainer" class="doc-list"></div>
         </section>
 
-        <!-- 視圖 D：法規與公文閱讀頁（純圖示工具列 + 單條星號收藏） -->
+        <!-- 視圖 D：法規與公文閱讀頁 -->
         <section id="readerView" class="hidden">
             <div class="reader-header-card">
                 <div class="reader-toolbar-row">
@@ -1361,44 +1361,30 @@
 
     </main>
 
-    <!-- 全站通用：可自由拖曳移動與點擊的懸浮球（FAB） -->
-    <div id="fabCircleBtn" class="fab-circle-btn" role="button" tabindex="0" title="輕點搜尋；按住可拖曳位置" aria-label="開啟搜尋視窗">
-        <svg width="22" height="22" style="width:22px;height:22px;flex-shrink:0;pointer-events:none;" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-        </svg>
-        <span id="fabBadge" class="fab-badge hidden">0</span>
-    </div>
-
-    <!-- 全站通用：可拖曳的浮動搜尋視窗 -->
-    <div id="fabPopover" class="fab-popover hidden">
-        <div id="fabDragHandle" class="fab-drag-handle" title="按住此處拖曳搜尋視窗">
-            <span id="fabModeLabel">⋮⋮ 跨資料夾搜尋（可拖曳）</span>
-            <button type="button" id="fabCloseBtn" class="fab-close-btn" title="收合" aria-label="收合">
-                <svg width="15" height="15" style="width:15px;height:15px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-            </button>
-        </div>
-
-        <div class="fab-popover-top">
-            <div class="fab-search-input-wrap">
+    <!-- 固定式底部搜尋橫條（不可移動、直接輸入、自動隨頁面切換跨資料夾或文內搜尋） -->
+    <div class="bottom-search-dock">
+        <div class="bottom-search-inner">
+            <div class="dock-input-wrap">
+                <span class="dock-search-icon">
+                    <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </span>
                 <input
                     type="text"
-                    id="fabSearchInput"
-                    class="fab-search-input"
+                    id="dockSearchInput"
+                    class="dock-search-input"
                     placeholder="跨資料夾搜尋法規、公文..."
                     autocomplete="off"
                 >
-                <button type="button" id="fabClearBtn" class="fab-clear-btn hidden" title="清除">✕</button>
+                <button type="button" id="dockClearBtn" class="dock-clear-btn hidden" title="清除">✕</button>
             </div>
-        </div>
 
-        <!-- 閱讀模式下顯示文內筆數與 ▲/▼ 跳轉列 -->
-        <div id="fabNavRow" class="fab-nav-row hidden">
-            <span id="fabMatchCounter" class="fab-counter">第 0 / 0 筆</span>
-            <div class="fab-nav-btns">
-                <button type="button" id="fabPrevBtn" class="fab-step-btn" title="上一筆">▲</button>
-                <button type="button" id="fabNextBtn" class="fab-step-btn" title="下一筆">▼</button>
+            <!-- 閱讀模式下有輸入關鍵字時顯示筆數與上下筆跳轉 -->
+            <div id="dockReaderNav" class="dock-reader-nav hidden">
+                <span id="dockMatchCounter" class="dock-counter">0/0</span>
+                <button type="button" id="dockPrevBtn" class="dock-step-btn" title="上一筆">▲</button>
+                <button type="button" id="dockNextBtn" class="dock-step-btn" title="下一筆">▼</button>
             </div>
         </div>
     </div>
@@ -1433,7 +1419,7 @@
 
     <script>
         /* =========================================================
-           1. 動態背景載入外部解析引擎（非阻塞，離線亦不影響任何按鈕運作）
+           1. 動態背景載入外部解析引擎（非阻塞）
            ========================================================= */
         let pdfLibReadyPromise = null;
         let tesseractReadyPromise = null;
@@ -1501,7 +1487,7 @@
             {
                 id: 'sample-doc-1',
                 folderId: 'folder-01',
-                title: '1-01郵政儲金匯兌法（範例）.txt',
+                title: '1-01郵政儲金匯兌法（範例）',
                 coreName: '郵政儲金匯兌法',
                 isOcr: false,
                 starredClauses: ['第一條'],
@@ -1510,7 +1496,7 @@
                 pages: [
                     {
                         pageNumber: 1,
-                        text: '第一條\n為鼓勵國民儲蓄，促進資本形成，配合國家政策，並增進民眾生活便利，保障郵政儲金匯兌安全，特制定本法；本法未規定者，依其他法律之規定。\n\n第二條\n郵政儲金匯兌事務，由中華郵政股份有限公司（以下簡稱中華郵政公司）辦理，屬交通部主管，業務並受金融監督管理委員會監督；其涉及外匯業務經營者，應經中央銀行許可。'
+                        text: '第一章 總則\n第一條\n為鼓勵國民儲蓄，促進資本形成，配合國家政策，並增進民眾生活便利，保障郵政儲金匯兌安全，特制定本法；本法未規定者，依其他法律之規定。\n\n第二條\n郵政儲金匯兌事務，由中華郵政股份有限公司（以下簡稱中華郵政公司）辦理，屬交通部主管，業務並受金融監督管理委員會監督；其涉及外匯業務經營者，應經中央銀行許可。'
                     },
                     {
                         pageNumber: 2,
@@ -1535,7 +1521,7 @@
         let isHandlingPopState = false;
 
         /* =========================================================
-           3. IndexedDB 本機資料庫（RegDocDB_v1）
+           3. IndexedDB 永久持久化儲存（鎖定版本直到手動更新或刪除）
            ========================================================= */
         const DB_NAME = 'RegDocDB_v1';
         const DB_VERSION = 1;
@@ -1543,6 +1529,17 @@
         const STORE_FOLDERS = 'folders';
         const STORE_PREFS = 'preferences';
         let idbAvailable = true;
+
+        async function requestPersistentStorage() {
+            try {
+                if (navigator.storage && navigator.storage.persist) {
+                    const already = await navigator.storage.persisted();
+                    if (!already) {
+                        await navigator.storage.persist();
+                    }
+                }
+            } catch (e) {}
+        }
 
         function openDB() {
             return new Promise((resolve, reject) => {
@@ -1683,18 +1680,17 @@
         }
 
         /* =========================================================
-           4. 瀏覽器歷史紀錄同步（攔截手機實體／系統返回鍵，逐層返回不跳出網頁）
+           4. 瀏覽器歷史紀錄同步（按手機左鍵逐層返回，不跳出網頁）
            ========================================================= */
         function pushNavigationState() {
             if (isHandlingPopState) return;
             try {
-                const state = {
+                window.history.pushState({
                     activeFolderId,
                     activeDocId,
                     isStarredPageActive,
                     globalQuery
-                };
-                window.history.pushState(state, '');
+                }, '');
             } catch (e) {}
         }
 
@@ -1711,11 +1707,6 @@
             window.addEventListener('popstate', (e) => {
                 isHandlingPopState = true;
                 try {
-                    const pop = document.getElementById('fabPopover');
-                    if (pop && !pop.classList.contains('hidden')) {
-                        pop.classList.add('hidden');
-                    }
-
                     if (e.state) {
                         activeDocId = e.state.activeDocId || null;
                         activeFolderId = e.state.activeFolderId || null;
@@ -1745,17 +1736,41 @@
         }
 
         /* =========================================================
-           5. 文字排版清理（消除 PDF 強制硬折行與頁首頁尾干擾）
+           5. 標題名稱清理（自動刪除「上傳內部資訊網」與副檔名）
            ========================================================= */
+        function cleanDisplayTitle(rawFilename) {
+            let name = String(rawFilename || '').trim();
+            // 去除常見副檔名
+            name = name.replace(/\.(pdf|txt|md|jpg|jpeg|png|webp)$/i, '');
+            // 去除後方「上傳內部資訊網」各種括號或連字號寫法
+            name = name.replace(/[\s\-_（(【\[]*上傳內部資訊網[\s\-_）)】\]]*$/g, '');
+            name = name.replace(/上傳內部資訊網/g, '');
+            return name.trim() || String(rawFilename || '');
+        }
+
+        function extractCoreName(filename) {
+            let name = cleanDisplayTitle(filename);
+            name = name.replace(/^[\d]+[-_.\s]+[\d]*[-_.\s]*/, '');
+            name = name.replace(/[-_（(](範例|修正|最新|\d{6,8}).*$/g, '');
+            return name.trim() || cleanDisplayTitle(filename);
+        }
+
+        /* =========================================================
+           6. 文字排版與多層級大標拆解引擎（大標橫幅 / 條號 / 款 / 目縮排）
+           ========================================================= */
+        const CHAPTER_MAJOR_REGEX = /^第\s*[一二三四五六七八九十百千0-9]+\s*[編章]\s*.*$/;
+        const SECTION_MINOR_REGEX = /^(第\s*[一二三四五六七八九十百千0-9]+\s*[節款目]\s*.*|附\s*則|總\s*則)$/;
+        const ARTICLE_HEADER_REGEX = /^第\s*[一二三四五六七八九十百千0-9]+\s*條(?:之[一二三四五六七八九十0-9]+)?/;
+
         function reflowRegulationText(rawText) {
             if (!rawText) return '';
             const rawLines = rawText.replace(/\r\n/g, '\n').split('\n');
             const cleanedLines = [];
 
-            // 過濾常見 PDF 頁碼與頁眉雜訊（如「- 7 -」或單獨出現的規章章節頁眉）
             for (const line of rawLines) {
                 const trimmed = line.trim();
                 if (!trimmed) continue;
+                // 濾除頁碼雜訊（如 - 7 - 或 第 11 頁 / 共 331 頁）
                 if (/^[-－—]\s*\d+\s*[-－—]$/.test(trimmed)) continue;
                 if (/^第\s*\d+\s*頁(\s*\/\s*共\s*\d+\s*頁)?$/.test(trimmed)) continue;
                 cleanedLines.push(trimmed);
@@ -1763,8 +1778,7 @@
 
             if (cleanedLines.length === 0) return '';
 
-            // 判斷是否為「必須強制換行」的新段落或條款開頭
-            const newParagraphRegex = /^(第\s*[一二三四五六七八九十百千0-9]+\s*[條章節款目](?:之[一二三四五六七八九十0-9]+)?|[一二三四五六七八九十]+、|（[一二三四五六七八九十0-9]+）|\([一二三四五六七八九十0-9]+\)|[0-9]+[、.．]|[①②③④⑤⑥⑦⑧⑨⑩]|附則|說明|主旨|依據|公告事項|辦法)：?/;
+            const newParagraphRegex = /^(第\s*[一二三四五六七八九十百千0-9]+\s*[編章節款目條](?:之[一二三四五六七八九十0-9]+)?|[一二三四五六七八九十]+、|（[一二三四五六七八九十0-9]+）|\([一二三四五六七八九十0-9]+\)|[0-9]+[、.．]|[①②③④⑤⑥⑦⑧⑨⑩]|附\s*則|總\s*則|說\s*明|主\s*旨|依\s*據|公告事項|辦\s*法)：?/;
 
             let result = '';
             for (let i = 0; i < cleanedLines.length; i++) {
@@ -1776,12 +1790,12 @@
 
                 const prev = cleanedLines[i - 1];
                 const isNewPara = newParagraphRegex.test(curr);
+                const prevIsHeading = CHAPTER_MAJOR_REGEX.test(prev) || SECTION_MINOR_REGEX.test(prev) || ARTICLE_HEADER_REGEX.test(prev);
                 const prevEndedSentence = /[。；：！？]$/.test(prev);
 
-                if (isNewPara || prevEndedSentence) {
+                if (isNewPara || prevIsHeading || prevEndedSentence) {
                     result += '\n' + curr;
                 } else {
-                    // 接續上一行被 PDF 切斷的句子（中文字之間不加空白，英數字之間保留一格）
                     const needSpace = /[A-Za-z0-9]$/.test(prev) && /^[A-Za-z0-9]/.test(curr);
                     result += (needSpace ? ' ' : '') + curr;
                 }
@@ -1790,27 +1804,87 @@
             return result.trim();
         }
 
-        function splitIntoArticles(pageText) {
+        /* 將一頁純文字拆解為「章節大標橫幅」與「條文卡片」兩種結構化單元 */
+        function parsePageUnits(pageText) {
             const reflowed = reflowRegulationText(pageText);
             const lines = reflowed.split('\n');
-            const blocks = [];
-            let current = [];
-            const headerRegex = /^\s*第\s*[一二三四五六七八九十百千0-9]+\s*條(?:之[一二三四五六七八九十0-9]+)?/;
+            const units = [];
+            let currentLines = [];
+
+            const flushClause = () => {
+                if (currentLines.length > 0) {
+                    const joined = currentLines.join('\n').trim();
+                    if (joined) {
+                        units.push({ type: 'clause', text: joined });
+                    }
+                    currentLines = [];
+                }
+            };
 
             for (const line of lines) {
-                if (headerRegex.test(line) && current.length > 0) {
-                    const joined = current.join('\n').trim();
-                    if (joined) blocks.push(joined);
-                    current = [line];
-                } else {
-                    current.push(line);
+                const trimmed = line.trim();
+                if (!trimmed) continue;
+
+                // 遇到「第X編／第X章」大標：獨立切出大標橫幅
+                if (CHAPTER_MAJOR_REGEX.test(trimmed) && trimmed.length <= 36) {
+                    flushClause();
+                    units.push({ type: 'chapter', level: 'major', text: trimmed });
+                    continue;
                 }
+
+                // 遇到「第X節／附則／總則」中標：獨立切出次標橫幅
+                if (SECTION_MINOR_REGEX.test(trimmed) && trimmed.length <= 36) {
+                    flushClause();
+                    units.push({ type: 'chapter', level: 'minor', text: trimmed });
+                    continue;
+                }
+
+                // 遇到「第X條」：結束上一條並開啟新條文卡片
+                if (ARTICLE_HEADER_REGEX.test(trimmed) && currentLines.length > 0) {
+                    flushClause();
+                }
+
+                currentLines.push(trimmed);
             }
-            if (current.length > 0) {
-                const joined = current.join('\n').trim();
-                if (joined) blocks.push(joined);
-            }
-            return blocks.length > 0 ? blocks : [reflowed];
+
+            flushClause();
+            return units.length > 0 ? units : [{ type: 'clause', text: reflowed }];
+        }
+
+        /* 將單條法規的每一行套用對應的層級樣式（條號徽章、一、、（一）、1. 縮排） */
+        function renderStructuredClauseHtml(blockText, keywords) {
+            const lines = blockText.split('\n');
+            return lines.map((line, idx) => {
+                const trimmed = line.trim();
+                if (!trimmed) return '';
+
+                // 第X條（若條號獨立成行或緊接內文，自動分離條號徽章）
+                if (idx === 0 && ARTICLE_HEADER_REGEX.test(trimmed)) {
+                    const m = trimmed.match(/^(第\s*[一二三四五六七八九十百千0-9]+\s*條(?:之[一二三四五六七八九十0-9]+)?)\s*(.*)$/);
+                    if (m) {
+                        const artTitleHtml = `<div class="clause-article-heading">${highlightKeywords(m[1], keywords)}</div>`;
+                        const restHtml = m[2] ? `<div class="clause-line-main">${highlightKeywords(m[2], keywords)}</div>` : '';
+                        return artTitleHtml + restHtml;
+                    }
+                }
+
+                // 第一層款目：一、二、三、
+                if (/^[一二三四五六七八九十百]+、/.test(trimmed)) {
+                    return `<div class="clause-line-lvl1">${highlightKeywords(trimmed, keywords)}</div>`;
+                }
+
+                // 第二層款目：（一）（二）或 (1)(2)
+                if (/^[（(][一二三四五六七八九十0-9]+[）)]/.test(trimmed)) {
+                    return `<div class="clause-line-lvl2">${highlightKeywords(trimmed, keywords)}</div>`;
+                }
+
+                // 第三層細目：1. 2. 或 ① ②
+                if (/^([0-9]+[、.．]|[①②③④⑤⑥⑦⑧⑨⑩])/.test(trimmed)) {
+                    return `<div class="clause-line-lvl3">${highlightKeywords(trimmed, keywords)}</div>`;
+                }
+
+                return `<div class="clause-line-main">${highlightKeywords(trimmed, keywords)}</div>`;
+            }).join('');
         }
 
         function extractClauseKey(blockText, pageNum, blockIdx) {
@@ -1823,15 +1897,8 @@
         }
 
         /* =========================================================
-           6. 輔助函式
+           7. 通用輔助函式
            ========================================================= */
-        function extractCoreName(filename) {
-            let name = filename.replace(/\.(pdf|txt|md|jpg|jpeg|png|webp)$/i, '');
-            name = name.replace(/^[\d]+[-_.\s]+[\d]*[-_.\s]*/, '');
-            name = name.replace(/[-_（(](上傳內部資訊網|範例|修正|最新|\d{6,8}).*$/g, '');
-            return name.trim() || filename.replace(/\.(pdf|txt|md|jpg|jpeg|png|webp)$/i, '').trim();
-        }
-
         function escapeHtml(str) {
             return String(str)
                 .replace(/&/g, '&amp;')
@@ -1960,7 +2027,7 @@
         }
 
         /* =========================================================
-           7. 圖片純取文字與 PDF / TXT 解析引擎
+           8. 圖片純取文字與 PDF / TXT 解析引擎
            ========================================================= */
         async function runTesseractOCR(imageSource, labelPrefix) {
             setProgress(true, `${labelPrefix} 準備繁中 OCR 辨識引擎...`, 12);
@@ -1993,7 +2060,7 @@
 
         async function parseAnyFile(file, index, total) {
             const lower = file.name.toLowerCase();
-            const prefix = `[${index + 1}/${total}] ${file.name}`;
+            const prefix = `[${index + 1}/${total}] ${cleanDisplayTitle(file.name)}`;
 
             if (file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(lower)) {
                 const objectUrl = URL.createObjectURL(file);
@@ -2098,6 +2165,7 @@
                 const file = files[i];
                 try {
                     const parsed = await parseAnyFile(file, i, files.length);
+                    const cleanedTitle = cleanDisplayTitle(file.name);
                     const core = extractCoreName(file.name);
 
                     let existing = null;
@@ -2108,7 +2176,7 @@
                     }
 
                     if (existing) {
-                        existing.title = file.name;
+                        existing.title = cleanedTitle;
                         existing.coreName = core;
                         existing.isOcr = parsed.isOcr;
                         existing.pages = parsed.pages;
@@ -2120,7 +2188,7 @@
                         const newDoc = {
                             id: 'doc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
                             folderId,
-                            title: file.name,
+                            title: cleanedTitle,
                             coreName: core,
                             isOcr: parsed.isOcr,
                             starredClauses: [],
@@ -2147,21 +2215,20 @@
             }
 
             if (updated > 0 && added > 0) {
-                showToast(`新增 ${added} 份、覆蓋更新 ${updated} 份（已保留法條星號）`, 'success');
+                showToast(`新增 ${added} 份、覆蓋更新 ${updated} 份（已鎖定儲存）`, 'success');
             } else if (updated > 0) {
                 showToast(`已覆蓋更新 ${updated} 份文件（法條星號已保留）`, 'success');
             } else if (added > 0) {
-                showToast(`成功匯入 ${added} 份文件`, 'success');
+                showToast(`成功匯入 ${added} 份文件（已鎖定儲存）`, 'success');
             }
         }
 
-        /* 永遠維持法規原本編號與名稱順序，不因打星號改變排列 */
         function sortDocuments() {
             documents.sort((a, b) => a.title.localeCompare(b.title, 'zh-Hant', { numeric: true }));
         }
 
         /* =========================================================
-           8. 字級切換控制
+           9. 字級切換控制
            ========================================================= */
         function applyFontScale(scale) {
             const valid = ['normal', 'large', 'xlarge'].includes(scale) ? scale : 'large';
@@ -2173,7 +2240,7 @@
         }
 
         /* =========================================================
-           9. 蒐集所有已打星號的「單條法條」清單
+           10. 蒐集所有已打星號的「單條法條」清單
            ========================================================= */
         function getAllStarredClauseItems() {
             const items = [];
@@ -2182,20 +2249,23 @@
                 if (starredSet.size === 0) continue;
 
                 for (const page of doc.pages) {
-                    const blocks = splitIntoArticles(page.text);
-                    blocks.forEach((blockText, bIdx) => {
-                        const clauseKey = extractClauseKey(blockText, page.pageNumber, bIdx);
+                    const units = parsePageUnits(page.text);
+                    let clauseIdx = 0;
+                    for (const u of units) {
+                        if (u.type !== 'clause') continue;
+                        const clauseKey = extractClauseKey(u.text, page.pageNumber, clauseIdx);
+                        clauseIdx++;
                         if (starredSet.has(clauseKey)) {
                             items.push({
                                 docId: doc.id,
-                                docTitle: doc.title,
+                                docTitle: cleanDisplayTitle(doc.title),
                                 folderName: getFolderNameById(doc.folderId),
                                 pageNumber: page.pageNumber,
                                 clauseKey,
-                                text: blockText
+                                text: u.text
                             });
                         }
-                    });
+                    }
                 }
             }
             return items;
@@ -2212,7 +2282,7 @@
         }
 
         /* =========================================================
-           10. 視圖渲染與全站懸浮球狀態同步
+           11. 視圖渲染與固定式底部搜尋橫條同步
            ========================================================= */
         function getFolderNameById(fid) {
             const f = folders.find(item => item.id === fid);
@@ -2225,51 +2295,28 @@
             ).join('');
         }
 
-        function syncFabUIWithMode() {
-            const fabBadge = document.getElementById('fabBadge');
-            const fabModeLabel = document.getElementById('fabModeLabel');
-            const fabInput = document.getElementById('fabSearchInput');
-            const fabClearBtn = document.getElementById('fabClearBtn');
-            const fabNavRow = document.getElementById('fabNavRow');
+        function syncBottomDockWithMode() {
+            const input = document.getElementById('dockSearchInput');
+            const clearBtn = document.getElementById('dockClearBtn');
+            const readerNav = document.getElementById('dockReaderNav');
 
             if (activeDocId) {
-                fabModeLabel.textContent = '⋮⋮ 文內關鍵字搜尋（可拖曳）';
-                fabInput.placeholder = '輸入文內關鍵字...';
-                fabInput.value = readerQuery;
-                fabClearBtn.classList.toggle('hidden', readerQuery.trim().length === 0);
+                input.placeholder = '輸入文內關鍵字定位...';
+                input.value = readerQuery;
+                clearBtn.classList.toggle('hidden', readerQuery.trim().length === 0);
 
                 const hasKw = parseKeywords(readerQuery).length > 0;
-                fabNavRow.classList.toggle('hidden', !hasKw);
-                fabBadge.classList.toggle('hidden', !hasKw);
-                if (hasKw) {
-                    fabBadge.textContent = readerMatches.length;
-                }
+                readerNav.classList.toggle('hidden', !hasKw);
             } else if (isStarredPageActive) {
-                fabModeLabel.textContent = '⋮⋮ 搜尋已收藏法條（可拖曳）';
-                fabInput.placeholder = '篩選已收藏的重點法條...';
-                fabInput.value = globalQuery;
-                fabClearBtn.classList.toggle('hidden', globalQuery.trim().length === 0);
-                fabNavRow.classList.add('hidden');
-
-                if (globalQuery.trim().length > 0) {
-                    fabBadge.classList.remove('hidden');
-                    fabBadge.textContent = getFilteredStarredClauses().length;
-                } else {
-                    fabBadge.classList.add('hidden');
-                }
+                input.placeholder = '篩選已收藏的重點法條...';
+                input.value = globalQuery;
+                clearBtn.classList.toggle('hidden', globalQuery.trim().length === 0);
+                readerNav.classList.add('hidden');
             } else {
-                fabModeLabel.textContent = '⋮⋮ 跨資料夾搜尋（可拖曳）';
-                fabInput.placeholder = '跨資料夾搜尋法規、公文...';
-                fabInput.value = globalQuery;
-                fabClearBtn.classList.toggle('hidden', globalQuery.trim().length === 0);
-                fabNavRow.classList.add('hidden');
-
-                if (globalQuery.trim().length > 0) {
-                    fabBadge.classList.remove('hidden');
-                    fabBadge.textContent = getFilteredDocuments(null).length;
-                } else {
-                    fabBadge.classList.add('hidden');
-                }
+                input.placeholder = '跨資料夾搜尋法規、公文...';
+                input.value = globalQuery;
+                clearBtn.classList.toggle('hidden', globalQuery.trim().length === 0);
+                readerNav.classList.add('hidden');
             }
         }
 
@@ -2282,7 +2329,7 @@
                 document.getElementById('docListView').classList.add('hidden');
                 document.getElementById('starredClausesView').classList.add('hidden');
                 document.getElementById('readerView').classList.remove('hidden');
-                syncFabUIWithMode();
+                syncBottomDockWithMode();
                 return;
             }
 
@@ -2293,7 +2340,7 @@
                 document.getElementById('docListView').classList.add('hidden');
                 document.getElementById('starredClausesView').classList.remove('hidden');
                 renderStarredClausesView();
-                syncFabUIWithMode();
+                syncBottomDockWithMode();
                 return;
             }
 
@@ -2305,7 +2352,7 @@
                 document.getElementById('folderHeaderBar').classList.add('hidden');
                 document.getElementById('searchResultBar').classList.remove('hidden');
                 renderFilteredDocList(null);
-                syncFabUIWithMode();
+                syncBottomDockWithMode();
                 return;
             }
 
@@ -2323,14 +2370,14 @@
 
                 document.getElementById('activeFolderTitle').textContent = folder.name;
                 renderFilteredDocList(folder.id);
-                syncFabUIWithMode();
+                syncBottomDockWithMode();
                 return;
             }
 
             document.getElementById('docListView').classList.add('hidden');
             document.getElementById('homeFolderView').classList.remove('hidden');
             renderFolderGrid();
-            syncFabUIWithMode();
+            syncBottomDockWithMode();
         }
 
         function renderFolderGrid() {
@@ -2441,7 +2488,7 @@
                             <button type="button" class="article-mini-btn star-btn starred" title="取消收藏此條">★</button>
                         </div>
                     </div>
-                    <div class="starred-clause-text">${highlightKeywords(item.text, keywords)}</div>
+                    <div class="starred-clause-text clause-structured-body">${renderStructuredClauseHtml(item.text, keywords)}</div>
                 `;
 
                 const jumpToOrigin = () => {
@@ -2484,19 +2531,19 @@
 
         function buildMatchSnippet(doc, keywords) {
             if (!keywords || keywords.length === 0) return '';
-            const blocks = doc.pages.flatMap(p => splitIntoArticles(p.text));
+            const units = doc.pages.flatMap(p => parsePageUnits(p.text));
             let bestText = '';
             let maxHits = 0;
 
-            for (const block of blocks) {
-                const lower = block.toLowerCase();
+            for (const u of units) {
+                const lower = u.text.toLowerCase();
                 let hits = 0;
                 for (const kw of keywords) {
                     if (lower.includes(kw.toLowerCase())) hits++;
                 }
                 if (hits > maxHits) {
                     maxHits = hits;
-                    bestText = block;
+                    bestText = u.text;
                 }
             }
 
@@ -2521,7 +2568,8 @@
                 if (folderIdOrNull && doc.folderId !== folderIdOrNull) return false;
                 if (keywords.length === 0) return true;
                 const folderName = getFolderNameById(doc.folderId);
-                const haystack = (folderName + '\n' + doc.title + '\n' + doc.pages.map(p => reflowRegulationText(p.text)).join('\n')).toLowerCase();
+                const displayTitle = cleanDisplayTitle(doc.title);
+                const haystack = (folderName + '\n' + displayTitle + '\n' + doc.pages.map(p => reflowRegulationText(p.text)).join('\n')).toLowerCase();
                 return keywords.every(kw => haystack.includes(kw.toLowerCase()));
             });
         }
@@ -2552,12 +2600,13 @@
             for (const doc of filtered) {
                 const card = document.createElement('div');
                 card.className = 'doc-card';
+                const displayTitle = cleanDisplayTitle(doc.title);
                 const snippetHtml = buildMatchSnippet(doc, keywords);
                 const starCount = Array.isArray(doc.starredClauses) ? doc.starredClauses.length : 0;
 
                 card.innerHTML = `
                     <div class="doc-card-body">
-                        <div class="doc-card-title">${highlightKeywords(doc.title, keywords)}</div>
+                        <div class="doc-card-title">${highlightKeywords(displayTitle, keywords)}</div>
                         <div class="doc-card-meta">
                             <select class="folder-move-select" title="變更所屬資料夾" aria-label="變更所屬資料夾">
                                 ${buildFolderOptionsHtml(doc.folderId)}
@@ -2592,7 +2641,7 @@
         }
 
         /* =========================================================
-           11. 閱讀頁（智慧斷行重組 + 單條星號收藏 + 迷你複製鈕）
+           12. 閱讀頁（大標分層橫幅 + 條號徽章 + 款目縮排 + 單條收藏）
            ========================================================= */
         function renderReaderContent(doc, searchStr, targetClauseKey = null) {
             const container = document.getElementById('readerContentContainer');
@@ -2670,9 +2719,21 @@
                     pageSec.appendChild(div);
                 }
 
-                const articles = splitIntoArticles(page.text);
-                articles.forEach((blockText, bIdx) => {
-                    const clauseKey = extractClauseKey(blockText, page.pageNumber, bIdx);
+                const units = parsePageUnits(page.text);
+                let clauseIdx = 0;
+
+                for (const u of units) {
+                    if (u.type === 'chapter') {
+                        const banner = document.createElement('div');
+                        banner.className = 'chapter-banner' + (u.level === 'minor' ? ' sub-section' : '');
+                        banner.innerHTML = highlightKeywords(u.text, keywords);
+                        pageSec.appendChild(banner);
+                        continue;
+                    }
+
+                    const blockText = u.text;
+                    const clauseKey = extractClauseKey(blockText, page.pageNumber, clauseIdx);
+                    clauseIdx++;
                     const isClauseStarred = doc.starredClauses.includes(clauseKey);
 
                     const card = document.createElement('article');
@@ -2684,7 +2745,7 @@
                             <button type="button" class="article-mini-btn star-btn ${isClauseStarred ? 'starred' : ''}" title="收藏此條至重要法條分頁" aria-label="收藏此條">${isClauseStarred ? '★' : '☆'}</button>
                             <button type="button" class="article-mini-btn copy-btn" title="複製此段" aria-label="複製此段">${copySvg}</button>
                         </div>
-                        <div class="article-text">${highlightKeywords(blockText, keywords)}</div>
+                        <div class="clause-structured-body">${renderStructuredClauseHtml(blockText, keywords)}</div>
                     `;
 
                     if (targetClauseKey && clauseKey === targetClauseKey) {
@@ -2726,7 +2787,7 @@
                     });
 
                     pageSec.appendChild(card);
-                });
+                }
 
                 container.appendChild(pageSec);
             }
@@ -2738,12 +2799,12 @@
                     highlightActiveMatch(0, false);
                 } else {
                     currentMatchIdx = -1;
-                    document.getElementById('fabMatchCounter').textContent = '第 0 / 0 筆';
+                    document.getElementById('dockMatchCounter').textContent = '0/0';
                 }
             } else {
                 currentMatchIdx = -1;
             }
-            syncFabUIWithMode();
+            syncBottomDockWithMode();
 
             if (targetElementToScroll) {
                 setTimeout(() => {
@@ -2763,7 +2824,7 @@
                 el.classList.toggle('active-match', idx === currentMatchIdx);
             });
 
-            document.getElementById('fabMatchCounter').textContent = `第 ${currentMatchIdx + 1} / ${total} 筆`;
+            document.getElementById('dockMatchCounter').textContent = `${currentMatchIdx + 1}/${total}`;
 
             if (shouldScroll) {
                 readerMatches[currentMatchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -2778,7 +2839,7 @@
             isEditingDocText = false;
             readerQuery = initialQuery || '';
 
-            document.getElementById('readerDocTitle').textContent = doc.title;
+            document.getElementById('readerDocTitle').textContent = cleanDisplayTitle(doc.title);
             document.getElementById('readerDocMetaText').textContent = `共 ${doc.pages.length} 頁・更新日期：${doc.updatedAt}`;
             document.getElementById('readerOcrBadge').classList.toggle('hidden', !doc.isOcr);
             document.getElementById('readerUpdatedBadge').classList.toggle('hidden', !doc.isRecentlyUpdated);
@@ -2788,12 +2849,6 @@
 
             renderCurrentView();
             renderReaderContent(doc, readerQuery, targetClauseKey);
-
-            if (readerQuery.trim().length > 0) {
-                toggleFabPopover(true);
-            } else {
-                toggleFabPopover(false);
-            }
 
             if (!targetClauseKey) {
                 if (readerMatches.length > 0) {
@@ -2817,194 +2872,7 @@
                 activeDocId = null;
                 isEditingDocText = false;
                 renderCurrentView();
-                if (!document.getElementById('fabPopover').classList.contains('hidden')) {
-                    positionPopoverNearFab();
-                }
             }
-        }
-
-        /* =========================================================
-           12. 全站通用可自由拖曳懸浮球與懸浮搜尋窗（Pointer Events 統一相容）
-           ========================================================= */
-        function clampPosition(x, y, elWidth, elHeight) {
-            const margin = 8;
-            const maxX = Math.max(margin, window.innerWidth - elWidth - margin);
-            const maxY = Math.max(margin, window.innerHeight - elHeight - margin);
-            return {
-                x: Math.min(Math.max(margin, x), maxX),
-                y: Math.min(Math.max(margin, y), maxY)
-            };
-        }
-
-        function positionPopoverNearFab() {
-            const fab = document.getElementById('fabCircleBtn');
-            const pop = document.getElementById('fabPopover');
-            if (pop.classList.contains('hidden')) return;
-
-            const fabRect = fab.getBoundingClientRect();
-            const popRect = pop.getBoundingClientRect();
-            const popW = popRect.width || 292;
-            const popH = popRect.height || 110;
-
-            let targetX = fabRect.right - popW;
-            if (targetX < 12) targetX = fabRect.left;
-
-            let targetY = fabRect.top - popH - 10;
-            if (targetY < 56) {
-                targetY = fabRect.bottom + 10;
-            }
-
-            const clamped = clampPosition(targetX, targetY, popW, popH);
-            pop.style.left = `${clamped.x}px`;
-            pop.style.top = `${clamped.y}px`;
-        }
-
-        function toggleFabPopover(open) {
-            const pop = document.getElementById('fabPopover');
-            if (open) {
-                syncFabUIWithMode();
-                pop.classList.remove('hidden');
-                positionPopoverNearFab();
-                setTimeout(() => document.getElementById('fabSearchInput').focus(), 40);
-            } else {
-                pop.classList.add('hidden');
-            }
-        }
-
-        function initDraggableFloatingControls() {
-            const fab = document.getElementById('fabCircleBtn');
-            const pop = document.getElementById('fabPopover');
-            const popHandle = document.getElementById('fabDragHandle');
-
-            loadPreference('fab_pos', null).then((savedPos) => {
-                if (savedPos && typeof savedPos.x === 'number' && typeof savedPos.y === 'number') {
-                    const c = clampPosition(savedPos.x, savedPos.y, 50, 50);
-                    fab.style.right = 'auto';
-                    fab.style.bottom = 'auto';
-                    fab.style.left = `${c.x}px`;
-                    fab.style.top = `${c.y}px`;
-                }
-            });
-
-            // 使用 Pointer Events 統一處理手機觸控與滑鼠，確保輕點與拖曳100%穩定
-            let pointerId = null;
-            let isDragging = false;
-            let startX = 0;
-            let startY = 0;
-            let startLeft = 0;
-            let startTop = 0;
-            const DRAG_THRESHOLD = 8;
-
-            fab.addEventListener('pointerdown', (e) => {
-                if (e.button !== undefined && e.button !== 0) return;
-                pointerId = e.pointerId;
-                isDragging = false;
-                const rect = fab.getBoundingClientRect();
-                startX = e.clientX;
-                startY = e.clientY;
-                startLeft = rect.left;
-                startTop = rect.top;
-                try { fab.setPointerCapture(e.pointerId); } catch (err) {}
-            });
-
-            fab.addEventListener('pointermove', (e) => {
-                if (pointerId !== e.pointerId) return;
-                const dx = e.clientX - startX;
-                const dy = e.clientY - startY;
-
-                if (!isDragging && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
-                    isDragging = true;
-                }
-
-                if (isDragging) {
-                    const c = clampPosition(startLeft + dx, startTop + dy, 50, 50);
-                    fab.style.right = 'auto';
-                    fab.style.bottom = 'auto';
-                    fab.style.left = `${c.x}px`;
-                    fab.style.top = `${c.y}px`;
-                    if (!pop.classList.contains('hidden')) {
-                        positionPopoverNearFab();
-                    }
-                }
-            });
-
-            const finishFabPointer = (e) => {
-                if (pointerId !== e.pointerId) return;
-                try { fab.releasePointerCapture(e.pointerId); } catch (err) {}
-                pointerId = null;
-
-                if (isDragging) {
-                    isDragging = false;
-                    const rect = fab.getBoundingClientRect();
-                    savePreference('fab_pos', { x: rect.left, y: rect.top });
-                } else {
-                    const isHidden = pop.classList.contains('hidden');
-                    toggleFabPopover(isHidden);
-                }
-            };
-
-            fab.addEventListener('pointerup', finishFabPointer);
-            fab.addEventListener('pointercancel', () => {
-                pointerId = null;
-                isDragging = false;
-            });
-
-            // 展開後的搜尋視窗拖曳手把
-            let popPointerId = null;
-            let popDragging = false;
-            let popStartX = 0;
-            let popStartY = 0;
-            let popOrigLeft = 0;
-            let popOrigTop = 0;
-
-            popHandle.addEventListener('pointerdown', (e) => {
-                if (e.target.closest('#fabCloseBtn')) return;
-                popPointerId = e.pointerId;
-                popDragging = false;
-                const rect = pop.getBoundingClientRect();
-                popStartX = e.clientX;
-                popStartY = e.clientY;
-                popOrigLeft = rect.left;
-                popOrigTop = rect.top;
-                try { popHandle.setPointerCapture(e.pointerId); } catch (err) {}
-            });
-
-            popHandle.addEventListener('pointermove', (e) => {
-                if (popPointerId !== e.pointerId) return;
-                const dx = e.clientX - popStartX;
-                const dy = e.clientY - popStartY;
-                if (!popDragging && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
-                    popDragging = true;
-                }
-                if (popDragging) {
-                    const rect = pop.getBoundingClientRect();
-                    const c = clampPosition(popOrigLeft + dx, popOrigTop + dy, rect.width, rect.height);
-                    pop.style.left = `${c.x}px`;
-                    pop.style.top = `${c.y}px`;
-                }
-            });
-
-            const finishPopPointer = (e) => {
-                if (popPointerId !== e.pointerId) return;
-                try { popHandle.releasePointerCapture(e.pointerId); } catch (err) {}
-                popPointerId = null;
-                popDragging = false;
-            };
-
-            popHandle.addEventListener('pointerup', finishPopPointer);
-            popHandle.addEventListener('pointercancel', finishPopPointer);
-
-            window.addEventListener('resize', () => {
-                const rect = fab.getBoundingClientRect();
-                const c = clampPosition(rect.left, rect.top, 50, 50);
-                fab.style.right = 'auto';
-                fab.style.bottom = 'auto';
-                fab.style.left = `${c.x}px`;
-                fab.style.top = `${c.y}px`;
-                if (!pop.classList.contains('hidden')) {
-                    positionPopoverNearFab();
-                }
-            });
         }
 
         /* =========================================================
@@ -3062,11 +2930,12 @@
                             text: p.text || ''
                         }));
 
+                        const cleanedTitle = cleanDisplayTitle(String(item.title));
                         const doc = {
                             id: item.id || ('doc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7)),
                             folderId: targetFid,
-                            title: String(item.title),
-                            coreName: item.coreName || extractCoreName(String(item.title)),
+                            title: cleanedTitle,
+                            coreName: item.coreName || extractCoreName(cleanedTitle),
                             isOcr: Boolean(item.isOcr || item.docType === 'image'),
                             starredClauses: Array.isArray(item.starredClauses) ? item.starredClauses : [],
                             updatedAt: item.updatedAt || item.uploadedAt || new Date().toLocaleDateString('zh-TW'),
@@ -3083,7 +2952,7 @@
                 }
                 sortDocuments();
                 renderCurrentView();
-                showToast(`已成功還原 ${count} 份文件`, 'success');
+                showToast(`已成功還原 ${count} 份文件（已鎖定儲存）`, 'success');
             } catch (e) {
                 showToast('備份檔案格式不正確', 'error');
             }
@@ -3093,6 +2962,8 @@
            14. 應用程式初始化與所有事件綁定
            ========================================================= */
         async function initApp() {
+            await requestPersistentStorage();
+
             const savedFont = await loadPreference('font_scale', 'large');
             applyFontScale(savedFont);
 
@@ -3113,11 +2984,21 @@
 
             const storedDocs = await dbGetAll(STORE_DOCS);
             if (storedDocs.length > 0) {
-                documents = storedDocs.map(d => ({
-                    ...d,
-                    starredClauses: Array.isArray(d.starredClauses) ? d.starredClauses : [],
-                    folderId: (d.folderId && folders.some(f => f.id === d.folderId)) ? d.folderId : UNCATEGORIZED_FOLDER_ID
-                }));
+                documents = [];
+                for (const d of storedDocs) {
+                    const cleanedTitle = cleanDisplayTitle(d.title);
+                    const normalizedDoc = {
+                        ...d,
+                        title: cleanedTitle,
+                        coreName: extractCoreName(cleanedTitle),
+                        starredClauses: Array.isArray(d.starredClauses) ? d.starredClauses : [],
+                        folderId: (d.folderId && folders.some(f => f.id === d.folderId)) ? d.folderId : UNCATEGORIZED_FOLDER_ID
+                    };
+                    if (cleanedTitle !== d.title) {
+                        await dbPut(STORE_DOCS, normalizedDoc);
+                    }
+                    documents.push(normalizedDoc);
+                }
             } else {
                 documents = [...SAMPLE_DOCS];
                 for (const d of documents) {
@@ -3128,7 +3009,6 @@
             sortDocuments();
             initHistoryNavigation();
             renderCurrentView();
-            initDraggableFloatingControls();
 
             // 頂部標題點擊回到封面
             document.getElementById('brandHomeBtn').addEventListener('click', () => {
@@ -3140,7 +3020,7 @@
                 renderCurrentView();
             });
 
-            // 重要法條收藏分頁入口（封面卡片 + 頂部 ★ 圖示）
+            // 重要法條收藏分頁入口
             const openStarredCollectionPage = () => {
                 activeDocId = null;
                 activeFolderId = null;
@@ -3174,7 +3054,6 @@
             document.getElementById('resetGlobalFilterBtn').addEventListener('click', () => {
                 globalQuery = '';
                 renderCurrentView();
-                toggleFabPopover(false);
             });
 
             // 字級切換
@@ -3207,7 +3086,7 @@
                 }
             });
 
-            // 封面單一精簡批次上傳小圖示（自動歸入「未分類 / 一般法規」）
+            // 封面單一精簡批次上傳小圖示
             document.getElementById('coverBatchFileInput').addEventListener('change', async (e) => {
                 if (e.target.files && e.target.files.length > 0) {
                     await processBatchFiles(e.target.files, UNCATEGORIZED_FOLDER_ID);
@@ -3250,7 +3129,7 @@
             document.getElementById('copyFullDocBtn').addEventListener('click', async () => {
                 const doc = documents.find(d => d.id === activeDocId);
                 if (!doc) return;
-                const fullText = `${doc.title}\n\n` + doc.pages.map(p => reflowRegulationText(p.text)).join('\n\n');
+                const fullText = `${cleanDisplayTitle(doc.title)}\n\n` + doc.pages.map(p => reflowRegulationText(p.text)).join('\n\n');
                 const ok = await copyToClipboard(fullText);
                 if (ok) {
                     const btn = document.getElementById('copyFullDocBtn');
@@ -3287,7 +3166,7 @@
                 if (!doc) return;
                 const ok = await showConfirmModal(
                     '整份刪除此法規',
-                    `確定要刪除《${doc.title}》嗎？刪除後無法復原。`,
+                    `確定要刪除《${cleanDisplayTitle(doc.title)}》嗎？刪除後無法復原。`,
                     '確定刪除',
                     true
                 );
@@ -3299,29 +3178,24 @@
                 }
             });
 
-            // 全站懸浮搜尋視窗事件
-            document.getElementById('fabCloseBtn').addEventListener('click', () => {
-                toggleFabPopover(false);
-            });
-
-            const fabInput = document.getElementById('fabSearchInput');
-            fabInput.addEventListener('input', () => {
+            // 固定式底部搜尋橫條事件
+            const dockInput = document.getElementById('dockSearchInput');
+            dockInput.addEventListener('input', () => {
                 if (activeDocId) {
-                    readerQuery = fabInput.value;
+                    readerQuery = dockInput.value;
                     const doc = documents.find(d => d.id === activeDocId);
                     if (doc) {
                         renderReaderContent(doc, readerQuery);
                         if (readerMatches.length > 0) highlightActiveMatch(0, true);
                     }
                 } else {
-                    globalQuery = fabInput.value;
+                    globalQuery = dockInput.value;
                     renderCurrentView();
-                    positionPopoverNearFab();
                 }
             });
 
-            document.getElementById('fabClearBtn').addEventListener('click', () => {
-                fabInput.value = '';
+            document.getElementById('dockClearBtn').addEventListener('click', () => {
+                dockInput.value = '';
                 if (activeDocId) {
                     readerQuery = '';
                     const doc = documents.find(d => d.id === activeDocId);
@@ -3329,16 +3203,15 @@
                 } else {
                     globalQuery = '';
                     renderCurrentView();
-                    positionPopoverNearFab();
                 }
-                fabInput.focus();
+                dockInput.focus();
             });
 
-            document.getElementById('fabPrevBtn').addEventListener('click', () => {
+            document.getElementById('dockPrevBtn').addEventListener('click', () => {
                 highlightActiveMatch(currentMatchIdx - 1, true);
             });
 
-            document.getElementById('fabNextBtn').addEventListener('click', () => {
+            document.getElementById('dockNextBtn').addEventListener('click', () => {
                 highlightActiveMatch(currentMatchIdx + 1, true);
             });
 
