@@ -6,7 +6,7 @@
     <title>法規與公文檢索系統</title>
     <style>
         /* =========================================================
-           1. 純原生 CSS 設計系統（零外部框架依賴、防破版、高對比）
+           1. 純原生 CSS 設計系統（零外部框架依賴、高對比、防破版）
            ========================================================= */
         :root {
             --bg-page: #f4f6f9;
@@ -28,36 +28,36 @@
             --success-soft: #ecfdf5;
             --success-border: #a7f3d0;
             --amber-star: #f59e0b;
+            --amber-soft: #fffbeb;
+            --amber-border: #fde68a;
             --folder-color: #d97706;
-            --folder-soft: #fffbeb;
-            --folder-border: #fde68a;
             --radius-lg: 14px;
             --radius-md: 10px;
             --radius-sm: 8px;
             --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
             --shadow-float: 0 10px 25px -5px rgba(15, 23, 42, 0.28), 0 8px 10px -6px rgba(15, 23, 42, 0.16);
 
-            /* 動態閱讀字級變數（預設放大 20px） */
+            /* 動態閱讀字級變數 */
             --reader-font-size: 20px;
-            --reader-line-height: 1.8;
+            --reader-line-height: 1.85;
             --list-title-size: 17px;
         }
 
         html[data-font-scale="normal"] {
             --reader-font-size: 16px;
-            --reader-line-height: 1.7;
+            --reader-line-height: 1.75;
             --list-title-size: 15px;
         }
 
         html[data-font-scale="large"] {
             --reader-font-size: 20px;
-            --reader-line-height: 1.8;
+            --reader-line-height: 1.85;
             --list-title-size: 17px;
         }
 
         html[data-font-scale="xlarge"] {
             --reader-font-size: 24px;
-            --reader-line-height: 1.9;
+            --reader-line-height: 1.95;
             --list-title-size: 19px;
         }
 
@@ -92,7 +92,7 @@
         }
 
         /* =========================================================
-           2. 極簡單排頂部導覽列
+           2. 頂部導覽列
            ========================================================= */
         .app-header {
             background-color: var(--bg-card);
@@ -160,7 +160,6 @@
             font-weight: 700;
         }
 
-        /* 純圖示按鈕（34x34px） */
         .icon-btn {
             position: relative;
             width: 34px;
@@ -210,7 +209,20 @@
             color: #ffffff;
         }
 
-        /* 原生透明全覆蓋檔案輸入框（手機 WebView 100% 可直接喚起選檔） */
+        .icon-btn.star-nav-btn {
+            color: #b45309;
+            border-color: var(--amber-border);
+            background-color: var(--amber-soft);
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .icon-btn.star-nav-btn.active {
+            background-color: var(--amber-star);
+            border-color: var(--amber-star);
+            color: #ffffff;
+        }
+
         .native-file-overlay {
             position: absolute;
             inset: 0;
@@ -223,15 +235,14 @@
         }
 
         /* =========================================================
-           3. 主容器（底部預留 150px 安全空間避開懸浮球與系統列）
+           3. 主容器（底部預留安全空間避開懸浮球與系統列）
            ========================================================= */
         .main-container {
             max-width: 920px;
             margin: 0 auto;
-            padding: 12px 12px 150px 12px;
+            padding: 12px 12px 160px 12px;
         }
 
-        /* 解析進度條 */
         .progress-panel {
             background-color: var(--brand-soft);
             border: 1px solid var(--brand-border);
@@ -266,13 +277,12 @@
         }
 
         /* =========================================================
-           4. 封面資料夾總覽（極簡無首頁搜尋橫條，直接呈現資料夾）
+           4. 封面資料夾總覽 & 重要法條收藏入口卡
            ========================================================= */
         .section-bar {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            flex-wrap: wrap;
             gap: 8px;
             margin-bottom: 10px;
         }
@@ -287,27 +297,68 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            flex-wrap: wrap;
         }
 
-        .add-folder-btn {
-            display: inline-flex;
+        .star-collection-banner {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border: 1px solid #fcd34d;
+            border-radius: var(--radius-lg);
+            padding: 13px 14px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
             align-items: center;
-            gap: 5px;
-            height: 36px;
-            padding: 0 11px;
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--text-primary);
-            white-space: nowrap;
+            justify-content: space-between;
+            gap: 10px;
+            cursor: pointer;
+            transition: border-color 0.15s, transform 0.1s;
         }
 
-        .add-folder-btn:hover {
-            background-color: var(--bg-subtle);
-            border-color: #94a3b8;
+        .star-collection-banner:active {
+            transform: scale(0.99);
+        }
+
+        .star-banner-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .star-banner-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background-color: var(--amber-star);
+            color: #ffffff;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .star-banner-title {
+            font-size: var(--list-title-size);
+            font-weight: 800;
+            color: #92400e;
+        }
+
+        .star-banner-sub {
+            font-size: 12px;
+            color: #b45309;
+            margin-top: 1px;
+        }
+
+        .star-banner-count {
+            background-color: #ffffff;
+            border: 1px solid #fcd34d;
+            color: #b45309;
+            font-size: 13px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 999px;
+            white-space: nowrap;
         }
 
         .batch-upload-label {
@@ -369,8 +420,8 @@
             width: 38px;
             height: 38px;
             border-radius: 10px;
-            background-color: var(--folder-soft);
-            border: 1px solid var(--folder-border);
+            background-color: var(--amber-soft);
+            border: 1px solid var(--amber-border);
             color: var(--folder-color);
             display: flex;
             align-items: center;
@@ -409,48 +460,25 @@
             margin-top: 2px;
         }
 
-        /* 加大手機觸控區域至 36x36px 並增加間距避免誤觸資料夾本體 */
-        .folder-card-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-
-        .folder-mini-btn {
-            position: relative;
-            width: 36px;
-            height: 36px;
-            border-radius: 9px;
-            color: #64748b;
-            background-color: var(--bg-subtle);
-            border: 1px solid var(--border-light);
+        .folder-del-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            color: #94a3b8;
+            background-color: transparent;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            overflow: hidden;
         }
 
-        .folder-mini-btn:hover {
-            background-color: #e2e8f0;
-            color: var(--text-primary);
-        }
-
-        .folder-mini-btn.upload-mini {
-            color: var(--brand-primary);
-            background-color: var(--brand-soft);
-            border-color: var(--brand-border);
-        }
-
-        .folder-mini-btn.del:hover {
+        .folder-del-btn:hover {
             background-color: var(--danger-soft);
-            border-color: var(--danger-border);
             color: var(--danger-color);
         }
 
         /* =========================================================
-           5. 資料夾內清單與跨資料夾搜尋結果
+           5. 資料夾內清單、跨資料夾搜尋結果 & 重要法條收藏分頁
            ========================================================= */
         .folder-toolbar-card {
             background-color: var(--bg-card);
@@ -498,7 +526,7 @@
             color: var(--brand-primary);
             background-color: var(--brand-soft);
             border: 1px solid var(--brand-border);
-            padding: 4px 10px;
+            padding: 5px 10px;
             border-radius: 8px;
             white-space: nowrap;
         }
@@ -524,19 +552,6 @@
 
         .doc-card:hover {
             border-color: #93c5fd;
-        }
-
-        .doc-card-star {
-            font-size: 22px;
-            line-height: 1;
-            color: #cbd5e1;
-            padding: 2px;
-            flex-shrink: 0;
-            margin-top: 1px;
-        }
-
-        .doc-card-star.starred {
-            color: var(--amber-star);
         }
 
         .doc-card-body {
@@ -567,8 +582,8 @@
             max-width: 165px;
             padding: 0 6px;
             border-radius: 6px;
-            border: 1px solid var(--folder-border);
-            background-color: var(--folder-soft);
+            border: 1px solid var(--amber-border);
+            background-color: var(--amber-soft);
             color: var(--folder-color);
             font-size: 12px;
             font-weight: 700;
@@ -578,7 +593,7 @@
 
         .folder-move-select.reader-select {
             height: 34px;
-            max-width: 145px;
+            max-width: 150px;
             font-size: 12px;
             border-radius: var(--radius-sm);
         }
@@ -602,6 +617,12 @@
             border: 1px solid var(--success-border);
         }
 
+        .badge-star-count {
+            background-color: var(--amber-soft);
+            color: #b45309;
+            border: 1px solid var(--amber-border);
+        }
+
         .doc-card-snippet {
             margin-top: 8px;
             padding: 8px 10px;
@@ -610,8 +631,58 @@
             border-radius: 0 8px 8px 0;
             font-size: 14px;
             color: var(--text-secondary);
-            line-height: 1.55;
+            line-height: 1.6;
             word-break: break-word;
+        }
+
+        /* 重要法條收藏分頁內的單條卡片 */
+        .starred-clause-card {
+            background-color: var(--bg-card);
+            border: 1px solid #fde68a;
+            border-radius: var(--radius-lg);
+            padding: 13px;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .starred-clause-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 6px;
+        }
+
+        .starred-clause-source {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--brand-primary);
+            cursor: pointer;
+            word-break: break-word;
+            line-height: 1.35;
+        }
+
+        .starred-clause-source:hover {
+            text-decoration: underline;
+        }
+
+        .starred-clause-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .starred-clause-text {
+            font-size: var(--reader-font-size);
+            line-height: var(--reader-line-height);
+            color: var(--text-primary);
+            white-space: pre-wrap;
+            word-break: break-word;
+            cursor: pointer;
         }
 
         .empty-state {
@@ -622,10 +693,11 @@
             text-align: center;
             color: var(--text-muted);
             font-size: 15px;
+            line-height: 1.6;
         }
 
         /* =========================================================
-           6. 閱讀模式（純圖示單排工具列 + 垂直分離標題 + 條文區塊）
+           6. 閱讀模式（純圖示工具列 + 單條星號與複製）
            ========================================================= */
         .reader-header-card {
             background-color: var(--bg-card);
@@ -653,27 +725,6 @@
             align-items: center;
             gap: 5px;
             flex-wrap: wrap;
-        }
-
-        .reader-star-btn {
-            width: 34px;
-            height: 34px;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border-color);
-            background-color: var(--bg-card);
-            font-size: 20px;
-            line-height: 1;
-            color: #cbd5e1;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .reader-star-btn.starred {
-            color: var(--amber-star);
-            background-color: #fffbeb;
-            border-color: #fcd34d;
         }
 
         .reader-title-block {
@@ -719,13 +770,30 @@
             margin-bottom: 10px;
             box-shadow: var(--shadow-sm);
             position: relative;
+            transition: border-color 0.2s, background-color 0.2s;
         }
 
-        .article-copy-btn {
+        .article-card.clause-starred {
+            border-color: #fcd34d;
+            background-color: #fffdf5;
+        }
+
+        .article-card.clause-jump-highlight {
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.35);
+            border-color: var(--brand-primary);
+        }
+
+        .article-card-actions {
             float: right;
-            margin: 0 0 4px 8px;
-            width: 28px;
-            height: 28px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin: 0 0 4px 10px;
+        }
+
+        .article-mini-btn {
+            width: 30px;
+            height: 30px;
             border-radius: 7px;
             border: 1px solid var(--border-light);
             background-color: var(--bg-subtle);
@@ -733,15 +801,23 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
+            font-size: 16px;
+            line-height: 1;
         }
 
-        .article-copy-btn:hover {
+        .article-mini-btn:hover {
             color: var(--brand-primary);
             border-color: var(--brand-border);
             background-color: var(--brand-soft);
         }
 
-        .article-copy-btn.copied {
+        .article-mini-btn.star-btn.starred {
+            color: var(--amber-star);
+            background-color: var(--amber-soft);
+            border-color: #fcd34d;
+        }
+
+        .article-mini-btn.copied {
             color: var(--success-color);
             border-color: var(--success-border);
             background-color: var(--success-soft);
@@ -798,8 +874,8 @@
             right: 16px;
             bottom: 105px;
             z-index: 999;
-            width: 48px;
-            height: 48px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             background-color: var(--brand-primary);
             color: #ffffff;
@@ -809,16 +885,12 @@
             justify-content: center;
             touch-action: none;
             user-select: none;
-            cursor: grab;
+            -webkit-user-select: none;
+            cursor: pointer;
         }
 
         .fab-circle-btn:active {
-            cursor: grabbing;
-            transform: scale(0.96);
-        }
-
-        .fab-circle-btn.star-active {
-            background-color: #b45309;
+            transform: scale(0.95);
         }
 
         .fab-badge {
@@ -842,7 +914,7 @@
         .fab-popover {
             position: fixed;
             z-index: 1000;
-            width: 288px;
+            width: 292px;
             max-width: calc(100vw - 24px);
             background-color: rgba(255, 255, 255, 0.98);
             border: 1px solid var(--border-color);
@@ -868,10 +940,6 @@
             font-weight: 700;
         }
 
-        .fab-drag-handle:active {
-            cursor: grabbing;
-        }
-
         .fab-popover-top {
             display: flex;
             align-items: center;
@@ -888,11 +956,11 @@
 
         .fab-search-input {
             width: 100%;
-            height: 36px;
-            padding: 0 26px 0 10px;
+            height: 38px;
+            padding: 0 28px 0 10px;
             border: 1px solid var(--border-color);
             border-radius: var(--radius-sm);
-            font-size: 14px;
+            font-size: 15px;
             color: var(--text-primary);
             background-color: #f8fafc;
             outline: none;
@@ -905,9 +973,9 @@
 
         .fab-clear-btn {
             position: absolute;
-            right: 5px;
-            width: 18px;
-            height: 18px;
+            right: 6px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             background-color: #e2e8f0;
             color: var(--text-secondary);
@@ -918,30 +986,9 @@
             justify-content: center;
         }
 
-        .fab-star-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border-color);
-            background-color: var(--bg-card);
-            color: #94a3b8;
-            font-size: 20px;
-            line-height: 1;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .fab-star-btn.active {
-            background-color: #fffbeb;
-            border-color: #fcd34d;
-            color: var(--amber-star);
-        }
-
         .fab-close-btn {
-            width: 24px;
-            height: 24px;
+            width: 26px;
+            height: 26px;
             border-radius: 6px;
             background-color: var(--bg-subtle);
             color: var(--text-secondary);
@@ -983,7 +1030,7 @@
             color: var(--text-primary);
             background-color: var(--bg-subtle);
             border: 1px solid var(--border-light);
-            padding: 4px 9px;
+            padding: 5px 10px;
             border-radius: 6px;
         }
 
@@ -1105,7 +1152,7 @@
 </head>
 <body>
 
-    <!-- 1. 極簡單排頂部導覽列 -->
+    <!-- 1. 頂部導覽列 -->
     <header class="app-header">
         <div class="header-inner">
             <button type="button" id="brandHomeBtn" class="brand-btn" title="回到資料夾封面">法規檢索</button>
@@ -1118,14 +1165,17 @@
                     <button type="button" class="font-pill-btn" data-font-btn="xlarge" title="特大字級 (24px)">特大</button>
                 </div>
 
-                <!-- 匯出 JSON 備份（純圖示） -->
+                <!-- 重要法條收藏分頁快捷鈕 -->
+                <button type="button" id="headerStarPageBtn" class="icon-btn star-nav-btn" title="重要法條收藏分頁" aria-label="重要法條收藏分頁">★</button>
+
+                <!-- 匯出 JSON 備份 -->
                 <button type="button" id="exportBackupBtn" class="icon-btn" title="匯出備份" aria-label="匯出備份">
                     <svg width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                     </svg>
                 </button>
 
-                <!-- 匯入 JSON 還原（純圖示 + 原生透明 input 覆蓋） -->
+                <!-- 匯入 JSON 還原 -->
                 <div class="icon-btn" title="匯入還原" aria-label="匯入還原">
                     <svg width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
@@ -1147,33 +1197,44 @@
             </div>
         </div>
 
-        <!-- 視圖 A：封面資料夾總覽（極簡無搜尋框，直接呈現資料夾） -->
+        <!-- 視圖 A：封面資料夾總覽 -->
         <section id="homeFolderView">
+            <!-- 重要法條獨立蒐集分頁入口 -->
+            <div id="openStarredPageCard" class="star-collection-banner" role="button" tabindex="0">
+                <div class="star-banner-left">
+                    <div class="star-banner-icon">★</div>
+                    <div>
+                        <div class="star-banner-title">重要法條收藏分頁</div>
+                        <div class="star-banner-sub">集中檢視所有打星號的單條法條與重點段落</div>
+                    </div>
+                </div>
+                <span id="starredClauseTotalBadge" class="star-banner-count">0 條</span>
+            </div>
+
             <div class="section-bar">
                 <span id="folderSummaryText" class="section-title">資料夾分類</span>
                 <div class="cover-actions-group">
-                    <button type="button" id="openNewFolderModalBtn" class="add-folder-btn" title="新增資料夾">
-                        <svg width="16" height="16" style="width:16px;height:16px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    <!-- 新增資料夾（精簡小圖示） -->
+                    <button type="button" id="openNewFolderModalBtn" class="icon-btn" title="新增資料夾" aria-label="新增資料夾">
+                        <svg width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
                         </svg>
-                        <span>新增資料夾</span>
                     </button>
 
-                    <!-- 封面直接批次上傳（歸入「未分類 / 一般法規」） -->
-                    <label class="batch-upload-label" title="直接批次上傳（自動歸入未分類，可隨時移動）">
-                        <svg width="16" height="16" style="width:16px;height:16px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+                    <!-- 首頁單一精簡批次上傳小圖示（自動歸入未分類，可隨時移動） -->
+                    <div class="icon-btn primary" title="批次上傳法規／公文（自動歸入未分類）" aria-label="批次上傳法規或公文">
+                        <svg width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
                         </svg>
-                        <span>直接上傳</span>
                         <input
                             type="file"
                             id="coverBatchFileInput"
                             class="native-file-overlay"
                             multiple
                             accept=".pdf,.txt,.md,.jpg,.jpeg,.png,.webp,application/pdf,text/plain,image/*"
-                            aria-label="直接批次上傳"
+                            aria-label="批次上傳檔案"
                         >
-                    </label>
+                    </div>
                 </div>
             </div>
 
@@ -1196,7 +1257,7 @@
                 </div>
 
                 <!-- 資料夾內批次上傳 -->
-                <label class="batch-upload-label" title="批次上傳至目前資料夾（圖片只取純文字，不存原圖）">
+                <label class="batch-upload-label" title="批次上傳至目前資料夾">
                     <svg width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                     </svg>
@@ -1214,16 +1275,34 @@
 
             <div id="searchResultBar" class="section-bar hidden">
                 <span id="searchResultSummary" class="section-title">搜尋結果：0 筆</span>
-                <button type="button" id="resetGlobalFilterBtn" class="clear-filter-pill">清除篩選返回</button>
+                <button type="button" id="resetGlobalFilterBtn" class="clear-filter-pill">清除搜尋</button>
             </div>
 
             <div id="docListContainer" class="doc-list"></div>
         </section>
 
-        <!-- 視圖 C：法規與公文閱讀頁（純圖示單排工具列 + 垂直分離標題） -->
+        <!-- 視圖 C：重要法條收藏分頁（專收所有打星號的單條法條） -->
+        <section id="starredClausesView" class="hidden">
+            <div class="folder-toolbar-card">
+                <div class="folder-toolbar-left">
+                    <button type="button" id="backFromStarredBtn" class="icon-btn" title="返回封面" aria-label="返回封面">
+                        <svg width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                    </button>
+                    <div class="folder-heading-wrap">
+                        <div class="folder-heading">★ 重要法條收藏分頁</div>
+                        <div id="starredClausesSub" class="folder-sub">共 0 條已收藏法條（點擊法條可直接跳回原法規位置）</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="starredClausesContainer" class="doc-list"></div>
+        </section>
+
+        <!-- 視圖 D：法規與公文閱讀頁（純圖示工具列 + 單條星號收藏） -->
         <section id="readerView" class="hidden">
             <div class="reader-header-card">
-                <!-- 第一排：純圖示緊湊單排操作列 + 分類下拉選單 -->
                 <div class="reader-toolbar-row">
                     <button type="button" id="backFromReaderBtn" class="icon-btn" title="返回清單" aria-label="返回清單">
                         <svg width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
@@ -1233,8 +1312,6 @@
 
                     <div class="reader-toolbar-right">
                         <select id="readerFolderSelect" class="folder-move-select reader-select" title="移動至其他資料夾" aria-label="移動至其他資料夾"></select>
-
-                        <button type="button" id="readerStarBtn" class="reader-star-btn" title="星號收藏" aria-label="星號收藏">☆</button>
 
                         <button type="button" id="copyFullDocBtn" class="icon-btn primary" title="一鍵複製全文" aria-label="一鍵複製全文">
                             <svg id="copyFullDocIcon" width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -1248,7 +1325,6 @@
                             </svg>
                         </button>
 
-                        <!-- 更新覆蓋此法規（原生透明 input 覆蓋在圖示上） -->
                         <div class="icon-btn brand-outline" title="更新覆蓋此法規" aria-label="更新覆蓋此法規">
                             <svg width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -1270,7 +1346,6 @@
                     </div>
                 </div>
 
-                <!-- 第二排：完整法規標題獨立佔滿 100% 寬度橫向顯示 -->
                 <div class="reader-title-block">
                     <h1 id="readerDocTitle" class="reader-doc-title">文件名稱</h1>
                     <div class="reader-doc-meta">
@@ -1281,24 +1356,23 @@
                 </div>
             </div>
 
-            <!-- 條文與段落渲染區 -->
             <div id="readerContentContainer"></div>
         </section>
 
     </main>
 
-    <!-- 全站通用：可自由拖曳移動的懸浮球（FAB） -->
-    <button type="button" id="fabCircleBtn" class="fab-circle-btn" title="可自由拖曳移動；輕點搜尋或篩選星號" aria-label="搜尋與星號篩選">
-        <svg width="22" height="22" style="width:22px;height:22px;flex-shrink:0;pointer-events:none;" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+    <!-- 全站通用：可自由拖曳移動與點擊的懸浮球（FAB） -->
+    <div id="fabCircleBtn" class="fab-circle-btn" role="button" tabindex="0" title="輕點搜尋；按住可拖曳位置" aria-label="開啟搜尋視窗">
+        <svg width="22" height="22" style="width:22px;height:22px;flex-shrink:0;pointer-events:none;" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
         </svg>
         <span id="fabBadge" class="fab-badge hidden">0</span>
-    </button>
+    </div>
 
-    <!-- 全站通用：可拖曳的浮動搜尋與星號視窗 -->
+    <!-- 全站通用：可拖曳的浮動搜尋視窗 -->
     <div id="fabPopover" class="fab-popover hidden">
         <div id="fabDragHandle" class="fab-drag-handle" title="按住此處拖曳搜尋視窗">
-            <span id="fabModeLabel">⋮⋮ 跨資料夾搜尋與星號（可拖曳）</span>
+            <span id="fabModeLabel">⋮⋮ 跨資料夾搜尋（可拖曳）</span>
             <button type="button" id="fabCloseBtn" class="fab-close-btn" title="收合" aria-label="收合">
                 <svg width="15" height="15" style="width:15px;height:15px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
@@ -1317,9 +1391,6 @@
                 >
                 <button type="button" id="fabClearBtn" class="fab-clear-btn hidden" title="清除">✕</button>
             </div>
-
-            <!-- 整合星號篩選／收藏按鈕 -->
-            <button type="button" id="fabStarToggleBtn" class="fab-star-btn" title="星號篩選" aria-label="星號篩選">☆</button>
         </div>
 
         <!-- 閱讀模式下顯示文內筆數與 ▲/▼ 跳轉列 -->
@@ -1433,7 +1504,7 @@
                 title: '1-01郵政儲金匯兌法（範例）.txt',
                 coreName: '郵政儲金匯兌法',
                 isOcr: false,
-                starred: true,
+                starredClauses: ['第一條'],
                 updatedAt: new Date().toLocaleDateString('zh-TW'),
                 isRecentlyUpdated: false,
                 pages: [
@@ -1453,17 +1524,18 @@
         let documents = [];
         let activeFolderId = null;
         let activeDocId = null;
+        let isStarredPageActive = false;
         let globalQuery = '';
-        let filterStarOnly = false;
         let readerQuery = '';
         let readerMatches = [];
         let currentMatchIdx = -1;
         let isEditingDocText = false;
         let toastTimer = null;
         let quotaWarned = false;
+        let isHandlingPopState = false;
 
         /* =========================================================
-           3. IndexedDB 本機資料庫（RegDocDB_v1，僅於 IDB 不可用時降級 localStorage）
+           3. IndexedDB 本機資料庫（RegDocDB_v1）
            ========================================================= */
         const DB_NAME = 'RegDocDB_v1';
         const DB_VERSION = 1;
@@ -1485,1572 +1557,4 @@
                         if (!db.objectStoreNames.contains(STORE_DOCS)) {
                             db.createObjectStore(STORE_DOCS, { keyPath: 'id' });
                         }
-                        if (!db.objectStoreNames.contains(STORE_FOLDERS)) {
-                            db.createObjectStore(STORE_FOLDERS, { keyPath: 'id' });
-                        }
-                        if (!db.objectStoreNames.contains(STORE_PREFS)) {
-                            db.createObjectStore(STORE_PREFS, { keyPath: 'key' });
-                        }
-                    };
-                    req.onsuccess = () => resolve(req.result);
-                    req.onerror = () => {
-                        idbAvailable = false;
-                        reject(req.error);
-                    };
-                } catch (err) {
-                    idbAvailable = false;
-                    reject(err);
-                }
-            });
-        }
-
-        function syncFallbackStorage() {
-            if (idbAvailable) return;
-            try {
-                localStorage.setItem('regdocdb_v1_folders', JSON.stringify(folders));
-                localStorage.setItem('regdocdb_v1_documents', JSON.stringify(documents));
-            } catch (e) {
-                if (!quotaWarned) {
-                    quotaWarned = true;
-                    showToast('本機暫存空間已滿，請立即匯出 JSON 備份以防遺失', 'error');
-                }
-            }
-        }
-
-        async function dbGetAll(storeName) {
-            try {
-                const db = await openDB();
-                return await new Promise((resolve) => {
-                    const tx = db.transaction(storeName, 'readonly');
-                    const req = tx.objectStore(storeName).getAll();
-                    req.onsuccess = () => resolve(req.result || []);
-                    req.onerror = () => resolve([]);
-                });
-            } catch (e) {
-                try {
-                    const key = storeName === STORE_FOLDERS ? 'regdocdb_v1_folders' : 'regdocdb_v1_documents';
-                    const raw = localStorage.getItem(key);
-                    return raw ? JSON.parse(raw) : [];
-                } catch (err) {
-                    return [];
-                }
-            }
-        }
-
-        async function dbPut(storeName, item) {
-            if (!idbAvailable) {
-                syncFallbackStorage();
-                return;
-            }
-            try {
-                const db = await openDB();
-                await new Promise((resolve, reject) => {
-                    const tx = db.transaction(storeName, 'readwrite');
-                    tx.objectStore(storeName).put(item);
-                    tx.oncomplete = () => resolve();
-                    tx.onerror = () => reject(tx.error);
-                });
-            } catch (e) {
-                idbAvailable = false;
-                syncFallbackStorage();
-            }
-        }
-
-        async function dbDelete(storeName, key) {
-            if (!idbAvailable) {
-                syncFallbackStorage();
-                return;
-            }
-            try {
-                const db = await openDB();
-                await new Promise((resolve, reject) => {
-                    const tx = db.transaction(storeName, 'readwrite');
-                    tx.objectStore(storeName).delete(key);
-                    tx.oncomplete = () => resolve();
-                    tx.onerror = () => reject(tx.error);
-                });
-            } catch (e) {
-                idbAvailable = false;
-                syncFallbackStorage();
-            }
-        }
-
-        async function savePreference(key, value) {
-            try {
-                localStorage.setItem('regdocdb_pref_' + key, JSON.stringify(value));
-            } catch (e) {}
-            if (!idbAvailable) return;
-            try {
-                const db = await openDB();
-                await new Promise((resolve) => {
-                    const tx = db.transaction(STORE_PREFS, 'readwrite');
-                    tx.objectStore(STORE_PREFS).put({ key, value });
-                    tx.oncomplete = () => resolve();
-                    tx.onerror = () => resolve();
-                });
-            } catch (e) {}
-        }
-
-        async function loadPreference(key, fallback) {
-            try {
-                const db = await openDB();
-                const val = await new Promise((resolve) => {
-                    const tx = db.transaction(STORE_PREFS, 'readonly');
-                    const req = tx.objectStore(STORE_PREFS).get(key);
-                    req.onsuccess = () => resolve(req.result ? req.result.value : null);
-                    req.onerror = () => resolve(null);
-                });
-                if (val !== null && val !== undefined) return val;
-            } catch (e) {}
-            try {
-                const raw = localStorage.getItem('regdocdb_pref_' + key);
-                return raw !== null ? JSON.parse(raw) : fallback;
-            } catch (e) {
-                return fallback;
-            }
-        }
-
-        /* =========================================================
-           4. 輔助函式
-           ========================================================= */
-        function extractCoreName(filename) {
-            let name = filename.replace(/\.(pdf|txt|md|jpg|jpeg|png|webp)$/i, '');
-            name = name.replace(/^[\d]+[-_.\s]+[\d]*[-_.\s]*/, '');
-            name = name.replace(/[-_（(](上傳內部資訊網|範例|修正|最新|\d{6,8}).*$/g, '');
-            return name.trim() || filename.replace(/\.(pdf|txt|md|jpg|jpeg|png|webp)$/i, '').trim();
-        }
-
-        function escapeHtml(str) {
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;');
-        }
-
-        function parseKeywords(q) {
-            return Array.from(new Set(q.trim().split(/\s+/).filter(Boolean)));
-        }
-
-        function highlightKeywords(text, keywords) {
-            const safe = escapeHtml(text);
-            if (!keywords || keywords.length === 0) return safe;
-            const escaped = keywords.map(k => escapeHtml(k).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-            const regex = new RegExp(`(${escaped.join('|')})`, 'gi');
-            return safe.replace(regex, '<mark class="hl-match">$1</mark>');
-        }
-
-        function showToast(msg, type = 'normal') {
-            const box = document.getElementById('toastBox');
-            box.textContent = msg;
-            box.className = 'toast-box show' + (type !== 'normal' ? ' ' + type : '');
-            clearTimeout(toastTimer);
-            toastTimer = setTimeout(() => box.classList.remove('show'), 2500);
-        }
-
-        function setProgress(visible, text = '', percent = 0) {
-            const panel = document.getElementById('progressPanel');
-            if (!visible) {
-                panel.classList.add('hidden');
-                return;
-            }
-            panel.classList.remove('hidden');
-            document.getElementById('progressText').textContent = text;
-            document.getElementById('progressFill').style.width = `${Math.min(100, Math.max(0, percent))}%`;
-        }
-
-        function showConfirmModal(title, desc, confirmLabel = '確定', isDanger = true) {
-            return new Promise((resolve) => {
-                const modal = document.getElementById('confirmModal');
-                document.getElementById('modalTitle').textContent = title;
-                document.getElementById('modalDesc').textContent = desc;
-                const confirmBtn = document.getElementById('modalConfirmBtn');
-                confirmBtn.textContent = confirmLabel;
-                confirmBtn.className = 'modal-btn ' + (isDanger ? 'confirm-danger' : 'confirm-primary');
-                modal.classList.remove('hidden');
-
-                const cancelBtn = document.getElementById('modalCancelBtn');
-
-                const cleanup = (res) => {
-                    modal.classList.add('hidden');
-                    cancelBtn.removeEventListener('click', onCancel);
-                    confirmBtn.removeEventListener('click', onConfirm);
-                    resolve(res);
-                };
-                const onCancel = () => cleanup(false);
-                const onConfirm = () => cleanup(true);
-
-                cancelBtn.addEventListener('click', onCancel);
-                confirmBtn.addEventListener('click', onConfirm);
-            });
-        }
-
-        function openFolderInputModal(title, desc, defaultVal = '') {
-            return new Promise((resolve) => {
-                const modal = document.getElementById('folderInputModal');
-                const input = document.getElementById('folderNameInput');
-                const cancelBtn = document.getElementById('cancelFolderModalBtn');
-                const confirmBtn = document.getElementById('confirmFolderModalBtn');
-
-                document.getElementById('folderModalTitle').textContent = title;
-                document.getElementById('folderModalDesc').textContent = desc;
-                input.value = defaultVal;
-                modal.classList.remove('hidden');
-                setTimeout(() => input.focus(), 40);
-
-                const cleanup = (val) => {
-                    modal.classList.add('hidden');
-                    cancelBtn.removeEventListener('click', onCancel);
-                    confirmBtn.removeEventListener('click', onConfirm);
-                    input.removeEventListener('keydown', onKey);
-                    resolve(val);
-                };
-
-                const onCancel = () => cleanup(null);
-                const onConfirm = () => {
-                    const trimmed = input.value.trim();
-                    if (!trimmed) {
-                        showToast('請輸入資料夾名稱', 'error');
-                        return;
-                    }
-                    cleanup(trimmed);
-                };
-                const onKey = (e) => {
-                    if (e.key === 'Enter') onConfirm();
-                };
-
-                cancelBtn.addEventListener('click', onCancel);
-                confirmBtn.addEventListener('click', onConfirm);
-                input.addEventListener('keydown', onKey);
-            });
-        }
-
-        async function copyToClipboard(text) {
-            try {
-                if (navigator.clipboard && window.isSecureContext) {
-                    await navigator.clipboard.writeText(text);
-                    return true;
-                }
-            } catch (e) {}
-            try {
-                const ta = document.createElement('textarea');
-                ta.value = text;
-                ta.style.position = 'fixed';
-                ta.style.left = '-9999px';
-                document.body.appendChild(ta);
-                ta.select();
-                const ok = document.execCommand('copy');
-                document.body.removeChild(ta);
-                return ok;
-            } catch (e) {
-                return false;
-            }
-        }
-
-        /* =========================================================
-           5. 圖片純取文字（丟棄原圖）與 PDF / TXT 解析引擎（離線優雅降級）
-           ========================================================= */
-        async function runTesseractOCR(imageSource, labelPrefix) {
-            setProgress(true, `${labelPrefix} 準備繁中 OCR 辨識引擎...`, 12);
-            const loaded = await ensureTesseractLoaded();
-            if (!loaded || !window.Tesseract) {
-                return '（目前為離線或受限網路環境，無法下載 OCR 模型；您可點擊上方「編輯」圖示手動輸入文字）';
-            }
-            try {
-                const result = await Tesseract.recognize(imageSource, 'chi_tra+eng', {
-                    logger: (m) => {
-                        if (m.status === 'recognizing text') {
-                            const pct = Math.round((m.progress || 0) * 100);
-                            setProgress(true, `${labelPrefix} 擷取文字中 (${pct}%)...`, pct);
-                        } else if (m.status) {
-                            setProgress(true, `${labelPrefix} 載入繁中辨識模型中...`, 25);
-                        }
-                    }
-                });
-                const raw = (result && result.data && result.data.text) ? result.data.text : '';
-                const cleaned = raw
-                    .replace(/([\u4e00-\u9fa5])\s+([\u4e00-\u9fa5])/g, '$1$2')
-                    .replace(/\n{3,}/g, '\n\n')
-                    .trim();
-                return cleaned || '（未辨識到清晰文字，可點擊閱讀頁上方的「編輯」圖示手動補充）';
-            } catch (err) {
-                console.error('OCR 錯誤:', err);
-                return '（圖片文字辨識失敗，請確認網路連線或點擊上方「編輯」手動補充）';
-            }
-        }
-
-        async function parseAnyFile(file, index, total) {
-            const lower = file.name.toLowerCase();
-            const prefix = `[${index + 1}/${total}] ${file.name}`;
-
-            // A. 圖片檔：執行 OCR 後僅保留純文字，立即釋放圖片記憶體（不存原圖）
-            if (file.type.startsWith('image/') || /\.(jpg|jpeg|png|webp)$/i.test(lower)) {
-                const objectUrl = URL.createObjectURL(file);
-                try {
-                    const extractedText = await runTesseractOCR(objectUrl, prefix);
-                    return {
-                        isOcr: true,
-                        pages: [{
-                            pageNumber: 1,
-                            text: extractedText
-                        }]
-                    };
-                } finally {
-                    URL.revokeObjectURL(objectUrl);
-                }
-            }
-
-            // B. PDF 檔案
-            if (lower.endsWith('.pdf')) {
-                setProgress(true, `${prefix} 載入 PDF 解析引擎...`, 10);
-                const pdfReady = await ensurePdfJsLoaded();
-                if (!pdfReady || !window.pdfjsLib) {
-                    return {
-                        isOcr: false,
-                        pages: [{
-                            pageNumber: 1,
-                            text: '（目前為離線或受限網路環境，無法載入 PDF 解析元件；建議連網後重新匯入或改傳 .txt 純文字檔）'
-                        }]
-                    };
-                }
-
-                const arrayBuffer = await file.arrayBuffer();
-                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                const pages = [];
-                let usedOcr = false;
-
-                for (let p = 1; p <= pdf.numPages; p++) {
-                    setProgress(true, `${prefix} 讀取第 ${p}/${pdf.numPages} 頁...`, Math.round((p / pdf.numPages) * 85));
-                    const page = await pdf.getPage(p);
-                    const content = await page.getTextContent();
-
-                    let lastY = null;
-                    let lineText = '';
-                    const lines = [];
-                    for (const item of content.items) {
-                        const y = item.transform ? item.transform[5] : null;
-                        if (lastY !== null && y !== null && Math.abs(y - lastY) > 6) {
-                            lines.push(lineText.trim());
-                            lineText = item.str;
-                        } else {
-                            lineText += item.str;
-                        }
-                        lastY = y;
-                    }
-                    if (lineText.trim()) lines.push(lineText.trim());
-                    let extracted = lines.join('\n').trim();
-
-                    // 若此 PDF 頁為掃描圖片（幾乎無內嵌文字），自動轉圖進行 OCR 後丟棄畫布
-                    if (extracted.length < 15) {
-                        const ocrReady = await ensureTesseractLoaded();
-                        if (ocrReady && window.Tesseract) {
-                            usedOcr = true;
-                            const viewport = page.getViewport({ scale: 1.7 });
-                            const canvas = document.createElement('canvas');
-                            canvas.width = viewport.width;
-                            canvas.height = viewport.height;
-                            const ctx = canvas.getContext('2d');
-                            await page.render({ canvasContext: ctx, viewport }).promise;
-                            extracted = await runTesseractOCR(canvas, `${prefix} 第${p}頁(掃描)`);
-                            canvas.width = 0;
-                            canvas.height = 0;
-                        }
-                    }
-
-                    pages.push({
-                        pageNumber: p,
-                        text: extracted || '（此頁無文字內容）'
-                    });
-                }
-                return { isOcr: usedOcr, pages };
-            }
-
-            // C. 純文字檔 (.txt / .md)
-            setProgress(true, `${prefix} 讀取純文字內容...`, 60);
-            const rawText = await file.text();
-            return {
-                isOcr: false,
-                pages: [{
-                    pageNumber: 1,
-                    text: rawText.replace(/\r\n/g, '\n').trim() || '（無文字內容）'
-                }]
-            };
-        }
-
-        async function processBatchFiles(fileList, targetFolderId, forceOverwriteDocId = null) {
-            const files = Array.from(fileList || []);
-            if (files.length === 0) return;
-
-            const folderId = targetFolderId || UNCATEGORIZED_FOLDER_ID;
-            const todayStr = new Date().toLocaleDateString('zh-TW');
-            let added = 0;
-            let updated = 0;
-
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                try {
-                    const parsed = await parseAnyFile(file, i, files.length);
-                    const core = extractCoreName(file.name);
-
-                    let existing = null;
-                    if (forceOverwriteDocId) {
-                        existing = documents.find(d => d.id === forceOverwriteDocId) || null;
-                    } else {
-                        existing = documents.find(d => extractCoreName(d.title) === core) || null;
-                    }
-
-                    if (existing) {
-                        existing.title = file.name;
-                        existing.coreName = core;
-                        existing.isOcr = parsed.isOcr;
-                        existing.pages = parsed.pages;
-                        existing.updatedAt = todayStr;
-                        existing.isRecentlyUpdated = true;
-                        await dbPut(STORE_DOCS, existing);
-                        updated++;
-                    } else {
-                        const newDoc = {
-                            id: 'doc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
-                            folderId,
-                            title: file.name,
-                            coreName: core,
-                            isOcr: parsed.isOcr,
-                            starred: false,
-                            updatedAt: todayStr,
-                            isRecentlyUpdated: false,
-                            pages: parsed.pages
-                        };
-                        documents.unshift(newDoc);
-                        await dbPut(STORE_DOCS, newDoc);
-                        added++;
-                    }
-                } catch (err) {
-                    console.error('匯入錯誤:', file.name, err);
-                    showToast(`匯入失敗：${file.name}`, 'error');
-                }
-            }
-
-            setProgress(false);
-            sortDocuments();
-            renderCurrentView();
-
-            if (forceOverwriteDocId && activeDocId === forceOverwriteDocId) {
-                openReaderView(forceOverwriteDocId, readerQuery);
-            }
-
-            if (updated > 0 && added > 0) {
-                showToast(`新增 ${added} 份、覆蓋更新 ${updated} 份（已保留星號）`, 'success');
-            } else if (updated > 0) {
-                showToast(`已覆蓋更新 ${updated} 份文件（星號已保留）`, 'success');
-            } else if (added > 0) {
-                showToast(`成功匯入 ${added} 份文件`, 'success');
-            }
-        }
-
-        function sortDocuments() {
-            documents.sort((a, b) => {
-                if (a.starred !== b.starred) return a.starred ? -1 : 1;
-                return a.title.localeCompare(b.title, 'zh-Hant');
-            });
-        }
-
-        /* =========================================================
-           6. 字級切換控制
-           ========================================================= */
-        function applyFontScale(scale) {
-            const valid = ['normal', 'large', 'xlarge'].includes(scale) ? scale : 'large';
-            document.documentElement.setAttribute('data-font-scale', valid);
-            savePreference('font_scale', valid);
-            document.querySelectorAll('.font-pill-btn').forEach(btn => {
-                btn.classList.toggle('active', btn.getAttribute('data-font-btn') === valid);
-            });
-        }
-
-        /* =========================================================
-           7. 視圖渲染與全站懸浮球狀態同步
-           ========================================================= */
-        function getFolderNameById(fid) {
-            const f = folders.find(item => item.id === fid);
-            return f ? f.name : '未分類 / 一般法規';
-        }
-
-        function buildFolderOptionsHtml(selectedId) {
-            return folders.map(f =>
-                `<option value="${escapeHtml(f.id)}" ${f.id === selectedId ? 'selected' : ''}>${escapeHtml(f.name)}</option>`
-            ).join('');
-        }
-
-        function syncFabUIWithMode() {
-            const fabBtn = document.getElementById('fabCircleBtn');
-            const fabBadge = document.getElementById('fabBadge');
-            const fabModeLabel = document.getElementById('fabModeLabel');
-            const fabInput = document.getElementById('fabSearchInput');
-            const fabClearBtn = document.getElementById('fabClearBtn');
-            const fabStarBtn = document.getElementById('fabStarToggleBtn');
-            const fabNavRow = document.getElementById('fabNavRow');
-
-            if (activeDocId) {
-                const doc = documents.find(d => d.id === activeDocId);
-                fabModeLabel.textContent = '⋮⋮ 文內關鍵字搜尋（可拖曳）';
-                fabInput.placeholder = '輸入文內關鍵字...';
-                fabInput.value = readerQuery;
-                fabClearBtn.classList.toggle('hidden', readerQuery.trim().length === 0);
-
-                const isStarred = doc ? doc.starred : false;
-                fabStarBtn.textContent = isStarred ? '★' : '☆';
-                fabStarBtn.classList.toggle('active', isStarred);
-                fabStarBtn.title = isStarred ? '取消此法規星號' : '加入星號收藏';
-                fabBtn.classList.toggle('star-active', isStarred);
-
-                const hasKw = parseKeywords(readerQuery).length > 0;
-                fabNavRow.classList.toggle('hidden', !hasKw);
-                fabBadge.classList.toggle('hidden', !hasKw);
-                if (hasKw) {
-                    fabBadge.textContent = readerMatches.length;
-                }
-            } else {
-                fabModeLabel.textContent = '⋮⋮ 跨資料夾搜尋與星號（可拖曳）';
-                fabInput.placeholder = '跨資料夾搜尋法規、公文...';
-                fabInput.value = globalQuery;
-                fabClearBtn.classList.toggle('hidden', globalQuery.trim().length === 0);
-
-                fabStarBtn.textContent = filterStarOnly ? '★' : '☆';
-                fabStarBtn.classList.toggle('active', filterStarOnly);
-                fabStarBtn.title = filterStarOnly ? '顯示全部文件' : '只顯示星號收藏';
-                fabBtn.classList.toggle('star-active', filterStarOnly);
-
-                fabNavRow.classList.add('hidden');
-                const isFiltering = globalQuery.trim().length > 0 || filterStarOnly;
-                if (isFiltering) {
-                    fabBadge.classList.remove('hidden');
-                    fabBadge.textContent = getFilteredDocuments(null).length;
-                } else {
-                    fabBadge.classList.add('hidden');
-                }
-            }
-        }
-
-        function renderCurrentView() {
-            const hasSearch = globalQuery.trim().length > 0;
-
-            if (activeDocId) {
-                document.getElementById('homeFolderView').classList.add('hidden');
-                document.getElementById('docListView').classList.add('hidden');
-                document.getElementById('readerView').classList.remove('hidden');
-                syncFabUIWithMode();
-                return;
-            }
-
-            document.getElementById('readerView').classList.add('hidden');
-
-            if (hasSearch || filterStarOnly) {
-                document.getElementById('homeFolderView').classList.add('hidden');
-                document.getElementById('docListView').classList.remove('hidden');
-                document.getElementById('folderHeaderBar').classList.add('hidden');
-                document.getElementById('searchResultBar').classList.remove('hidden');
-                renderFilteredDocList(null);
-                syncFabUIWithMode();
-                return;
-            }
-
-            if (activeFolderId) {
-                const folder = folders.find(f => f.id === activeFolderId);
-                if (!folder) {
-                    activeFolderId = null;
-                    renderCurrentView();
-                    return;
-                }
-                document.getElementById('homeFolderView').classList.add('hidden');
-                document.getElementById('docListView').classList.remove('hidden');
-                document.getElementById('folderHeaderBar').classList.remove('hidden');
-                document.getElementById('searchResultBar').classList.add('hidden');
-
-                document.getElementById('activeFolderTitle').textContent = folder.name;
-                renderFilteredDocList(folder.id);
-                syncFabUIWithMode();
-                return;
-            }
-
-            document.getElementById('docListView').classList.add('hidden');
-            document.getElementById('homeFolderView').classList.remove('hidden');
-            renderFolderGrid();
-            syncFabUIWithMode();
-        }
-
-        function renderFolderGrid() {
-            const grid = document.getElementById('folderGridContainer');
-            document.getElementById('folderSummaryText').textContent = `資料夾分類（共 ${folders.length} 個）`;
-            grid.innerHTML = '';
-
-            const folderSvg = `<svg width="20" height="20" style="width:20px;height:20px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>`;
-            const uploadMiniSvg = `<svg width="16" height="16" style="width:16px;height:16px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>`;
-            const trashSvg = `<svg width="16" height="16" style="width:16px;height:16px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>`;
-
-            for (const folder of folders) {
-                const count = documents.filter(d => d.folderId === folder.id).length;
-                const isDefaultUncat = folder.id === UNCATEGORIZED_FOLDER_ID;
-                const badgeClass = isDefaultUncat ? 'default-cat' : (folder.kind === 'official' ? 'official' : '');
-
-                const card = document.createElement('div');
-                card.className = 'folder-card';
-
-                card.innerHTML = `
-                    <div class="folder-card-left">
-                        <div class="folder-icon-badge ${badgeClass}">${folderSvg}</div>
-                        <div class="folder-info">
-                            <div class="folder-name">${escapeHtml(folder.name)}</div>
-                            <div class="folder-count">${count} 份文件</div>
-                        </div>
-                    </div>
-                    <div class="folder-card-actions">
-                        <div class="folder-mini-btn upload-mini" title="直接批次上傳至此資料夾" aria-label="直接批次上傳至此資料夾">
-                            ${uploadMiniSvg}
-                            <input
-                                type="file"
-                                class="native-file-overlay card-folder-upload"
-                                multiple
-                                accept=".pdf,.txt,.md,.jpg,.jpeg,.png,.webp,application/pdf,text/plain,image/*"
-                                aria-label="直接批次上傳至此資料夾"
-                            >
-                        </div>
-                        ${!isDefaultUncat ? `<button type="button" class="folder-mini-btn del del-btn" title="刪除資料夾" aria-label="刪除資料夾">${trashSvg}</button>` : ''}
-                    </div>
-                `;
-
-                card.addEventListener('click', () => {
-                    activeFolderId = folder.id;
-                    renderCurrentView();
-                });
-
-                const cardUpload = card.querySelector('.card-folder-upload');
-                cardUpload.addEventListener('click', (e) => e.stopPropagation());
-                cardUpload.addEventListener('change', async (e) => {
-                    e.stopPropagation();
-                    if (e.target.files && e.target.files.length > 0) {
-                        await processBatchFiles(e.target.files, folder.id);
-                    }
-                    e.target.value = '';
-                });
-
-                const delBtn = card.querySelector('.del-btn');
-                if (delBtn) {
-                    delBtn.addEventListener('click', async (e) => {
-                        e.stopPropagation();
-                        const desc = count > 0
-                            ? `確定要刪除資料夾「${folder.name}」嗎？裡面的 ${count} 份文件會自動安全移至「未分類 / 一般法規」，不會遺失。`
-                            : `確定要刪除空白資料夾「${folder.name}」嗎？`;
-                        const ok = await showConfirmModal('刪除資料夾', desc, '確定刪除', true);
-                        if (ok) {
-                            for (const d of documents) {
-                                if (d.folderId === folder.id) {
-                                    d.folderId = UNCATEGORIZED_FOLDER_ID;
-                                    await dbPut(STORE_DOCS, d);
-                                }
-                            }
-                            await dbDelete(STORE_FOLDERS, folder.id);
-                            folders = folders.filter(f => f.id !== folder.id);
-                            renderCurrentView();
-                            showToast(count > 0 ? `已刪除資料夾，${count} 份文件已移至未分類` : `已刪除資料夾「${folder.name}」`);
-                        }
-                    });
-                }
-
-                grid.appendChild(card);
-            }
-        }
-
-        function buildMatchSnippet(doc, keywords) {
-            if (!keywords || keywords.length === 0) return '';
-            const paragraphs = doc.pages.flatMap(p => p.text.split(/\n{2,}/));
-            let bestText = '';
-            let maxHits = 0;
-
-            for (const para of paragraphs) {
-                const lower = para.toLowerCase();
-                let hits = 0;
-                for (const kw of keywords) {
-                    if (lower.includes(kw.toLowerCase())) hits++;
-                }
-                if (hits > maxHits) {
-                    maxHits = hits;
-                    bestText = para;
-                }
-            }
-
-            const targetText = bestText || doc.pages.map(p => p.text).join('\n');
-            const lowerTarget = targetText.toLowerCase();
-            let firstIdx = -1;
-            for (const kw of keywords) {
-                const idx = lowerTarget.indexOf(kw.toLowerCase());
-                if (idx !== -1 && (firstIdx === -1 || idx < firstIdx)) firstIdx = idx;
-            }
-            if (firstIdx === -1) return '';
-
-            const start = Math.max(0, firstIdx - 28);
-            const end = Math.min(targetText.length, firstIdx + 95);
-            const slice = (start > 0 ? '...' : '') + targetText.slice(start, end) + (end < targetText.length ? '...' : '');
-            return highlightKeywords(slice, keywords);
-        }
-
-        function getFilteredDocuments(folderIdOrNull) {
-            const keywords = parseKeywords(globalQuery);
-            return documents.filter(doc => {
-                if (folderIdOrNull && doc.folderId !== folderIdOrNull) return false;
-                if (filterStarOnly && !doc.starred) return false;
-                if (keywords.length === 0) return true;
-                const folderName = getFolderNameById(doc.folderId);
-                const haystack = (folderName + '\n' + doc.title + '\n' + doc.pages.map(p => p.text).join('\n')).toLowerCase();
-                return keywords.every(kw => haystack.includes(kw.toLowerCase()));
-            });
-        }
-
-        function renderFilteredDocList(folderIdOrNull) {
-            const container = document.getElementById('docListContainer');
-            const keywords = parseKeywords(globalQuery);
-            const filtered = getFilteredDocuments(folderIdOrNull);
-
-            if (folderIdOrNull) {
-                document.getElementById('activeFolderSub').textContent = `共 ${filtered.length} 份文件（支援批次上傳 PDF / 圖片純取文字）`;
-            } else {
-                document.getElementById('searchResultSummary').textContent =
-                    keywords.length > 0
-                        ? `跨資料夾搜尋結果：共 ${filtered.length} 筆`
-                        : `星號收藏項目：共 ${filtered.length} 筆`;
-            }
-
-            container.innerHTML = '';
-
-            if (filtered.length === 0) {
-                const empty = document.createElement('div');
-                empty.className = 'empty-state';
-                empty.textContent = folderIdOrNull
-                    ? '此資料夾尚無文件，可點擊右上角「批次上傳」或從其他資料夾移動過來'
-                    : '找不到符合條件的法規或公文';
-                container.appendChild(empty);
-                return;
-            }
-
-            for (const doc of filtered) {
-                const card = document.createElement('div');
-                card.className = 'doc-card';
-                const snippetHtml = buildMatchSnippet(doc, keywords);
-
-                card.innerHTML = `
-                    <button type="button" class="doc-card-star ${doc.starred ? 'starred' : ''}" title="星號收藏">${doc.starred ? '★' : '☆'}</button>
-                    <div class="doc-card-body">
-                        <div class="doc-card-title">${highlightKeywords(doc.title, keywords)}</div>
-                        <div class="doc-card-meta">
-                            <select class="folder-move-select" title="變更所屬資料夾" aria-label="變更所屬資料夾">
-                                ${buildFolderOptionsHtml(doc.folderId)}
-                            </select>
-                            ${doc.isOcr ? '<span class="badge-tag badge-ocr">圖片轉純文字</span>' : ''}
-                            <span>${doc.pages.length} 頁</span>
-                            <span>・</span>
-                            <span>${escapeHtml(doc.updatedAt)}</span>
-                            ${doc.isRecentlyUpdated ? '<span class="badge-tag badge-updated">已更新</span>' : ''}
-                        </div>
-                        ${snippetHtml ? `<div class="doc-card-snippet">${snippetHtml}</div>` : ''}
-                    </div>
-                `;
-
-                const starBtn = card.querySelector('.doc-card-star');
-                starBtn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    doc.starred = !doc.starred;
-                    await dbPut(STORE_DOCS, doc);
-                    sortDocuments();
-                    renderCurrentView();
-                    showToast(doc.starred ? '已加入星號收藏 ★' : '已取消星號收藏');
-                });
-
-                const moveSelect = card.querySelector('.folder-move-select');
-                moveSelect.addEventListener('click', (e) => e.stopPropagation());
-                moveSelect.addEventListener('change', async (e) => {
-                    e.stopPropagation();
-                    doc.folderId = e.target.value;
-                    await dbPut(STORE_DOCS, doc);
-                    renderCurrentView();
-                    showToast(`已移動至「${getFolderNameById(doc.folderId)}」`, 'success');
-                });
-
-                card.addEventListener('click', () => {
-                    openReaderView(doc.id, globalQuery);
-                });
-
-                container.appendChild(card);
-            }
-        }
-
-        /* =========================================================
-           8. 閱讀頁（自動依「第X條」或段落切分、迷你複製鈕、文內定位）
-           ========================================================= */
-        function splitIntoArticles(pageText) {
-            const lines = pageText.split('\n');
-            const blocks = [];
-            let current = [];
-            const headerRegex = /^\s*第\s*[一二三四五六七八九十百千0-9]+\s*條(?:之[一二三四五六七八九十0-9]+)?/;
-
-            for (const line of lines) {
-                if (headerRegex.test(line) && current.length > 0) {
-                    const joined = current.join('\n').trim();
-                    if (joined) blocks.push(joined);
-                    current = [line];
-                } else {
-                    current.push(line);
-                }
-            }
-            if (current.length > 0) {
-                const joined = current.join('\n').trim();
-                if (joined) blocks.push(joined);
-            }
-            return blocks.length > 0 ? blocks : [pageText];
-        }
-
-        function updateReaderStarBtn(starred) {
-            const btn = document.getElementById('readerStarBtn');
-            btn.textContent = starred ? '★' : '☆';
-            btn.classList.toggle('starred', starred);
-            if (activeDocId) {
-                syncFabUIWithMode();
-            }
-        }
-
-        function renderReaderContent(doc, searchStr) {
-            const container = document.getElementById('readerContentContainer');
-            container.innerHTML = '';
-            const keywords = parseKeywords(searchStr);
-
-            const copySvg = `<svg width="16" height="16" style="width:16px;height:16px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>`;
-            const checkSvg = `<svg width="16" height="16" style="width:16px;height:16px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`;
-
-            if (isEditingDocText) {
-                const textareas = [];
-                for (const page of doc.pages) {
-                    const pageSec = document.createElement('div');
-                    pageSec.className = 'page-section';
-
-                    if (doc.pages.length > 1) {
-                        const div = document.createElement('div');
-                        div.className = 'page-divider';
-                        div.textContent = `編輯第 ${page.pageNumber} 頁 / 共 ${doc.pages.length} 頁`;
-                        pageSec.appendChild(div);
-                    }
-
-                    const card = document.createElement('div');
-                    card.className = 'article-card';
-                    const ta = document.createElement('textarea');
-                    ta.className = 'inline-edit-textarea';
-                    ta.value = page.text;
-                    card.appendChild(ta);
-                    textareas.push({ page, ta });
-                    pageSec.appendChild(card);
-                    container.appendChild(pageSec);
-                }
-
-                const actionBar = document.createElement('div');
-                actionBar.className = 'inline-edit-actions';
-                actionBar.innerHTML = `
-                    <button type="button" id="cancelEditDocBtn" class="modal-btn cancel">取消</button>
-                    <button type="button" id="saveEditDocBtn" class="modal-btn confirm-primary">儲存修改</button>
-                `;
-                container.appendChild(actionBar);
-
-                document.getElementById('cancelEditDocBtn').addEventListener('click', () => {
-                    isEditingDocText = false;
-                    renderReaderContent(doc, readerQuery);
-                });
-
-                document.getElementById('saveEditDocBtn').addEventListener('click', async () => {
-                    for (const item of textareas) {
-                        item.page.text = item.ta.value;
-                    }
-                    doc.updatedAt = new Date().toLocaleDateString('zh-TW');
-                    doc.isRecentlyUpdated = true;
-                    await dbPut(STORE_DOCS, doc);
-                    sortDocuments();
-                    isEditingDocText = false;
-                    document.getElementById('readerDocMetaText').textContent = `共 ${doc.pages.length} 頁・更新日期：${doc.updatedAt}`;
-                    document.getElementById('readerUpdatedBadge').classList.remove('hidden');
-                    renderReaderContent(doc, readerQuery);
-                    showToast('已儲存校正後的內文', 'success');
-                });
-                return;
-            }
-
-            for (const page of doc.pages) {
-                const pageSec = document.createElement('div');
-                pageSec.className = 'page-section';
-
-                if (doc.pages.length > 1) {
-                    const div = document.createElement('div');
-                    div.className = 'page-divider';
-                    div.textContent = `第 ${page.pageNumber} 頁 / 共 ${doc.pages.length} 頁`;
-                    pageSec.appendChild(div);
-                }
-
-                const articles = splitIntoArticles(page.text);
-                for (const blockText of articles) {
-                    const card = document.createElement('article');
-                    card.className = 'article-card';
-                    card.innerHTML = `
-                        <button type="button" class="article-copy-btn" title="複製此段" aria-label="複製此段">${copySvg}</button>
-                        <div class="article-text">${highlightKeywords(blockText, keywords)}</div>
-                    `;
-
-                    const copyBtn = card.querySelector('.article-copy-btn');
-                    copyBtn.addEventListener('click', async () => {
-                        const ok = await copyToClipboard(blockText);
-                        if (ok) {
-                            copyBtn.innerHTML = checkSvg;
-                            copyBtn.classList.add('copied');
-                            showToast('已複製此段文字', 'success');
-                            setTimeout(() => {
-                                copyBtn.innerHTML = copySvg;
-                                copyBtn.classList.remove('copied');
-                            }, 1600);
-                        }
-                    });
-
-                    pageSec.appendChild(card);
-                }
-
-                container.appendChild(pageSec);
-            }
-
-            readerMatches = Array.from(container.querySelectorAll('mark.hl-match'));
-            if (keywords.length > 0) {
-                if (readerMatches.length > 0) {
-                    currentMatchIdx = 0;
-                    highlightActiveMatch(0, false);
-                } else {
-                    currentMatchIdx = -1;
-                    document.getElementById('fabMatchCounter').textContent = '第 0 / 0 筆';
-                }
-            } else {
-                currentMatchIdx = -1;
-            }
-            syncFabUIWithMode();
-        }
-
-        function highlightActiveMatch(index, shouldScroll = true) {
-            if (readerMatches.length === 0) return;
-            const total = readerMatches.length;
-            currentMatchIdx = ((index % total) + total) % total;
-
-            readerMatches.forEach((el, idx) => {
-                el.classList.toggle('active-match', idx === currentMatchIdx);
-            });
-
-            document.getElementById('fabMatchCounter').textContent = `第 ${currentMatchIdx + 1} / ${total} 筆`;
-
-            if (shouldScroll) {
-                readerMatches[currentMatchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
-
-        /* =========================================================
-           9. 全站通用可自由拖曳懸浮球與懸浮搜尋窗（嚴格區分輕點 <=6px 與拖曳 >6px）
-           ========================================================= */
-        function clampPosition(x, y, elWidth, elHeight) {
-            const margin = 8;
-            const maxX = Math.max(margin, window.innerWidth - elWidth - margin);
-            const maxY = Math.max(margin, window.innerHeight - elHeight - margin);
-            return {
-                x: Math.min(Math.max(margin, x), maxX),
-                y: Math.min(Math.max(margin, y), maxY)
-            };
-        }
-
-        function positionPopoverNearFab() {
-            const fab = document.getElementById('fabCircleBtn');
-            const pop = document.getElementById('fabPopover');
-            if (pop.classList.contains('hidden')) return;
-
-            const fabRect = fab.getBoundingClientRect();
-            const popRect = pop.getBoundingClientRect();
-            const popW = popRect.width || 288;
-            const popH = popRect.height || 120;
-
-            let targetX = fabRect.right - popW;
-            if (targetX < 12) targetX = fabRect.left;
-
-            let targetY = fabRect.top - popH - 10;
-            if (targetY < 56) {
-                targetY = fabRect.bottom + 10;
-            }
-
-            const clamped = clampPosition(targetX, targetY, popW, popH);
-            pop.style.left = `${clamped.x}px`;
-            pop.style.top = `${clamped.y}px`;
-        }
-
-        function toggleFabPopover(open) {
-            const pop = document.getElementById('fabPopover');
-            if (open) {
-                syncFabUIWithMode();
-                pop.classList.remove('hidden');
-                positionPopoverNearFab();
-                setTimeout(() => document.getElementById('fabSearchInput').focus(), 40);
-            } else {
-                pop.classList.add('hidden');
-            }
-        }
-
-        function initDraggableFloatingControls() {
-            const fab = document.getElementById('fabCircleBtn');
-            const pop = document.getElementById('fabPopover');
-            const popHandle = document.getElementById('fabDragHandle');
-
-            // 還原上次儲存的懸浮球位置（預設為右下側 right:16px, bottom:105px）
-            loadPreference('fab_pos', null).then((savedPos) => {
-                if (savedPos && typeof savedPos.x === 'number' && typeof savedPos.y === 'number') {
-                    const c = clampPosition(savedPos.x, savedPos.y, 48, 48);
-                    fab.style.right = 'auto';
-                    fab.style.bottom = 'auto';
-                    fab.style.left = `${c.x}px`;
-                    fab.style.top = `${c.y}px`;
-                }
-            });
-
-            // 1. 懸浮球拖曳與輕點分離邏輯（絕不在 start 時呼叫 preventDefault，確保點擊100%暢通）
-            let isPointerDown = false;
-            let isDragging = false;
-            let startX = 0;
-            let startY = 0;
-            let startLeft = 0;
-            let startTop = 0;
-            const DRAG_THRESHOLD = 6;
-
-            const handlePointerStart = (clientX, clientY) => {
-                const rect = fab.getBoundingClientRect();
-                isPointerDown = true;
-                isDragging = false;
-                startX = clientX;
-                startY = clientY;
-                startLeft = rect.left;
-                startTop = rect.top;
-            };
-
-            const handlePointerMove = (clientX, clientY, e) => {
-                if (!isPointerDown) return;
-                const dx = clientX - startX;
-                const dy = clientY - startY;
-
-                if (!isDragging && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
-                    isDragging = true;
-                }
-
-                if (isDragging) {
-                    if (e && e.cancelable) e.preventDefault();
-                    const c = clampPosition(startLeft + dx, startTop + dy, 48, 48);
-                    fab.style.right = 'auto';
-                    fab.style.bottom = 'auto';
-                    fab.style.left = `${c.x}px`;
-                    fab.style.top = `${c.y}px`;
-                    if (!pop.classList.contains('hidden')) {
-                        positionPopoverNearFab();
-                    }
-                }
-            };
-
-            const handlePointerEnd = () => {
-                if (!isPointerDown) return;
-                isPointerDown = false;
-                if (isDragging) {
-                    isDragging = false;
-                    const rect = fab.getBoundingClientRect();
-                    savePreference('fab_pos', { x: rect.left, y: rect.top });
-                } else {
-                    // 移動距離 <= 6px 判定為有效點擊：開關懸浮搜尋窗
-                    const isHidden = pop.classList.contains('hidden');
-                    toggleFabPopover(isHidden);
-                }
-            };
-
-            fab.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 1) {
-                    handlePointerStart(e.touches[0].clientX, e.touches[0].clientY);
-                }
-            }, { passive: true });
-
-            window.addEventListener('touchmove', (e) => {
-                if (isPointerDown && e.touches.length === 1) {
-                    handlePointerMove(e.touches[0].clientX, e.touches[0].clientY, e);
-                }
-            }, { passive: false });
-
-            window.addEventListener('touchend', () => {
-                if (isPointerDown) handlePointerEnd();
-            });
-
-            fab.addEventListener('mousedown', (e) => {
-                if (e.button === 0) {
-                    handlePointerStart(e.clientX, e.clientY);
-                }
-            });
-
-            window.addEventListener('mousemove', (e) => {
-                if (isPointerDown) {
-                    handlePointerMove(e.clientX, e.clientY, e);
-                }
-            });
-
-            window.addEventListener('mouseup', () => {
-                if (isPointerDown) handlePointerEnd();
-            });
-
-            // 2. 展開後的懸浮搜尋視窗拖曳手把
-            let popDragging = false;
-            let popStartX = 0;
-            let popStartY = 0;
-            let popOrigLeft = 0;
-            let popOrigTop = 0;
-
-            const onPopStart = (clientX, clientY) => {
-                const rect = pop.getBoundingClientRect();
-                popDragging = true;
-                popStartX = clientX;
-                popStartY = clientY;
-                popOrigLeft = rect.left;
-                popOrigTop = rect.top;
-            };
-
-            const onPopMove = (clientX, clientY, e) => {
-                if (!popDragging) return;
-                const dx = clientX - popStartX;
-                const dy = clientY - popStartY;
-                if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
-                    if (e && e.cancelable) e.preventDefault();
-                    const rect = pop.getBoundingClientRect();
-                    const c = clampPosition(popOrigLeft + dx, popOrigTop + dy, rect.width, rect.height);
-                    pop.style.left = `${c.x}px`;
-                    pop.style.top = `${c.y}px`;
-                }
-            };
-
-            popHandle.addEventListener('touchstart', (e) => {
-                if (e.target.closest('#fabCloseBtn')) return;
-                if (e.touches.length === 1) {
-                    onPopStart(e.touches[0].clientX, e.touches[0].clientY);
-                }
-            }, { passive: true });
-
-            window.addEventListener('touchmove', (e) => {
-                if (popDragging && e.touches.length === 1) {
-                    onPopMove(e.touches[0].clientX, e.touches[0].clientY, e);
-                }
-            }, { passive: false });
-
-            window.addEventListener('touchend', () => {
-                popDragging = false;
-            });
-
-            popHandle.addEventListener('mousedown', (e) => {
-                if (e.target.closest('#fabCloseBtn')) return;
-                if (e.button === 0) {
-                    onPopStart(e.clientX, e.clientY);
-                }
-            });
-
-            window.addEventListener('mousemove', (e) => {
-                if (popDragging) {
-                    onPopMove(e.clientX, e.clientY, e);
-                }
-            });
-
-            window.addEventListener('mouseup', () => {
-                popDragging = false;
-            });
-
-            // 視窗旋轉或尺寸改變時自動將懸浮球與浮窗貼齊安全範圍
-            window.addEventListener('resize', () => {
-                const rect = fab.getBoundingClientRect();
-                const c = clampPosition(rect.left, rect.top, 48, 48);
-                fab.style.right = 'auto';
-                fab.style.bottom = 'auto';
-                fab.style.left = `${c.x}px`;
-                fab.style.top = `${c.y}px`;
-                if (!pop.classList.contains('hidden')) {
-                    positionPopoverNearFab();
-                }
-            });
-        }
-
-        function openReaderView(docId, initialQuery = '') {
-            const doc = documents.find(d => d.id === docId);
-            if (!doc) return;
-
-            activeDocId = docId;
-            isEditingDocText = false;
-            readerQuery = initialQuery || '';
-
-            document.getElementById('readerDocTitle').textContent = doc.title;
-            document.getElementById('readerDocMetaText').textContent = `共 ${doc.pages.length} 頁・更新日期：${doc.updatedAt}`;
-            document.getElementById('readerOcrBadge').classList.toggle('hidden', !doc.isOcr);
-            document.getElementById('readerUpdatedBadge').classList.toggle('hidden', !doc.isRecentlyUpdated);
-            updateReaderStarBtn(doc.starred);
-
-            const folderSelect = document.getElementById('readerFolderSelect');
-            folderSelect.innerHTML = buildFolderOptionsHtml(doc.folderId);
-
-            renderCurrentView();
-            renderReaderContent(doc, readerQuery);
-
-            if (readerQuery.trim().length > 0) {
-                toggleFabPopover(true);
-            } else {
-                toggleFabPopover(false);
-            }
-
-            if (readerMatches.length > 0) {
-                highlightActiveMatch(0, true);
-            } else {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-        }
-
-        function closeReaderView() {
-            activeDocId = null;
-            isEditingDocText = false;
-            renderCurrentView();
-            if (!document.getElementById('fabPopover').classList.contains('hidden')) {
-                positionPopoverNearFab();
-            }
-        }
-
-        /* =========================================================
-           10. JSON 備份匯出與還原匯入（純文字超輕量化）
-           ========================================================= */
-        function exportJsonBackup() {
-            const payload = {
-                exportedAt: new Date().toISOString(),
-                folders,
-                documents
-            };
-            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            const dateTag = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-            a.href = url;
-            a.download = `法規公文備份_${dateTag}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast('已匯出純文字備份檔', 'success');
-        }
-
-        async function importJsonBackup(file) {
-            if (!file) return;
-            try {
-                const text = await file.text();
-                const parsed = JSON.parse(text);
-
-                if (Array.isArray(parsed.folders)) {
-                    for (const f of parsed.folders) {
-                        if (f && f.id && f.name) {
-                            if (!folders.some(existing => existing.id === f.id)) {
-                                folders.push(f);
-                            }
-                            await dbPut(STORE_FOLDERS, f);
-                        }
-                    }
-                }
-
-                const docList = Array.isArray(parsed.documents)
-                    ? parsed.documents
-                    : (Array.isArray(parsed.regulations) ? parsed.regulations : []);
-
-                let count = 0;
-                for (const item of docList) {
-                    if (item && item.title && Array.isArray(item.pages)) {
-                        const targetFid = (item.folderId && folders.some(f => f.id === item.folderId))
-                            ? item.folderId
-                            : UNCATEGORIZED_FOLDER_ID;
-
-                        const cleanPages = item.pages.map((p, idx) => ({
-                            pageNumber: p.pageNumber || (idx + 1),
-                            text: p.text || ''
-                        }));
-
-                        const doc = {
-                            id: item.id || ('doc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7)),
-                            folderId: targetFid,
-                            title: String(item.title),
-                            coreName: item.coreName || extractCoreName(String(item.title)),
-                            isOcr: Boolean(item.isOcr || item.docType === 'image'),
-                            starred: Boolean(item.starred),
-                            updatedAt: item.updatedAt || item.uploadedAt || new Date().toLocaleDateString('zh-TW'),
-                            isRecentlyUpdated: Boolean(item.isRecentlyUpdated),
-                            pages: cleanPages
-                        };
-
-                        const idx = documents.findIndex(d => d.id === doc.id);
-                        if (idx !== -1) documents[idx] = doc;
-                        else documents.push(doc);
-                        await dbPut(STORE_DOCS, doc);
-                        count++;
-                    }
-                }
-                sortDocuments();
-                renderCurrentView();
-                showToast(`已成功還原 ${count} 份文件`, 'success');
-            } catch (e) {
-                showToast('備份檔案格式不正確', 'error');
-            }
-        }
-
-        /* =========================================================
-           11. 應用程式初始化與所有事件綁定（確保零阻塞、100% 接通）
-           ========================================================= */
-        async function initApp() {
-            const savedFont = await loadPreference('font_scale', 'large');
-            applyFontScale(savedFont);
-
-            // 初始化資料夾（確保「未分類 / 一般法規」永遠存在於首位）
-            const storedFolders = await dbGetAll(STORE_FOLDERS);
-            if (storedFolders.length > 0) {
-                folders = storedFolders;
-                if (!folders.some(f => f.id === UNCATEGORIZED_FOLDER_ID)) {
-                    const uncat = DEFAULT_FOLDERS[0];
-                    folders.unshift(uncat);
-                    await dbPut(STORE_FOLDERS, uncat);
-                }
-            } else {
-                folders = [...DEFAULT_FOLDERS];
-                for (const f of folders) {
-                    await dbPut(STORE_FOLDERS, f);
-                }
-            }
-
-            // 初始化文件庫（首次無資料時建立 1 份範例法規）
-            const storedDocs = await dbGetAll(STORE_DOCS);
-            if (storedDocs.length > 0) {
-                documents = storedDocs.map(d => ({
-                    ...d,
-                    folderId: (d.folderId && folders.some(f => f.id === d.folderId)) ? d.folderId : UNCATEGORIZED_FOLDER_ID
-                }));
-            } else {
-                documents = [...SAMPLE_DOCS];
-                for (const d of documents) {
-                    await dbPut(STORE_DOCS, d);
-                }
-            }
-            sortDocuments();
-            renderCurrentView();
-            initDraggableFloatingControls();
-
-            // 頂部標題點擊回到封面
-            document.getElementById('brandHomeBtn').addEventListener('click', () => {
-                activeDocId = null;
-                activeFolderId = null;
-                globalQuery = '';
-                filterStarOnly = false;
-                renderCurrentView();
-            });
-
-            // 搜尋結果列一鍵清除篩選
-            document.getElementById('resetGlobalFilterBtn').addEventListener('click', () => {
-                globalQuery = '';
-                filterStarOnly = false;
-                renderCurrentView();
-                toggleFabPopover(false);
-            });
-
-            // 字級切換（標準 / 放大 / 特大）
-            document.querySelectorAll('.font-pill-btn').forEach(btn => {
-                btn.addEventListener('click', () => applyFontScale(btn.getAttribute('data-font-btn')));
-            });
-
-            // 匯出與匯入備份
-            document.getElementById('exportBackupBtn').addEventListener('click', exportJsonBackup);
-            document.getElementById('importBackupInput').addEventListener('change', async (e) => {
-                if (e.target.files && e.target.files[0]) {
-                    await importJsonBackup(e.target.files[0]);
-                }
-                e.target.value = '';
-            });
-
-            // 封面「+ 新增資料夾」按鈕
-            document.getElementById('openNewFolderModalBtn').addEventListener('click', async () => {
-                const name = await openFolderInputModal('新增資料夾', '請輸入新的分類資料夾名稱：');
-                if (name) {
-                    const newFolder = {
-                        id: 'folder-' + Date.now(),
-                        name,
-                        kind: name.includes('公文') ? 'official' : 'normal'
-                    };
-                    folders.push(newFolder);
-                    await dbPut(STORE_FOLDERS, newFolder);
-                    renderCurrentView();
-                    showToast(`已建立資料夾「${name}」`, 'success');
-                }
-            });
-
-            // 封面「直接上傳」按鈕（自動歸入「未分類 / 一般法規」）
-            document.getElementById('coverBatchFileInput').addEventListener('change', async (e) => {
-                if (e.target.files && e.target.files.length > 0) {
-                    await processBatchFiles(e.target.files, UNCATEGORIZED_FOLDER_ID);
-                    activeFolderId = UNCATEGORIZED_FOLDER_ID;
-                    renderCurrentView();
-                }
-                e.target.value = '';
-            });
-
-            // 資料夾內返回封面與批次上傳
-            document.getElementById('backToFoldersBtn').addEventListener('click', () => {
-                activeFolderId = null;
-                renderCurrentView();
-            });
-
-            document.getElementById('batchFileInput').addEventListener('change', async (e) => {
-                if (e.target.files && e.target.files.length > 0) {
-                    await processBatchFiles(e.target.files, activeFolderId || UNCATEGORIZED_FOLDER_ID);
-                }
-                e.target.value = '';
-            });
-
-            // 閱讀模式純圖示單排工具列事件
-            document.getElementById('backFromReaderBtn').addEventListener('click', closeReaderView);
-
-            document.getElementById('readerFolderSelect').addEventListener('change', async (e) => {
-                const doc = documents.find(d => d.id === activeDocId);
-                if (!doc) return;
-                doc.folderId = e.target.value;
-                activeFolderId = doc.folderId;
-                await dbPut(STORE_DOCS, doc);
-                showToast(`已移動至「${getFolderNameById(doc.folderId)}」`, 'success');
-            });
-
-            document.getElementById('readerStarBtn').addEventListener('click', async () => {
-                const doc = documents.find(d => d.id === activeDocId);
-                if (!doc) return;
-                doc.starred = !doc.starred;
-                await dbPut(STORE_DOCS, doc);
-                updateReaderStarBtn(doc.starred);
-                showToast(doc.starred ? '已加入星號收藏 ★' : '已取消星號收藏');
-            });
-
-            document.getElementById('copyFullDocBtn').addEventListener('click', async () => {
-                const doc = documents.find(d => d.id === activeDocId);
-                if (!doc) return;
-                const fullText = `${doc.title}\n\n` + doc.pages.map(p => p.text).join('\n\n');
-                const ok = await copyToClipboard(fullText);
-                if (ok) {
-                    const btn = document.getElementById('copyFullDocBtn');
-                    const icon = document.getElementById('copyFullDocIcon');
-                    btn.classList.remove('primary');
-                    btn.classList.add('success-solid');
-                    icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>';
-                    showToast('已複製全文', 'success');
-                    setTimeout(() => {
-                        btn.classList.remove('success-solid');
-                        btn.classList.add('primary');
-                        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>';
-                    }, 1800);
-                }
-            });
-
-            document.getElementById('toggleEditDocBtn').addEventListener('click', () => {
-                const doc = documents.find(d => d.id === activeDocId);
-                if (!doc) return;
-                isEditingDocText = !isEditingDocText;
-                renderReaderContent(doc, readerQuery);
-            });
-
-            document.getElementById('singleUpdateInput').addEventListener('change', async (e) => {
-                const doc = documents.find(d => d.id === activeDocId);
-                if (doc && e.target.files && e.target.files[0]) {
-                    await processBatchFiles([e.target.files[0]], doc.folderId, doc.id);
-                }
-                e.target.value = '';
-            });
-
-            document.getElementById('readerDeleteBtn').addEventListener('click', async () => {
-                const doc = documents.find(d => d.id === activeDocId);
-                if (!doc) return;
-                const ok = await showConfirmModal(
-                    '整份刪除此法規',
-                    `確定要刪除《${doc.title}》嗎？刪除後無法復原。`,
-                    '確定刪除',
-                    true
-                );
-                if (ok) {
-                    await dbDelete(STORE_DOCS, doc.id);
-                    documents = documents.filter(d => d.id !== doc.id);
-                    showToast('已整份刪除此文件');
-                    closeReaderView();
-                }
-            });
-
-            // 全站懸浮搜尋視窗事件
-            document.getElementById('fabCloseBtn').addEventListener('click', () => {
-                toggleFabPopover(false);
-            });
-
-            const fabInput = document.getElementById('fabSearchInput');
-            fabInput.addEventListener('input', () => {
-                if (activeDocId) {
-                    readerQuery = fabInput.value;
-                    const doc = documents.find(d => d.id === activeDocId);
-                    if (doc) {
-                        renderReaderContent(doc, readerQuery);
-                        if (readerMatches.length > 0) highlightActiveMatch(0, true);
-                    }
-                } else {
-                    globalQuery = fabInput.value;
-                    renderCurrentView();
-                    positionPopoverNearFab();
-                }
-            });
-
-            document.getElementById('fabClearBtn').addEventListener('click', () => {
-                fabInput.value = '';
-                if (activeDocId) {
-                    readerQuery = '';
-                    const doc = documents.find(d => d.id === activeDocId);
-                    if (doc) renderReaderContent(doc, '');
-                } else {
-                    globalQuery = '';
-                    renderCurrentView();
-                    positionPopoverNearFab();
-                }
-                fabInput.focus();
-            });
-
-            document.getElementById('fabStarToggleBtn').addEventListener('click', async () => {
-                if (activeDocId) {
-                    const doc = documents.find(d => d.id === activeDocId);
-                    if (!doc) return;
-                    doc.starred = !doc.starred;
-                    await dbPut(STORE_DOCS, doc);
-                    updateReaderStarBtn(doc.starred);
-                    showToast(doc.starred ? '已加入星號收藏 ★' : '已取消星號收藏');
-                } else {
-                    filterStarOnly = !filterStarOnly;
-                    renderCurrentView();
-                    positionPopoverNearFab();
-                }
-            });
-
-            document.getElementById('fabPrevBtn').addEventListener('click', () => {
-                highlightActiveMatch(currentMatchIdx - 1, true);
-            });
-
-            document.getElementById('fabNextBtn').addEventListener('click', () => {
-                highlightActiveMatch(currentMatchIdx + 1, true);
-            });
-
-            // 背景預載外部 PDF/OCR 解析器（完全不阻塞畫面互動）
-            ensurePdfJsLoaded();
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initApp);
-        } else {
-            initApp();
-        }
-    </script>
-</body>
-</html>
-
+                        if (!db.objectStoreNames.contains(STORE
