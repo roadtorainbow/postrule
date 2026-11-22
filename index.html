@@ -1037,6 +1037,12 @@
             background-color: var(--danger-color);
             color: #ffffff;
         }
+
+.toc-line[data-toc-page]{cursor:pointer;border-radius:6px}
+.toc-line[data-toc-page]:active{background:rgba(29,90,154,.08)}
+.chapter-banner,.article-card{scroll-margin-top:76px}
+@keyframes jflash{0%{box-shadow:0 0 0 3px rgba(29,90,154,.55)}100%{box-shadow:0 0 0 3px rgba(29,90,154,0)}}
+.jump-flash{animation:jflash 1.6s ease-out}
     </style>
 </head>
 <body>
@@ -1772,7 +1778,7 @@
                 const tocM = trimmed.match(/^(.*?)\s*⋯\s*p\.(\d+)$/);
                 if (tocM) {
                     const isChapter = /^第\s*[一二三四五六七八九十百千0-9]+\s*[編章]/.test(tocM[1]);
-                    return `<div class="toc-line${isChapter ? ' toc-chapter' : ''}"><span class="toc-title">${hl(tocM[1])}</span><span class="toc-page">${tocM[2]}</span></div>`;
+                    return `<div class="toc-line${isChapter ? ' toc-chapter' : ''}" data-toc-title="${escapeHtml(tocM[1])}" data-toc-page="${tocM[2]}"><span class="toc-title">${hl(tocM[1])}</span><span class="toc-page">${tocM[2]}</span></div>`;
                 }
 
                 // 第X條（若條號獨立成行或緊接內文，自動分離條號徽章）
@@ -2102,7 +2108,7 @@
                         existing.title = cleanedTitle;
                         existing.coreName = core;
                         existing.isOcr = parsed.isOcr;
-                        existing.pages = parsed.pages;
+                        existing.pages = parsed.pages; delete existing.pageCount;
                         existing.updatedAt = todayStr;
                         existing.isRecentlyUpdated = true;
                         await dbPut(STORE_DOCS, existing);
@@ -2353,7 +2359,7 @@
 
         function buildMatchSnippet(doc, keywords) {
             if (!keywords || keywords.length === 0) return '';
-            const units = doc.pages.flatMap(p => parsePageUnits(p.text));
+            const units = buildDocUnits(doc);
             let bestText = '';
             let maxHits = 0;
 
@@ -2421,7 +2427,7 @@
                     <div class="row-sub">
                         ${folderTag}
                         ${doc.isOcr ? '<span class="badge-tag badge-ocr">圖片轉純文字</span>' : ''}
-                        <span>${doc.pages.length} 頁・${escapeHtml(doc.updatedAt)}</span>
+                        <span>${docPageCount(doc)} 頁・${escapeHtml(doc.updatedAt)}</span>
                         ${doc.isRecentlyUpdated ? '<span class="badge-tag badge-updated">已更新</span>' : ''}
                     </div>
                     ${snippetHtml ? `<div class="row-snippet">${snippetHtml}</div>` : ''}
@@ -2545,34 +2551,166 @@
             }).join('').replace(`value="${cur}"`, `value="${cur}" selected`);
         }
 
+        /* ---------- 整份規章合併成連續文章（隱藏頁碼、每頁頁首頁尾雜訊、跨頁條文接回） ---------- */
+        const HEAD_EXCLUDE_RE = /^(第\s*[一二三四五六七八九十百千0-9]+\s*[編章節款目條]|[一二三四五六七八九十]+、|（[一二三四五六七八九十0-9]+）|\([一二三四五六七八九十0-9]+\)|[0-9]+[、.．]|[①②③④⑤⑥⑦⑧⑨⑩]|附\s*則|總\s*則|說\s*明|主\s*旨|依\s*據|公告事項|辦\s*法)/;
+        const PRINTED_RE = /^[-－—–]\s*(\d{1,4})\s*[-－—–]$/;
+        const CONT_START_RE = /^(第|[一二三四五六七八九十]+、|（|\(|[0-9]+[、.．]|[①②③④⑤⑥⑦⑧⑨⑩])/;
+        const docUnitsCache = new Map();
+
+        function docSignature(doc) {
+            let n = 0;
+            for (const p of doc.pages) n += (p.text || '').length;
+            return doc.id + '|' + doc.pages.length + '|' + n;
+        }
+
+        function buildDocUnits(doc) {
+            const sig = docSignature(doc);
+            if (docUnitsCache.has(sig)) return docUnitsCache.get(sig);
+
+            const prepared = doc.pages.map(p => ({
+                page: p,
+                lines: normalizeExtractedText(p.text).replace(/\r\n/g, '\n').split('\n').map(l => l.trim()).filter(Boolean)
+            }));
+
+            const noise = new Set();
+            const hasExact = doc.pages.some(p => p.exact);
+            if (!hasExact && prepared.length >= 4) {
+                const counts = new Map();
+                for (const pp of prepared) {
+                    const edge = new Set();
+                    pp.lines.slice(0, 3).concat(pp.lines.slice(-3)).forEach(l => {
+                        if (l.length >= 4 && !HEAD_EXCLUDE_RE.test(l) && !PRINTED_RE.test(l)) edge.add(l.replace(/\s+/g, ''));
+                    });
+                    edge.forEach(k => counts.set(k, (counts.get(k) || 0) + 1));
+                }
+                const th = Math.max(3, Math.ceil(prepared.length * 0.25));
+                counts.forEach((c, k) => { if (c >= th) noise.add(k); });
+            }
+
+            const units = [];
+            let pendPages = [];
+            let pendPrinted = [];
+
+            prepared.forEach((pp, i) => {
+                const page = pp.page;
+                pendPages.push(page.pageNumber || (i + 1));
+                if (Array.isArray(page.printedList)) pendPrinted.push(...page.printedList);
+                const edge = pp.lines.slice(0, 3).concat(pp.lines.slice(-3));
+                for (const l of edge) {
+                    const m = l.match(PRINTED_RE);
+                    if (m) { pendPrinted.push(Number(m[1])); break; }
+                }
+
+                const kept = pp.lines.filter(l => !noise.has(l.replace(/\s+/g, '')) && !PRINTED_RE.test(l));
+                const cleaned = kept.join('\n');
+                if (!cleaned.trim()) return;
+
+                const pu = parsePageUnits(cleaned);
+                pu.forEach((u0, k) => {
+                    const u = { ...u0, pages: [], printed: [] };
+                    const prev = units[units.length - 1];
+
+                    if (k === 0 && !page.exact && prev && u.type === 'clause' && prev.type === 'clause') {
+                        let merged = false;
+                        if (u.isToc && prev.isToc) {
+                            prev.text += '\n' + u.text;
+                            merged = true;
+                        } else if (!u.isToc && !prev.isToc) {
+                            const firstLine = u.text.split('\n')[0].trim();
+                            if (!ARTICLE_HEADER_REGEX.test(firstLine)) {
+                                const sep = (CONT_START_RE.test(firstLine) || /[。；：！？]$/.test(prev.text)) ? '\n' : '';
+                                prev.text += sep + u.text;
+                                merged = true;
+                            }
+                        }
+                        if (merged) {
+                            prev.pages.push(...pendPages);
+                            prev.printed.push(...pendPrinted);
+                            pendPages = [];
+                            pendPrinted = [];
+                            return;
+                        }
+                    }
+
+                    u.pages = pendPages;
+                    u.printed = pendPrinted;
+                    pendPages = [];
+                    pendPrinted = [];
+                    units.push(u);
+                });
+            });
+
+            if (units.length === 0) units.push({ type: 'clause', text: '', pages: [], printed: [] });
+            if (docUnitsCache.size > 12) docUnitsCache.clear();
+            docUnitsCache.set(sig, units);
+            return units;
+        }
+
+        function docPageCount(doc) {
+            return doc.pageCount || doc.pages.length;
+        }
+
+        function stripWs(s) {
+            return String(s || '').replace(/\s+/g, '');
+        }
+
+        /* 點目錄條目 → 跳到對應位置 */
+        function jumpFromToc(title, pageNo) {
+            const container = document.getElementById('readerContentContainer');
+            const key = stripWs(title);
+            const targets = Array.from(container.querySelectorAll('[data-body="1"]'));
+            let startIdx = targets.findIndex(el => (' ' + el.dataset.printed + ' ').includes(' ' + pageNo + ' '));
+            if (startIdx === -1) {
+                startIdx = targets.findIndex(el => (' ' + el.dataset.pages + ' ').includes(' ' + pageNo + ' '));
+            }
+
+            const matchTitle = (el) => {
+                const t = stripWs(el.classList.contains('chapter-banner') ? el.textContent : (el.querySelector('.clause-article-heading') || {}).textContent);
+                return t && (t === key || (key.startsWith(t) && t.length >= 3));
+            };
+
+            let found = null;
+            if (startIdx !== -1) {
+                for (let i = startIdx; i < Math.min(targets.length, startIdx + 40); i++) {
+                    if (matchTitle(targets[i])) { found = targets[i]; break; }
+                }
+                if (!found) found = targets[startIdx];
+            } else {
+                found = targets.find(matchTitle) || null;
+            }
+
+            if (!found) {
+                showToast('找不到對應位置');
+                return;
+            }
+            found.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            found.classList.remove('jump-flash');
+            void found.offsetWidth;
+            found.classList.add('jump-flash');
+        }
+
         function renderReaderContent(doc, searchStr) {
             const container = document.getElementById('readerContentContainer');
             container.innerHTML = '';
             const keywords = parseKeywords(searchStr);
+            const units = buildDocUnits(doc);
 
             if (isEditingDocText) {
-                const textareas = [];
-                for (const page of doc.pages) {
-                    const pageSec = document.createElement('div');
-                    pageSec.className = 'page-section';
-
-                    if (doc.pages.length > 1) {
-                        const div = document.createElement('div');
-                        div.className = 'page-divider';
-                        div.textContent = `編輯第 ${page.pageNumber} 頁 / 共 ${doc.pages.length} 頁`;
-                        pageSec.appendChild(div);
-                    }
-
+                const items = [];
+                const wrap = document.createElement('div');
+                wrap.className = 'page-section';
+                units.forEach((u, idx) => {
                     const card = document.createElement('div');
                     card.className = 'article-card';
                     const ta = document.createElement('textarea');
                     ta.className = 'inline-edit-textarea';
-                    ta.value = reflowRegulationText(page.text);
+                    ta.value = u.text;
+                    ta.rows = Math.min(14, Math.max(2, u.text.split('\n').length + 1));
                     card.appendChild(ta);
-                    textareas.push({ page, ta });
-                    pageSec.appendChild(card);
-                    container.appendChild(pageSec);
-                }
+                    wrap.appendChild(card);
+                    items.push({ u, ta });
+                });
+                container.appendChild(wrap);
 
                 const actionBar = document.createElement('div');
                 actionBar.className = 'inline-edit-actions';
@@ -2588,15 +2726,31 @@
                 });
 
                 document.getElementById('saveEditDocBtn').addEventListener('click', async () => {
-                    for (const item of textareas) {
-                        item.page.text = item.ta.value;
+                    const origCount = docPageCount(doc);
+                    const newPages = [];
+                    items.forEach(({ u, ta }) => {
+                        const txt = ta.value.trim();
+                        if (!txt) return;
+                        newPages.push({
+                            pageNumber: newPages.length + 1,
+                            text: txt,
+                            exact: true,
+                            printedList: u.printed || [],
+                            srcPages: u.pages || []
+                        });
+                    });
+                    if (newPages.length === 0) {
+                        showToast('內容不能全部清空', 'error');
+                        return;
                     }
+                    doc.pages = newPages;
+                    doc.pageCount = origCount;
                     doc.updatedAt = new Date().toLocaleDateString('zh-TW');
                     doc.isRecentlyUpdated = true;
                     await dbPut(STORE_DOCS, doc);
                     sortDocuments();
                     isEditingDocText = false;
-                    document.getElementById('readerDocMetaText').textContent = `共 ${doc.pages.length} 頁・更新日期：${doc.updatedAt}`;
+                    document.getElementById('readerDocMetaText').textContent = `共 ${docPageCount(doc)} 頁・更新日期：${doc.updatedAt}`;
                     document.getElementById('readerUpdatedBadge').classList.remove('hidden');
                     renderReaderContent(doc, readerQuery);
                     showToast('已儲存校正後的內文', 'success');
@@ -2604,57 +2758,58 @@
                 return;
             }
 
-            for (const page of doc.pages) {
-                const pageSec = document.createElement('div');
-                pageSec.className = 'page-section';
+            const flow = document.createElement('div');
+            flow.className = 'page-section';
 
-                if (doc.pages.length > 1) {
-                    const div = document.createElement('div');
-                    div.className = 'page-divider';
-                    div.textContent = `第 ${page.pageNumber} 頁 / 共 ${doc.pages.length} 頁`;
-                    pageSec.appendChild(div);
+            for (const u of units) {
+                if (!u.text) continue;
+                const dataAttrs = (el) => {
+                    el.setAttribute('data-body', '1');
+                    el.dataset.pages = (u.pages || []).join(' ');
+                    el.dataset.printed = (u.printed || []).join(' ');
+                };
+
+                if (u.type === 'chapter') {
+                    const banner = document.createElement('div');
+                    banner.className = 'chapter-banner' + (u.level === 'minor' ? ' sub-section' : '');
+                    banner.innerHTML = highlightKeywords(u.text, keywords);
+                    dataAttrs(banner);
+                    flow.appendChild(banner);
+                    continue;
                 }
 
-                const units = parsePageUnits(page.text);
+                const blockText = u.text;
+                const card = document.createElement('article');
+                card.className = 'article-card';
+                dataAttrs(card);
+                card.innerHTML = `
+                    <div class="article-card-actions">
+                        <button type="button" class="article-mini-btn copy-btn" title="複製此段" aria-label="複製此段">${svgIcon('copy', 16)}</button>
+                    </div>
+                    <div class="clause-structured-body">${renderStructuredClauseHtml(blockText, keywords)}</div>
+                `;
 
-                for (const u of units) {
-                    if (u.type === 'chapter') {
-                        const banner = document.createElement('div');
-                        banner.className = 'chapter-banner' + (u.level === 'minor' ? ' sub-section' : '');
-                        banner.innerHTML = highlightKeywords(u.text, keywords);
-                        pageSec.appendChild(banner);
-                        continue;
+                const copyBtn = card.querySelector('.copy-btn');
+                copyBtn.addEventListener('click', async () => {
+                    const ok = await copyToClipboard(blockText);
+                    if (ok) {
+                        copyBtn.innerHTML = svgIcon('check', 16);
+                        copyBtn.classList.add('copied');
+                        showToast('已複製此段文字', 'success');
+                        setTimeout(() => {
+                            copyBtn.innerHTML = svgIcon('copy', 16);
+                            copyBtn.classList.remove('copied');
+                        }, 1600);
                     }
+                });
 
-                    const blockText = u.text;
-                    const card = document.createElement('article');
-                    card.className = 'article-card';
-                    card.innerHTML = `
-                        <div class="article-card-actions">
-                            <button type="button" class="article-mini-btn copy-btn" title="複製此段" aria-label="複製此段">${svgIcon('copy', 16)}</button>
-                        </div>
-                        <div class="clause-structured-body">${renderStructuredClauseHtml(blockText, keywords)}</div>
-                    `;
+                card.querySelectorAll('.toc-line[data-toc-page]').forEach(row => {
+                    row.addEventListener('click', () => jumpFromToc(row.dataset.tocTitle, Number(row.dataset.tocPage)));
+                });
 
-                    const copyBtn = card.querySelector('.copy-btn');
-                    copyBtn.addEventListener('click', async () => {
-                        const ok = await copyToClipboard(blockText);
-                        if (ok) {
-                            copyBtn.innerHTML = svgIcon('check', 16);
-                            copyBtn.classList.add('copied');
-                            showToast('已複製此段文字', 'success');
-                            setTimeout(() => {
-                                copyBtn.innerHTML = svgIcon('copy', 16);
-                                copyBtn.classList.remove('copied');
-                            }, 1600);
-                        }
-                    });
-
-                    pageSec.appendChild(card);
-                }
-
-                container.appendChild(pageSec);
+                flow.appendChild(card);
             }
+            container.appendChild(flow);
 
             readerMatches = Array.from(container.querySelectorAll('mark.hl-match'));
             if (keywords.length > 0) {
@@ -2696,7 +2851,7 @@
             readerQuery = initialQuery || '';
 
             document.getElementById('readerDocTitle').textContent = cleanDisplayTitle(doc.title);
-            document.getElementById('readerDocMetaText').textContent = `共 ${doc.pages.length} 頁・更新日期：${doc.updatedAt}`;
+            document.getElementById('readerDocMetaText').textContent = `共 ${docPageCount(doc)} 頁・更新日期：${doc.updatedAt}`;
             document.getElementById('readerOcrBadge').classList.toggle('hidden', !doc.isOcr);
             document.getElementById('readerUpdatedBadge').classList.toggle('hidden', !doc.isRecentlyUpdated);
             document.getElementById('readerMenuPanel').classList.add('hidden');
@@ -2781,7 +2936,8 @@
                     if (item && item.title && Array.isArray(item.pages)) {
                         const cleanPages = item.pages.map((p, idx) => ({
                             pageNumber: p.pageNumber || (idx + 1),
-                            text: p.text || ''
+                            text: p.text || '',
+                            ...(p.exact ? { exact: true, printedList: p.printedList || [], srcPages: p.srcPages || [] } : {})
                         }));
                         const cleanedTitle = cleanDisplayTitle(String(item.title));
                         const doc = normalizeDoc({
@@ -2794,6 +2950,7 @@
                             starred: item.starred,
                             updatedAt: item.updatedAt || item.uploadedAt || new Date().toLocaleDateString('zh-TW'),
                             isRecentlyUpdated: Boolean(item.isRecentlyUpdated),
+                            ...(item.pageCount ? { pageCount: item.pageCount } : {}),
                             pages: cleanPages
                         });
 
@@ -3156,7 +3313,7 @@
             document.getElementById('copyFullDocBtn').addEventListener('click', async () => {
                 const doc = documents.find(d => d.id === activeDocId);
                 if (!doc) return;
-                const fullText = `${cleanDisplayTitle(doc.title)}\n\n` + doc.pages.map(p => reflowRegulationText(p.text)).join('\n\n');
+                const fullText = `${cleanDisplayTitle(doc.title)}\n\n` + buildDocUnits(doc).map(u => u.text).join('\n\n');
                 const ok = await copyToClipboard(fullText);
                 if (ok) {
                     const btn = document.getElementById('copyFullDocBtn');
