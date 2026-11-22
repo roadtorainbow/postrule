@@ -1054,6 +1054,18 @@
 .dock-grip{touch-action:none;cursor:grab;width:26px;height:38px;display:inline-flex;align-items:center;justify-content:center;color:#9a9a9a;flex-shrink:0;-webkit-user-select:none;user-select:none}
 .bottom-search-dock.moving{box-shadow:0 10px 28px rgba(0,0,0,.28)}
 .bottom-search-dock.moving .dock-grip{color:#1d5a9a}
+
+.search-fab{position:fixed;left:0;top:0;width:54px;height:54px;border-radius:50%;border:none;background:#1d5a9a;color:#fff;box-shadow:0 6px 18px rgba(0,0,0,.30);z-index:90;display:flex;align-items:center;justify-content:center;touch-action:none;-webkit-user-select:none;user-select:none;cursor:pointer;padding:0}
+.search-fab.hidden{display:none}
+.search-fab.snap{transition:left .2s ease,top .2s ease}
+.search-fab:active{transform:scale(.96)}
+.fab-dot{position:absolute;top:6px;right:6px;width:12px;height:12px;border-radius:50%;background:#e8a317;border:2px solid #fff}
+.dock-collapse{flex-shrink:0;width:34px;height:38px;border:none;background:transparent;color:#777;display:inline-flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+
+.bottom-search-inner .dock-input-wrap{order:1}
+.bottom-search-inner .dock-reader-nav{order:2}
+.bottom-search-inner .dock-collapse{order:0}
+.bottom-search-dock.btn-right .dock-collapse{order:3}
     </style>
 </head>
 <body>
@@ -1228,9 +1240,11 @@
 
     </main>
 
-    <div id="bottomSearchDock" class="bottom-search-dock">
+    <button type="button" id="searchFab" class="search-fab" aria-label="搜尋"><span data-icon="search" data-size="24"></span><span id="fabDot" class="fab-dot hidden"></span></button>
+
+    <div id="bottomSearchDock" class="bottom-search-dock hidden">
         <div class="bottom-search-inner">
-            <span id="dockGrip" class="dock-grip" data-icon="grip" data-size="20" title="按住拖曳移動，點兩下回到最下面" aria-label="拖曳移動搜尋列"></span>
+            <button type="button" id="dockCollapseBtn" class="dock-collapse" title="收合成圓球" aria-label="收合搜尋"><span data-icon="chevdown" data-size="20"></span></button>
             <div class="dock-input-wrap">
                 <span class="dock-search-icon" data-icon="search" data-size="17"></span>
                 <input type="text" id="dockSearchInput" class="dock-search-input" placeholder="搜尋法規、公文..." autocomplete="off">
@@ -1646,13 +1660,20 @@
             s = s.replace(SPACED_RUN_RE, (m, pre, run) => pre + run.replace(/[ \t]+/g, ''));
 
             // 5. 全形標點前後多餘空格、「1 、」→「1、」
-            s = s.replace(/[ \t]+([、，。；：！？）」』])/g, '$1');
-            s = s.replace(/([（「『])[ \t]+/g, '$1');
+            s = s.replace(/[ \t]+([、，。；：！？）」』〕])/g, '$1');
+            s = s.replace(/([（「『〔])[ \t]+/g, '$1');
             s = s.replace(/^(\d{1,3})[ \t]+([、.．])/gm, '$1$2');
 
             // 6. 年月日、頁、條 與數字之間多餘的空格（115 年 9 月 → 115年9月）
             s = s.replace(/(\d)[ \t]+(?=[年月日頁條項款目號元％%])/g, '$1');
             s = s.replace(/([第共年月日])[ \t]+(?=\d)/g, '$1');
+
+            // 7. 長句中文字之間零散的空格（標題行不動）
+            s = s.split('\n').map(line => {
+                if (line.length < 20) return line;
+                if (/^\s*(第\s*[一二三四五六七八九十百千0-9]+\s*[編章節款目條]|附\s*則|總\s*則)/.test(line)) return line;
+                return line.replace(/([\u3400-\u9fff）〕」』，。；：、])[ \t]+(?=[\u3400-\u9fff（〔「『])/g, '$1');
+            }).join('\n');
 
             return s;
         }
@@ -1666,6 +1687,36 @@
             if (reflowCache.size > 4000) reflowCache.clear();
             reflowCache.set(rawText, out);
             return out;
+        }
+
+        function bracketDepth(s) {
+            let d = 0;
+            for (const ch of s.slice(-150)) {
+                if ('（(「『〔['.includes(ch)) d++;
+                else if ('）)」』〕]'.includes(ch)) d = Math.max(0, d - 1);
+            }
+            return d;
+        }
+
+        function endsSentence(line) {
+            return /[。；：！？][」』）)〕\]]*$/.test(line) && bracketDepth(line) === 0;
+        }
+
+        const ITEM_FIRST_RE = /^(一、|（一）|\(一\)|1[、.．]|（1）|\(1\)|①)/;
+        const ITEM_ANY_RE = /^([一二三四五六七八九十]+、|（[一二三四五六七八九十0-9]+）|\([一二三四五六七八九十0-9]+\)|[0-9]+[、.．]|[①②③④⑤⑥⑦⑧⑨⑩])/;
+        const KEYWORD_PARA_RE = /^(附\s*則|總\s*則|說\s*明|主\s*旨|依\s*據|公告事項|辦\s*法)：?/;
+
+        function isParaStart(curr, prevEnded, prevLen) {
+            if (KEYWORD_PARA_RE.test(curr)) return true;
+            let m = curr.match(/^第\s*[一二三四五六七八九十百千0-9]+\s*條(?:之[一二三四五六七八九十0-9]+)?(.?)/);
+            if (m) return ARTICLE_ONLY_REGEX.test(curr) || /[\s　：:]/.test(m[1] || '') || prevEnded;
+            if (/^第\s*[一二三四五六七八九十百千0-9]+\s*[編章節]/.test(curr)) {
+                return (curr.length <= 36 && !/[。，；]/.test(curr)) || prevEnded;
+            }
+            if (/^第\s*[一二三四五六七八九十百千0-9]+\s*[款目]/.test(curr)) return prevEnded;
+            if (ITEM_FIRST_RE.test(curr)) return true;
+            if (ITEM_ANY_RE.test(curr)) return prevEnded || prevLen < 20;
+            return false;
         }
 
         function reflowRegulationTextCore(rawText) {
@@ -1708,13 +1759,15 @@
                     continue;
                 }
 
-                const isNewPara = newParagraphRegex.test(curr);
-                const prevIsHeading = prev.length <= 36 && (
+                const lastLogical = result.slice(result.lastIndexOf('\n') + 1);
+                const prevEndedSentenceX = endsSentence(lastLogical);
+                const isNewPara = isParaStart(curr, prevEndedSentenceX, prev.length);
+                const prevIsHeading = prev.length <= 36 && !/[。，；]/.test(prev) && (
                     CHAPTER_MAJOR_REGEX.test(prev) ||
                     SECTION_MINOR_REGEX.test(prev) ||
                     ARTICLE_ONLY_REGEX.test(prev)
                 );
-                const prevEndedSentence = /[。；：！？]$/.test(prev);
+                const prevEndedSentence = prevEndedSentenceX;
 
                 if (isNewPara || prevIsHeading || prevEndedSentence) {
                     result += '\n' + curr;
@@ -1753,14 +1806,14 @@
                 if (!trimmed) continue;
 
                 // 遇到「第X編／第X章」大標：獨立切出大標橫幅
-                if (CHAPTER_MAJOR_REGEX.test(trimmed) && trimmed.length <= 36) {
+                if (CHAPTER_MAJOR_REGEX.test(trimmed) && trimmed.length <= 36 && !/[。，；：]/.test(trimmed)) {
                     flushClause();
                     units.push({ type: 'chapter', level: 'major', text: trimmed });
                     continue;
                 }
 
                 // 遇到「第X節／附則／總則」中標：獨立切出次標橫幅
-                if (SECTION_MINOR_REGEX.test(trimmed) && trimmed.length <= 36) {
+                if (SECTION_MINOR_REGEX.test(trimmed) && trimmed.length <= 36 && !/[。，；：]/.test(trimmed)) {
                     flushClause();
                     units.push({ type: 'chapter', level: 'minor', text: trimmed });
                     continue;
@@ -2194,6 +2247,7 @@
             plus: 'M12 5v14M5 12h14',
             copy: 'M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z',
             check: 'M5 13l4 4L19 7',
+            chevdown: 'M6 9l6 6 6-6',
             trash: 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
         };
 
@@ -2257,7 +2311,13 @@
             document.getElementById('favNavBtn').classList.toggle('active', isFavPageActive && !activeDocId);
         }
 
+        function updateFabDot() {
+            const q = activeDocId ? readerQuery : globalQuery;
+            document.getElementById('fabDot').classList.toggle('hidden', !(q && q.trim().length > 0));
+        }
+
         function syncBottomDockWithMode() {
+            updateFabDot();
             const input = document.getElementById('dockSearchInput');
             const clearBtn = document.getElementById('dockClearBtn');
             const readerNav = document.getElementById('dockReaderNav');
@@ -2710,7 +2770,7 @@
                         } else if (!u.isToc && !prev.isToc) {
                             const firstLine = u.text.split('\n')[0].trim();
                             if (!ARTICLE_HEADER_REGEX.test(firstLine)) {
-                                const sep = (CONT_START_RE.test(firstLine) || /[。；：！？]$/.test(prev.text)) ? '\n' : '';
+                                const sep = endsSentence(prev.text.slice(prev.text.lastIndexOf('\n') + 1)) ? '\n' : '';
                                 prev.text += sep + u.text;
                                 merged = true;
                             }
@@ -3457,6 +3517,7 @@
             dockInput.addEventListener('input', () => {
                 if (activeDocId) {
                     readerQuery = dockInput.value;
+                    updateFabDot();
                     const doc = documents.find(d => d.id === activeDocId);
                     if (doc) {
                         renderReaderContent(doc, readerQuery);
@@ -3464,6 +3525,7 @@
                     }
                 } else {
                     globalQuery = dockInput.value;
+                    updateFabDot();
                     renderCurrentView();
                 }
             });
@@ -3484,58 +3546,120 @@
             document.getElementById('dockPrevBtn').addEventListener('click', () => highlightActiveMatch(currentMatchIdx - 1, true));
             document.getElementById('dockNextBtn').addEventListener('click', () => highlightActiveMatch(currentMatchIdx + 1, true));
 
-            /* ----- 可移動的搜尋列 ----- */
+            /* ----- 懸浮搜尋球：點一下展開搜尋框，可拖到任何位置 ----- */
             const dock = document.getElementById('bottomSearchDock');
-            const dockGrip = document.getElementById('dockGrip');
-            let dockRatio = await loadPreference('dock_top_ratio', null);
-            if (typeof dockRatio !== 'number') dockRatio = null;
+            const fab = document.getElementById('searchFab');
+            const FAB = 54;
+            const MARGIN = 8;
+            let fabPos = await loadPreference('fab_pos', null);
+            if (!fabPos || typeof fabPos.fx !== 'number' || typeof fabPos.fy !== 'number') fabPos = null;
+
+            const vpSize = () => {
+                const vv = window.visualViewport;
+                return { w: vv ? vv.width : window.innerWidth, h: vv ? vv.height : window.innerHeight, ox: vv ? vv.offsetLeft : 0, oy: vv ? vv.offsetTop : 0 };
+            };
+
+            const placeFab = () => {
+                const v = vpSize();
+                let left, top;
+                if (!fabPos) {
+                    left = v.w - FAB - 14;
+                    top = v.h - FAB - 90;
+                } else {
+                    left = MARGIN + fabPos.fx * (v.w - FAB - MARGIN * 2);
+                    top = MARGIN + fabPos.fy * (v.h - FAB - MARGIN * 2);
+                }
+                left = Math.min(Math.max(MARGIN, left), v.w - FAB - MARGIN);
+                top = Math.min(Math.max(MARGIN, top), v.h - FAB - MARGIN);
+                fab.style.left = (left + v.ox) + 'px';
+                fab.style.top = (top + v.oy) + 'px';
+            };
+
+            let anchorTop = null;
 
             const positionDock = () => {
-                const vv = window.visualViewport;
-                const vh = vv ? vv.height : window.innerHeight;
-                const off = vv ? vv.offsetTop : 0;
+                const v = vpSize();
                 const h = dock.offsetHeight;
-                let top;
-                if (dockRatio === null) top = vh - h - 10;
-                else top = Math.min(Math.max(8, dockRatio * vh), vh - h - 8);
-                dock.style.top = (top + off) + 'px';
+                const base = anchorTop === null ? (v.h - h - 10) : (anchorTop + FAB / 2 - h / 2);
+                const top = Math.min(Math.max(8, base), v.h - h - 8);
+                dock.style.top = (top + v.oy) + 'px';
                 dock.style.bottom = 'auto';
+                dock.classList.toggle('btn-right', !fabPos || fabPos.fx >= 0.5);
             };
-            positionDock();
-            window.addEventListener('resize', positionDock);
-            if (window.visualViewport) {
-                window.visualViewport.addEventListener('resize', positionDock);
-                window.visualViewport.addEventListener('scroll', positionDock);
-            }
-            document.getElementById('dockSearchInput').addEventListener('focus', () => setTimeout(positionDock, 150));
 
-            dockGrip.addEventListener('pointerdown', (e) => {
+            const openSearch = () => {
+                const v = vpSize();
+                anchorTop = parseFloat(fab.style.top) - v.oy;
+                fab.classList.add('hidden');
+                dock.classList.remove('hidden');
+                positionDock();
+                document.getElementById('dockSearchInput').focus();
+                setTimeout(positionDock, 200);
+                setTimeout(positionDock, 450);
+            };
+
+            const closeSearch = () => {
+                document.getElementById('dockSearchInput').blur();
+                dock.classList.add('hidden');
+                fab.classList.remove('hidden');
+                placeFab();
+            };
+
+            const relayout = () => {
+                placeFab();
+                if (!dock.classList.contains('hidden')) positionDock();
+            };
+            placeFab();
+            window.addEventListener('resize', relayout);
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', relayout);
+                window.visualViewport.addEventListener('scroll', relayout);
+            }
+
+            document.getElementById('dockCollapseBtn').addEventListener('click', closeSearch);
+            document.addEventListener('click', (e) => {
+                if (dock.classList.contains('hidden')) return;
+                if (dock.contains(e.target) || fab.contains(e.target)) return;
+                if (e.target.closest('.modal-overlay, #confirmModal, #folderInputModal')) return;
+                closeSearch();
+            });
+            document.getElementById('dockSearchInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') e.target.blur();
+            });
+
+            fab.addEventListener('pointerdown', (e) => {
                 e.preventDefault();
-                dock.classList.add('moving');
+                const startX = e.clientX, startY = e.clientY;
+                let moved = false;
+                fab.classList.remove('snap');
                 const onMove = (ev) => {
-                    const vv = window.visualViewport;
-                    const vh = vv ? vv.height : window.innerHeight;
-                    const off = vv ? vv.offsetTop : 0;
-                    const h = dock.offsetHeight;
-                    const top = Math.min(Math.max(8, ev.clientY - off - h / 2), vh - h - 8);
-                    dockRatio = top / vh;
-                    positionDock();
+                    if (!moved && Math.hypot(ev.clientX - startX, ev.clientY - startY) < 7) return;
+                    moved = true;
+                    const v = vpSize();
+                    const left = ev.clientX - v.ox - FAB / 2;
+                    const top = ev.clientY - v.oy - FAB / 2;
+                    fabPos = {
+                        fx: Math.min(1, Math.max(0, (left - MARGIN) / (v.w - FAB - MARGIN * 2))),
+                        fy: Math.min(1, Math.max(0, (top - MARGIN) / (v.h - FAB - MARGIN * 2)))
+                    };
+                    placeFab();
                 };
                 const onEnd = () => {
                     window.removeEventListener('pointermove', onMove);
                     window.removeEventListener('pointerup', onEnd);
                     window.removeEventListener('pointercancel', onEnd);
-                    dock.classList.remove('moving');
-                    savePreference('dock_top_ratio', dockRatio);
+                    if (moved) {
+                        fabPos.fx = fabPos.fx < 0.5 ? 0 : 1;
+                        fab.classList.add('snap');
+                        placeFab();
+                        savePreference('fab_pos', fabPos);
+                    } else {
+                        openSearch();
+                    }
                 };
                 window.addEventListener('pointermove', onMove);
                 window.addEventListener('pointerup', onEnd);
                 window.addEventListener('pointercancel', onEnd);
-            });
-            dockGrip.addEventListener('dblclick', () => {
-                dockRatio = null;
-                savePreference('dock_top_ratio', null);
-                positionDock();
             });
 
             ensurePdfJsLoaded();
