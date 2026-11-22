@@ -2,62 +2,57 @@
 <html lang="zh-Hant" data-font-scale="large">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>法規與公文檢索系統</title>
     <style>
-        /* =========================================================
-           1. 純原生 CSS 設計系統（零外部框架依賴、高對比、層級分明）
-           ========================================================= */
         :root {
-            --bg-page: #f4f6f9;
+            --bg-page: #f6f5f2;
             --bg-card: #ffffff;
-            --bg-subtle: #f1f5f9;
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --text-muted: #64748b;
-            --border-color: #cbd5e1;
-            --border-light: #e2e8f0;
-            --brand-primary: #1e40af;
-            --brand-hover: #1e3a8a;
-            --brand-soft: #eff6ff;
-            --brand-border: #bfdbfe;
-            --danger-color: #dc2626;
-            --danger-soft: #fef2f2;
-            --danger-border: #fecaca;
-            --success-color: #059669;
-            --success-soft: #ecfdf5;
-            --success-border: #a7f3d0;
-            --amber-star: #f59e0b;
-            --amber-soft: #fffbeb;
-            --amber-border: #fde68a;
-            --folder-color: #d97706;
+            --bg-subtle: #efede8;
+            --text-primary: #1c1c1a;
+            --text-secondary: #57564f;
+            --text-muted: #87857d;
+            --border-color: #d9d6ce;
+            --border-light: #e8e6df;
+            --brand-primary: #1d5a9a;
+            --brand-hover: #174a80;
+            --brand-soft: #e9f1f9;
+            --brand-border: #b9d3ec;
+            --danger-color: #b42318;
+            --danger-soft: #fdeceb;
+            --danger-border: #f3c3bf;
+            --success-color: #2b7a4b;
+            --success-soft: #e9f5ee;
+            --success-border: #b8dfc7;
+            --amber-star: #c98a10;
+            --amber-soft: #fbf2de;
+            --amber-border: #efd9a3;
+            --folder-color: #a8741a;
             --radius-lg: 14px;
             --radius-md: 10px;
             --radius-sm: 8px;
-            --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
-            --shadow-bar: 0 -4px 16px rgba(15, 23, 42, 0.08);
+            --shadow-bar: 0 -2px 12px rgba(28, 28, 26, 0.06);
 
-            /* 動態閱讀字級變數 */
             --reader-font-size: 20px;
-            --reader-line-height: 1.85;
+            --reader-line-height: 1.75;
             --list-title-size: 17px;
         }
 
         html[data-font-scale="normal"] {
             --reader-font-size: 16px;
-            --reader-line-height: 1.75;
+            --reader-line-height: 1.7;
             --list-title-size: 15px;
         }
 
         html[data-font-scale="large"] {
             --reader-font-size: 20px;
-            --reader-line-height: 1.85;
+            --reader-line-height: 1.75;
             --list-title-size: 17px;
         }
 
         html[data-font-scale="xlarge"] {
             --reader-font-size: 24px;
-            --reader-line-height: 1.95;
+            --reader-line-height: 1.8;
             --list-title-size: 19px;
         }
 
@@ -69,7 +64,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", Roboto, sans-serif;
             background-color: var(--bg-page);
             color: var(--text-primary);
             min-height: 100vh;
@@ -79,6 +74,7 @@
 
         button, input, textarea, select {
             font-family: inherit;
+            color: inherit;
         }
 
         button {
@@ -91,57 +87,44 @@
             display: none !important;
         }
 
-        /* =========================================================
-           2. 頂部導覽列
-           ========================================================= */
+        /* ---------- 頂部列 ---------- */
         .app-header {
             background-color: var(--bg-card);
             border-bottom: 1px solid var(--border-light);
             position: sticky;
             top: 0;
             z-index: 60;
-            box-shadow: var(--shadow-sm);
         }
 
         .header-inner {
-            max-width: 920px;
+            max-width: 760px;
             margin: 0 auto;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 6px;
+            gap: 8px;
             padding: 8px 12px;
         }
 
         .brand-btn {
             font-size: 17px;
             font-weight: 800;
-            color: var(--text-primary);
             white-space: nowrap;
-            flex-shrink: 0;
             padding: 4px 2px;
-        }
-
-        .brand-btn:hover {
-            color: var(--brand-primary);
         }
 
         .header-controls {
             display: flex;
             align-items: center;
-            gap: 5px;
-            flex-shrink: 0;
+            gap: 6px;
         }
 
         .font-pill-group {
             display: inline-flex;
-            align-items: center;
             background-color: var(--bg-subtle);
-            border: 1px solid var(--border-light);
             border-radius: 10px;
             padding: 2px;
             gap: 2px;
-            flex-shrink: 0;
         }
 
         .font-pill-btn {
@@ -151,19 +134,19 @@
             padding: 5px 7px;
             border-radius: 8px;
             white-space: nowrap;
-            transition: background-color 0.15s, color 0.15s;
         }
 
         .font-pill-btn.active {
-            background-color: var(--brand-primary);
-            color: #ffffff;
-            font-weight: 700;
+            background-color: var(--bg-card);
+            color: var(--text-primary);
+            font-weight: 800;
+            box-shadow: 0 0 0 1px var(--border-color);
         }
 
         .icon-btn {
             position: relative;
-            width: 34px;
-            height: 34px;
+            width: 36px;
+            height: 36px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -172,75 +155,137 @@
             background-color: var(--bg-card);
             color: var(--text-primary);
             flex-shrink: 0;
-            overflow: hidden;
-            transition: background-color 0.15s, border-color 0.15s;
         }
 
-        .icon-btn:hover {
+        .icon-btn:active {
             background-color: var(--bg-subtle);
-            border-color: #94a3b8;
         }
 
-        .icon-btn.primary {
-            background-color: var(--brand-primary);
-            border-color: var(--brand-primary);
-            color: #ffffff;
+        .icon-btn.active,
+        .icon-btn.star-toggle.on {
+            background-color: var(--amber-soft);
+            border-color: var(--amber-border);
+            color: var(--amber-star);
         }
 
-        .icon-btn.primary:hover {
-            background-color: var(--brand-hover);
-        }
-
-        .icon-btn.brand-outline {
-            color: var(--brand-primary);
-            border-color: var(--brand-border);
-            background-color: var(--brand-soft);
-        }
-
-        .icon-btn.danger-outline {
+        .icon-btn.danger {
             color: var(--danger-color);
             border-color: var(--danger-border);
             background-color: var(--danger-soft);
         }
 
-        .icon-btn.success-solid {
-            background-color: var(--success-color);
-            border-color: var(--success-color);
-            color: #ffffff;
-        }
-
-        .icon-btn.star-nav-btn {
-            color: #b45309;
-            border-color: var(--amber-border);
-            background-color: var(--amber-soft);
-            font-size: 17px;
-            font-weight: 700;
-        }
-
-        .icon-btn.star-nav-btn.active {
-            background-color: var(--amber-star);
-            border-color: var(--amber-star);
-            color: #ffffff;
-        }
-
-        .native-file-overlay {
+        .count-dot {
             position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            cursor: pointer;
-            z-index: 5;
-            font-size: 0;
+            top: -6px;
+            right: -6px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border-radius: 999px;
+            background-color: var(--amber-star);
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        /* =========================================================
-           3. 主容器（底部預留固定搜尋列空間）
-           ========================================================= */
+        /* ---------- 選單 ---------- */
+        .menu-wrap {
+            position: relative;
+        }
+
+        .menu-panel {
+            position: absolute;
+            right: 0;
+            top: calc(100% + 8px);
+            z-index: 90;
+            min-width: 250px;
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 10px 28px rgba(28, 28, 26, 0.16);
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .menu-item {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 12px 10px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .menu-item:active {
+            background-color: var(--bg-subtle);
+        }
+
+        .menu-item.danger {
+            color: var(--danger-color);
+        }
+
+        .menu-note {
+            font-size: 12px;
+            color: var(--text-muted);
+            padding: 2px 10px 8px;
+            line-height: 1.5;
+        }
+
+        .menu-sep {
+            height: 1px;
+            background-color: var(--border-light);
+            margin: 4px 2px;
+        }
+
+        .menu-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px 10px;
+        }
+
+        .menu-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .menu-select {
+            height: 34px;
+            max-width: 160px;
+            padding: 0 6px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-card);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .menu-file {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        /* ---------- 主容器 ---------- */
         .main-container {
-            max-width: 920px;
+            max-width: 760px;
             margin: 0 auto;
-            padding: 12px 12px 92px 12px;
+            padding: 14px 12px 96px 12px;
         }
 
         .progress-panel {
@@ -252,7 +297,6 @@
             display: flex;
             flex-direction: column;
             gap: 6px;
-            box-shadow: var(--shadow-sm);
         }
 
         .progress-text {
@@ -264,7 +308,7 @@
         .progress-track {
             width: 100%;
             height: 6px;
-            background-color: #dbeafe;
+            background-color: #d6e5f4;
             border-radius: 4px;
             overflow: hidden;
         }
@@ -276,332 +320,184 @@
             transition: width 0.2s ease;
         }
 
-        /* =========================================================
-           4. 封面資料夾總覽 & 重要法條收藏入口卡
-           ========================================================= */
-        .section-bar {
+        /* ---------- 儲匯／郵務頁籤 ---------- */
+        .seg {
+            display: flex;
+            gap: 4px;
+            background-color: var(--bg-subtle);
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 14px;
+        }
+
+        .seg button {
+            flex: 1;
+            height: 42px;
+            border-radius: 9px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .seg button.on {
+            background-color: var(--bg-card);
+            color: var(--text-primary);
+            font-weight: 800;
+            box-shadow: 0 0 0 1px var(--border-color);
+        }
+
+        .seg-count {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        /* ---------- 區塊標題與清單 ---------- */
+        .section-head {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 8px;
-            margin-bottom: 10px;
+            margin: 20px 2px 8px;
         }
 
-        .section-title {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--text-secondary);
+        .section-head:first-of-type {
+            margin-top: 4px;
         }
 
-        .cover-actions-group {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .star-collection-banner {
-            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-            border: 1px solid #fcd34d;
-            border-radius: var(--radius-lg);
-            padding: 13px 14px;
-            margin-bottom: 12px;
-            box-shadow: var(--shadow-sm);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            cursor: pointer;
-            transition: border-color 0.15s, transform 0.1s;
-        }
-
-        .star-collection-banner:active {
-            transform: scale(0.99);
-        }
-
-        .star-banner-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            min-width: 0;
-        }
-
-        .star-banner-icon {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            background-color: var(--amber-star);
-            color: #ffffff;
-            font-size: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .star-banner-title {
-            font-size: var(--list-title-size);
-            font-weight: 800;
-            color: #92400e;
-        }
-
-        .star-banner-sub {
-            font-size: 12px;
-            color: #b45309;
-            margin-top: 1px;
-        }
-
-        .star-banner-count {
-            background-color: #ffffff;
-            border: 1px solid #fcd34d;
-            color: #b45309;
+        .section-label {
             font-size: 13px;
-            font-weight: 800;
-            padding: 4px 10px;
-            border-radius: 999px;
-            white-space: nowrap;
+            font-weight: 700;
+            color: var(--text-muted);
+            letter-spacing: 0.02em;
         }
 
-        .batch-upload-label {
+        .text-btn {
             position: relative;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
-            height: 36px;
-            padding: 0 12px;
-            background-color: var(--brand-primary);
-            color: #ffffff;
-            border-radius: var(--radius-md);
-            font-size: 13px;
+            gap: 4px;
+            font-size: 14px;
             font-weight: 700;
-            white-space: nowrap;
-            flex-shrink: 0;
+            color: var(--brand-primary);
+            padding: 6px 8px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .text-btn:active {
+            background-color: var(--brand-soft);
+        }
+
+        .list {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
             overflow: hidden;
+        }
+
+        .row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px;
+            border-top: 1px solid var(--border-light);
             cursor: pointer;
-            transition: background-color 0.15s;
         }
 
-        .batch-upload-label:hover {
-            background-color: var(--brand-hover);
+        .row:first-child {
+            border-top: none;
         }
 
-        .folder-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 8px;
-        }
-
-        .folder-card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius-lg);
-            padding: 12px;
-            box-shadow: var(--shadow-sm);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            cursor: pointer;
-            transition: border-color 0.15s;
-        }
-
-        .folder-card:hover {
-            border-color: #93c5fd;
-        }
-
-        .folder-card-left {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            min-width: 0;
-            flex: 1;
-        }
-
-        .folder-icon-badge {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            background-color: var(--amber-soft);
-            border: 1px solid var(--amber-border);
-            color: var(--folder-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .folder-icon-badge.official {
-            background-color: var(--brand-soft);
-            border-color: var(--brand-border);
-            color: var(--brand-primary);
-        }
-
-        .folder-icon-badge.default-cat {
+        .row:active {
             background-color: var(--bg-subtle);
-            border-color: var(--border-color);
-            color: var(--text-secondary);
         }
 
-        .folder-info {
-            min-width: 0;
-            flex: 1;
-        }
-
-        .folder-name {
-            font-size: var(--list-title-size);
-            font-weight: 700;
-            color: var(--text-primary);
-            word-break: break-word;
-            line-height: 1.35;
-        }
-
-        .folder-count {
-            font-size: 12px;
+        .row-icon {
+            display: flex;
             color: var(--text-muted);
-            margin-top: 2px;
         }
 
-        .folder-del-btn {
-            width: 34px;
-            height: 34px;
-            border-radius: 8px;
-            color: #94a3b8;
-            background-color: transparent;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
+        .row.folder .row-icon {
+            color: var(--folder-color);
         }
 
-        .folder-del-btn:hover {
-            background-color: var(--danger-soft);
-            color: var(--danger-color);
-        }
-
-        /* =========================================================
-           5. 資料夾內清單、跨資料夾搜尋結果 & 重要法條收藏分頁
-           ========================================================= */
-        .folder-toolbar-card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius-lg);
-            padding: 10px 12px;
-            box-shadow: var(--shadow-sm);
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-        }
-
-        .folder-toolbar-left {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            min-width: 0;
-            flex: 1;
-        }
-
-        .folder-heading-wrap {
-            min-width: 0;
-            flex: 1;
-        }
-
-        .folder-heading {
-            font-size: calc(var(--list-title-size) + 1px);
-            font-weight: 800;
-            color: var(--text-primary);
-            word-break: break-word;
-            line-height: 1.3;
-        }
-
-        .folder-sub {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 2px;
-        }
-
-        .clear-filter-pill {
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--brand-primary);
-            background-color: var(--brand-soft);
-            border: 1px solid var(--brand-border);
-            padding: 5px 10px;
-            border-radius: 8px;
-            white-space: nowrap;
-        }
-
-        .doc-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .doc-card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-light);
-            border-radius: var(--radius-lg);
-            padding: 12px;
-            box-shadow: var(--shadow-sm);
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            cursor: pointer;
-            transition: border-color 0.15s;
-        }
-
-        .doc-card:hover {
-            border-color: #93c5fd;
-        }
-
-        .doc-card-body {
+        .row-main {
             flex: 1;
             min-width: 0;
         }
 
-        .doc-card-title {
+        .row-title {
             font-size: var(--list-title-size);
-            font-weight: 700;
-            color: var(--text-primary);
-            word-break: break-word;
+            font-weight: 600;
             line-height: 1.4;
+            word-break: break-word;
         }
 
-        .doc-card-meta {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 5px;
+        .row-sub {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
             gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
         }
 
-        .folder-move-select {
-            height: 26px;
-            max-width: 165px;
-            padding: 0 6px;
-            border-radius: 6px;
-            border: 1px solid var(--amber-border);
+        .row-chevron {
+            color: var(--text-muted);
+            display: flex;
+        }
+
+        .row-snippet {
+            margin-top: 8px;
+            padding: 8px 10px;
+            background-color: var(--bg-page);
+            border-left: 3px solid var(--brand-primary);
+            border-radius: 0 8px 8px 0;
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            word-break: break-word;
+        }
+
+        .empty-line {
+            padding: 22px 16px;
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.7;
+            white-space: pre-line;
+            cursor: default;
+        }
+
+        .star-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid var(--border-color);
+            background: transparent;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .star-btn.on {
             background-color: var(--amber-soft);
-            color: var(--folder-color);
-            font-size: 12px;
-            font-weight: 700;
-            outline: none;
-            cursor: pointer;
-        }
-
-        .folder-move-select.reader-select {
-            height: 34px;
-            max-width: 150px;
-            font-size: 12px;
-            border-radius: var(--radius-sm);
+            color: var(--amber-star);
+            border-color: var(--amber-border);
         }
 
         .badge-tag {
             font-size: 11px;
             font-weight: 700;
-            padding: 1px 6px;
+            padding: 1px 7px;
             border-radius: 6px;
         }
 
@@ -617,91 +513,88 @@
             border: 1px solid var(--success-border);
         }
 
-        .badge-star-count {
+        .badge-folder {
             background-color: var(--amber-soft);
-            color: #b45309;
+            color: var(--folder-color);
             border: 1px solid var(--amber-border);
         }
 
-        .doc-card-snippet {
-            margin-top: 8px;
-            padding: 8px 10px;
-            background-color: #f8fafc;
-            border-left: 3px solid var(--brand-primary);
-            border-radius: 0 8px 8px 0;
-            font-size: 14px;
-            color: var(--text-secondary);
-            line-height: 1.6;
-            word-break: break-word;
-        }
-
-        /* 重要法條收藏分頁內的單條卡片 */
-        .starred-clause-card {
+        /* ---------- 子頁工具列 ---------- */
+        .toolbar-card {
             background-color: var(--bg-card);
-            border: 1px solid #fde68a;
+            border: 1px solid var(--border-light);
             border-radius: var(--radius-lg);
-            padding: 13px;
-            box-shadow: var(--shadow-sm);
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .starred-clause-header {
+            padding: 10px 12px;
+            margin-bottom: 14px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 8px;
-            border-bottom: 1px solid var(--border-light);
-            padding-bottom: 6px;
         }
 
-        .starred-clause-source {
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--brand-primary);
-            cursor: pointer;
-            word-break: break-word;
-            line-height: 1.35;
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+            flex: 1;
         }
 
-        .starred-clause-source:hover {
-            text-decoration: underline;
-        }
-
-        .starred-clause-actions {
+        .toolbar-actions {
             display: flex;
             align-items: center;
             gap: 6px;
-            flex-shrink: 0;
         }
 
-        .starred-clause-text {
+        .heading-wrap {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .heading {
+            font-size: calc(var(--list-title-size) + 1px);
+            font-weight: 800;
+            line-height: 1.3;
+            word-break: break-word;
+        }
+
+        .heading-sub {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .result-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin: 2px 2px 10px;
+        }
+
+        .upload-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            height: 36px;
+            padding: 0 12px;
+            background-color: var(--brand-primary);
+            color: #ffffff;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
             cursor: pointer;
         }
 
-        .empty-state {
-            background-color: var(--bg-card);
-            border: 1px dashed var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: 32px 16px;
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 15px;
-            line-height: 1.6;
-            white-space: pre-line;
-        }
-
-        /* =========================================================
-           6. 閱讀模式（層級視覺化：編章節大標 vs 條號 vs 款目縮排）
-           ========================================================= */
+        /* ---------- 閱讀頁 ---------- */
         .reader-header-card {
             background-color: var(--bg-card);
             border: 1px solid var(--border-light);
             border-radius: var(--radius-lg);
             padding: 10px 12px;
-            box-shadow: var(--shadow-sm);
-            margin-bottom: 12px;
+            margin-bottom: 14px;
             display: flex;
             flex-direction: column;
             gap: 10px;
@@ -711,30 +604,32 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 5px;
-            width: 100%;
-            flex-wrap: wrap;
+            gap: 6px;
         }
 
         .reader-toolbar-right {
             display: flex;
             align-items: center;
-            gap: 5px;
-            flex-wrap: wrap;
+            gap: 6px;
         }
 
         .reader-title-block {
-            width: 100%;
             border-top: 1px solid var(--border-light);
             padding-top: 10px;
+        }
+
+        .reader-crumb {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--folder-color);
+            margin-bottom: 4px;
         }
 
         .reader-doc-title {
             font-size: calc(var(--list-title-size) + 2px);
             font-weight: 800;
-            color: var(--text-primary);
-            word-break: break-word;
             line-height: 1.4;
+            word-break: break-word;
         }
 
         .reader-doc-meta {
@@ -758,83 +653,52 @@
             margin: 0 0 6px 4px;
         }
 
-        /* 第一層大標：編、章、節、款、附則獨立橫幅 */
         .chapter-banner {
-            background-color: #e0e7ff;
-            border-left: 5px solid var(--brand-primary);
-            color: #1e3a8a;
+            background-color: var(--brand-soft);
+            border-left: 4px solid var(--brand-primary);
+            color: var(--brand-hover);
             padding: 10px 14px;
-            margin: 14px 0 8px 0;
+            margin: 16px 0 8px 0;
             border-radius: 0 var(--radius-md) var(--radius-md) 0;
             font-size: calc(var(--reader-font-size) + 1px);
             font-weight: 800;
             line-height: 1.45;
             word-break: break-word;
-            box-shadow: var(--shadow-sm);
         }
 
         .chapter-banner.sub-section {
-            background-color: var(--brand-soft);
-            border-left: 4px solid #3b82f6;
-            color: #1e40af;
+            background-color: var(--bg-subtle);
+            border-left-color: var(--text-muted);
+            color: var(--text-primary);
             font-size: var(--reader-font-size);
             padding: 8px 12px;
-            margin: 10px 0 8px 0;
+            margin: 12px 0 8px 0;
         }
 
         .article-card {
             background-color: var(--bg-card);
             border: 1px solid var(--border-light);
             border-radius: var(--radius-lg);
-            padding: 14px;
+            padding: 15px;
             margin-bottom: 10px;
-            box-shadow: var(--shadow-sm);
             position: relative;
-            transition: border-color 0.2s, background-color 0.2s;
-        }
-
-        .article-card.clause-starred {
-            border-color: #fcd34d;
-            background-color: #fffdf5;
-        }
-
-        .article-card.clause-jump-highlight {
-            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.35);
-            border-color: var(--brand-primary);
         }
 
         .article-card-actions {
             float: right;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
             margin: 0 0 4px 10px;
         }
 
         .article-mini-btn {
-            width: 30px;
-            height: 30px;
-            border-radius: 7px;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
             border: 1px solid var(--border-light);
-            background-color: var(--bg-subtle);
+            background-color: var(--bg-page);
             color: var(--text-muted);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
-            line-height: 1;
-        }
-
-        .article-mini-btn:hover {
-            color: var(--brand-primary);
-            border-color: var(--brand-border);
-            background-color: var(--brand-soft);
-        }
-
-        .article-mini-btn.star-btn.starred {
-            color: var(--amber-star);
-            background-color: var(--amber-soft);
-            border-color: #fcd34d;
         }
 
         .article-mini-btn.copied {
@@ -843,11 +707,9 @@
             background-color: var(--success-soft);
         }
 
-        /* 條文內部分層排版（條號標題、本文段落、款、目縮排） */
         .clause-structured-body {
             font-size: var(--reader-font-size);
             line-height: var(--reader-line-height);
-            color: var(--text-primary);
             word-break: break-word;
         }
 
@@ -864,27 +726,70 @@
         }
 
         .clause-line-main {
-            margin-bottom: 6px;
+            margin-bottom: 10px;
         }
 
         .clause-line-lvl1 {
-            padding-left: 1.5em;
-            text-indent: -1.5em;
-            margin-bottom: 5px;
+            padding-left: 2em;
+            text-indent: -2em;
+            margin: 12px 0 8px 0;
         }
 
         .clause-line-lvl2 {
-            padding-left: 2.8em;
-            text-indent: -1.6em;
-            margin-bottom: 4px;
-            color: #1e293b;
+            margin-left: 1em;
+            padding-left: 3em;
+            text-indent: -3em;
+            margin-bottom: 8px;
+            color: #2a2a27;
         }
 
         .clause-line-lvl3 {
-            padding-left: 4em;
-            text-indent: -1.4em;
-            margin-bottom: 4px;
-            color: #334155;
+            margin-left: 2em;
+            padding-left: 2em;
+            text-indent: -2em;
+            margin-bottom: 7px;
+            color: #3d3d39;
+        }
+
+        .clause-line-lvl4 {
+            margin-left: 3em;
+            padding-left: 2.6em;
+            text-indent: -2.6em;
+            margin-bottom: 6px;
+            color: #55544e;
+        }
+
+        .toc-line {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-light);
+            font-size: calc(var(--reader-font-size) - 2px);
+            line-height: 1.5;
+        }
+
+        .toc-line.toc-chapter {
+            font-weight: 800;
+            color: var(--brand-primary);
+            padding-top: 14px;
+        }
+
+        .toc-title {
+            flex: 1;
+            min-width: 0;
+            word-break: break-word;
+        }
+
+        .toc-page {
+            flex-shrink: 0;
+            min-width: 2em;
+            text-align: center;
+            font-size: 0.82em;
+            color: var(--text-muted);
+            background-color: var(--bg-subtle);
+            border-radius: 6px;
+            padding: 0 7px;
         }
 
         .inline-edit-textarea {
@@ -895,7 +800,6 @@
             border-radius: var(--radius-sm);
             font-size: var(--reader-font-size);
             line-height: var(--reader-line-height);
-            color: var(--text-primary);
             background-color: #ffffff;
             resize: vertical;
             outline: none;
@@ -909,22 +813,19 @@
         }
 
         mark.hl-match {
-            background-color: #fef08a;
-            color: #0f172a;
+            background-color: #fde68a;
+            color: inherit;
             padding: 0 2px;
             border-radius: 3px;
         }
 
         mark.hl-match.active-match {
-            background-color: #ea580c;
+            background-color: #d9480f;
             color: #ffffff;
             font-weight: 700;
-            box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.35);
         }
 
-        /* =========================================================
-           7. 固定式底部搜尋橫條（不漂浮、不跑位、直接可打字）
-           ========================================================= */
+        /* ---------- 底部搜尋列 ---------- */
         .bottom-search-dock {
             position: fixed;
             left: 0;
@@ -938,7 +839,7 @@
         }
 
         .bottom-search-inner {
-            max-width: 920px;
+            max-width: 760px;
             margin: 0 auto;
             display: flex;
             align-items: center;
@@ -955,24 +856,21 @@
 
         .dock-search-icon {
             position: absolute;
-            left: 10px;
+            left: 11px;
             color: var(--text-muted);
             pointer-events: none;
             display: flex;
-            align-items: center;
         }
 
         .dock-search-input {
             width: 100%;
-            height: 40px;
-            padding: 0 32px 0 34px;
+            height: 42px;
+            padding: 0 34px 0 36px;
             border: 1.5px solid var(--border-color);
             border-radius: var(--radius-md);
             font-size: 15px;
-            color: var(--text-primary);
-            background-color: #f8fafc;
+            background-color: var(--bg-page);
             outline: none;
-            transition: border-color 0.15s, background-color 0.15s;
         }
 
         .dock-search-input:focus {
@@ -983,10 +881,10 @@
         .dock-clear-btn {
             position: absolute;
             right: 7px;
-            width: 22px;
-            height: 22px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
-            background-color: #e2e8f0;
+            background-color: var(--border-light);
             color: var(--text-secondary);
             font-size: 12px;
             font-weight: 700;
@@ -1006,10 +904,10 @@
             font-size: 12px;
             font-weight: 800;
             color: #9a3412;
-            background-color: #fff7ed;
-            border: 1px solid #fed7aa;
+            background-color: #fff4ea;
+            border: 1px solid #f6d3b5;
             padding: 0 8px;
-            height: 36px;
+            height: 38px;
             border-radius: var(--radius-sm);
             display: inline-flex;
             align-items: center;
@@ -1017,12 +915,11 @@
         }
 
         .dock-step-btn {
-            width: 36px;
-            height: 36px;
+            width: 38px;
+            height: 38px;
             border-radius: var(--radius-sm);
             background-color: var(--bg-subtle);
             border: 1px solid var(--border-color);
-            color: var(--text-primary);
             font-size: 13px;
             font-weight: 800;
             display: inline-flex;
@@ -1030,26 +927,19 @@
             justify-content: center;
         }
 
-        .dock-step-btn:active {
-            background-color: #e2e8f0;
-        }
-
-        /* =========================================================
-           8. Toast 提示與自訂對話框
-           ========================================================= */
+        /* ---------- Toast 與對話框 ---------- */
         .toast-box {
             position: fixed;
-            top: 58px;
+            top: 62px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 1100;
-            background-color: #0f172a;
+            background-color: #1c1c1a;
             color: #ffffff;
-            padding: 8px 16px;
+            padding: 9px 16px;
             border-radius: 20px;
             font-size: 14px;
             font-weight: 600;
-            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
             white-space: nowrap;
             max-width: calc(100vw - 24px);
             overflow: hidden;
@@ -1074,7 +964,7 @@
         .modal-backdrop {
             position: fixed;
             inset: 0;
-            background-color: rgba(15, 23, 42, 0.5);
+            background-color: rgba(28, 28, 26, 0.5);
             z-index: 1200;
             display: flex;
             align-items: center;
@@ -1088,27 +978,26 @@
             padding: 18px;
             width: 100%;
             max-width: 350px;
-            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
+            box-shadow: 0 10px 25px rgba(28, 28, 26, 0.25);
         }
 
         .modal-title {
             font-size: 17px;
             font-weight: 700;
-            color: var(--text-primary);
             margin-bottom: 8px;
         }
 
         .modal-desc {
             font-size: 14px;
             color: var(--text-secondary);
-            line-height: 1.5;
+            line-height: 1.6;
             margin-bottom: 14px;
             word-break: break-word;
         }
 
         .modal-input {
             width: 100%;
-            height: 38px;
+            height: 40px;
             padding: 0 10px;
             border: 1px solid var(--border-color);
             border-radius: var(--radius-sm);
@@ -1128,10 +1017,10 @@
         }
 
         .modal-btn {
-            padding: 8px 14px;
+            padding: 9px 15px;
             border-radius: var(--radius-sm);
             font-size: 14px;
-            font-weight: 600;
+            font-weight: 700;
         }
 
         .modal-btn.cancel {
@@ -1152,44 +1041,44 @@
 </head>
 <body>
 
-    <!-- 1. 頂部導覽列 -->
     <header class="app-header">
         <div class="header-inner">
-            <button type="button" id="brandHomeBtn" class="brand-btn" title="回到資料夾封面">法規檢索</button>
+            <button type="button" id="brandHomeBtn" class="brand-btn" title="回到首頁">法規檢索</button>
 
             <div class="header-controls">
-                <!-- 字級切換 -->
                 <div class="font-pill-group" role="group" aria-label="字級切換">
-                    <button type="button" class="font-pill-btn" data-font-btn="normal" title="標準字級 (16px)">標準</button>
-                    <button type="button" class="font-pill-btn active" data-font-btn="large" title="放大字級 (20px)">放大</button>
-                    <button type="button" class="font-pill-btn" data-font-btn="xlarge" title="特大字級 (24px)">特大</button>
+                    <button type="button" class="font-pill-btn" data-font-btn="normal">標準</button>
+                    <button type="button" class="font-pill-btn active" data-font-btn="large">放大</button>
+                    <button type="button" class="font-pill-btn" data-font-btn="xlarge">特大</button>
                 </div>
 
-                <!-- 重要法條收藏分頁快捷鈕 -->
-                <button type="button" id="headerStarPageBtn" class="icon-btn star-nav-btn" title="重要法條收藏分頁" aria-label="重要法條收藏分頁">★</button>
-
-                <!-- 匯出 JSON 備份 -->
-                <button type="button" id="exportBackupBtn" class="icon-btn" title="匯出備份" aria-label="匯出備份">
-                    <svg width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                    </svg>
+                <button type="button" id="favNavBtn" class="icon-btn" title="收藏夾" aria-label="收藏夾">
+                    <span data-icon="star" data-size="19"></span>
+                    <span id="favNavCount" class="count-dot hidden">0</span>
                 </button>
 
-                <!-- 匯入 JSON 還原 -->
-                <div class="icon-btn" title="匯入還原" aria-label="匯入還原">
-                    <svg width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                    </svg>
-                    <input type="file" id="importBackupInput" accept=".json" class="native-file-overlay" aria-label="匯入還原">
+                <div class="menu-wrap">
+                    <button type="button" id="appMenuBtn" class="icon-btn" title="更多功能" aria-label="更多功能">
+                        <span data-icon="dots" data-size="18"></span>
+                    </button>
+                    <div id="appMenuPanel" class="menu-panel hidden">
+                        <button type="button" id="saveRestoreBtn" class="menu-item">儲存目前整體法規（還原點）</button>
+                        <button type="button" id="loadRestoreBtn" class="menu-item">還原到上次儲存</button>
+                        <div id="restoreInfo" class="menu-note">尚未儲存過還原點</div>
+                        <div class="menu-sep"></div>
+                        <button type="button" id="exportBackupBtn" class="menu-item">匯出備份檔</button>
+                        <label class="menu-item">
+                            匯入備份檔
+                            <input type="file" id="importBackupInput" class="menu-file" accept=".json" aria-label="匯入備份檔">
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- 主工作區 -->
     <main class="main-container">
 
-        <!-- 解析進度條 -->
         <div id="progressPanel" class="progress-panel hidden">
             <div id="progressText" class="progress-text">正在處理檔案...</div>
             <div class="progress-track">
@@ -1197,156 +1086,117 @@
             </div>
         </div>
 
-        <!-- 視圖 A：封面資料夾總覽 -->
-        <section id="homeFolderView">
-            <!-- 重要法條獨立蒐集分頁入口 -->
-            <div id="openStarredPageCard" class="star-collection-banner" role="button" tabindex="0">
-                <div class="star-banner-left">
-                    <div class="star-banner-icon">★</div>
-                    <div>
-                        <div class="star-banner-title">重要法條收藏分頁</div>
-                        <div class="star-banner-sub">集中檢視所有打星號的單條法條與重點段落</div>
-                    </div>
-                </div>
-                <span id="starredClauseTotalBadge" class="star-banner-count">0 條</span>
+        <!-- 首頁：儲匯／郵務各自的資料夾與單一規章 -->
+        <section id="homeView">
+            <div id="homeTabs" class="seg"></div>
+
+            <div class="section-head">
+                <span class="section-label">資料夾</span>
+                <button type="button" id="newFolderBtn" class="text-btn">＋ 新增資料夾</button>
             </div>
+            <div id="folderList" class="list"></div>
 
-            <div class="section-bar">
-                <span id="folderSummaryText" class="section-title">資料夾分類</span>
-                <div class="cover-actions-group">
-                    <!-- 新增資料夾（精簡小圖示） -->
-                    <button type="button" id="openNewFolderModalBtn" class="icon-btn" title="新增資料夾" aria-label="新增資料夾">
-                        <svg width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                        </svg>
-                    </button>
-
-                    <!-- 首頁單一精簡批次上傳小圖示 -->
-                    <div class="icon-btn primary" title="批次上傳法規／公文（自動歸入未分類）" aria-label="批次上傳法規或公文">
-                        <svg width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                        </svg>
-                        <input
-                            type="file"
-                            id="coverBatchFileInput"
-                            class="native-file-overlay"
-                            multiple
-                            accept=".pdf,.txt,.md,.jpg,.jpeg,.png,.webp,application/pdf,text/plain,image/*"
-                            aria-label="批次上傳檔案"
-                        >
-                    </div>
-                </div>
-            </div>
-
-            <div id="folderGridContainer" class="folder-grid"></div>
-        </section>
-
-        <!-- 視圖 B：資料夾內清單 / 跨資料夾搜尋結果 -->
-        <section id="docListView" class="hidden">
-            <div id="folderHeaderBar" class="folder-toolbar-card">
-                <div class="folder-toolbar-left">
-                    <button type="button" id="backToFoldersBtn" class="icon-btn" title="返回封面" aria-label="返回封面">
-                        <svg width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-                        </svg>
-                    </button>
-                    <div class="folder-heading-wrap">
-                        <div id="activeFolderTitle" class="folder-heading">資料夾名稱</div>
-                        <div id="activeFolderSub" class="folder-sub">共 0 份文件</div>
-                    </div>
-                </div>
-
-                <!-- 資料夾內批次上傳 -->
-                <label class="batch-upload-label" title="批次上傳至目前資料夾">
-                    <svg width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    <span>批次上傳</span>
-                    <input
-                        type="file"
-                        id="batchFileInput"
-                        class="native-file-overlay"
-                        multiple
-                        accept=".pdf,.txt,.md,.jpg,.jpeg,.png,.webp,application/pdf,text/plain,image/*"
-                        aria-label="批次上傳檔案"
-                    >
+            <div class="section-head">
+                <span class="section-label">單一規章</span>
+                <label class="text-btn">
+                    ＋ 上傳規章
+                    <input type="file" id="homeUploadInput" class="menu-file" multiple
+                           accept=".pdf,.txt,.md,.jpg,.jpeg,.png,.webp,application/pdf,text/plain,image/*" aria-label="上傳規章">
                 </label>
             </div>
-
-            <div id="searchResultBar" class="section-bar hidden">
-                <span id="searchResultSummary" class="section-title">搜尋結果：0 筆</span>
-                <button type="button" id="resetGlobalFilterBtn" class="clear-filter-pill">清除搜尋</button>
-            </div>
-
-            <div id="docListContainer" class="doc-list"></div>
+            <div id="looseList" class="list"></div>
         </section>
 
-        <!-- 視圖 C：重要法條收藏分頁 -->
-        <section id="starredClausesView" class="hidden">
-            <div class="folder-toolbar-card">
-                <div class="folder-toolbar-left">
-                    <button type="button" id="backFromStarredBtn" class="icon-btn" title="返回封面" aria-label="返回封面">
-                        <svg width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-                        </svg>
+        <!-- 資料夾內 -->
+        <section id="folderView" class="hidden">
+            <div class="toolbar-card">
+                <div class="toolbar-left">
+                    <button type="button" id="backFromFolderBtn" class="icon-btn" title="返回" aria-label="返回">
+                        <span data-icon="back" data-size="18"></span>
                     </button>
-                    <div class="folder-heading-wrap">
-                        <div class="folder-heading">★ 重要法條收藏分頁</div>
-                        <div id="starredClausesSub" class="folder-sub">共 0 條已收藏法條（點擊法條可直接跳回原法規位置）</div>
+                    <div class="heading-wrap">
+                        <div id="activeFolderTitle" class="heading">資料夾</div>
+                        <div id="activeFolderSub" class="heading-sub">共 0 份規章</div>
+                    </div>
+                </div>
+                <div class="toolbar-actions">
+                    <label class="upload-btn" title="上傳到這個資料夾">
+                        <span data-icon="plus" data-size="16"></span>
+                        <span>上傳</span>
+                        <input type="file" id="folderUploadInput" class="menu-file" multiple
+                               accept=".pdf,.txt,.md,.jpg,.jpeg,.png,.webp,application/pdf,text/plain,image/*" aria-label="上傳到這個資料夾">
+                    </label>
+                    <button type="button" id="deleteFolderBtn" class="icon-btn danger" title="刪除資料夾" aria-label="刪除資料夾">
+                        <span data-icon="trash" data-size="17"></span>
+                    </button>
+                </div>
+            </div>
+            <div id="folderDocList" class="list"></div>
+        </section>
+
+        <!-- 搜尋結果（只搜目前頁籤） -->
+        <section id="searchView" class="hidden">
+            <div id="searchTabs" class="seg"></div>
+            <div class="result-bar">
+                <span id="searchResultSummary" class="section-label">搜尋結果</span>
+                <button type="button" id="resetSearchBtn" class="text-btn">清除搜尋</button>
+            </div>
+            <div id="searchList" class="list"></div>
+        </section>
+
+        <!-- 收藏夾（整份規章，儲匯與郵務各一份） -->
+        <section id="favView" class="hidden">
+            <div class="toolbar-card">
+                <div class="toolbar-left">
+                    <button type="button" id="backFromFavBtn" class="icon-btn" title="返回" aria-label="返回">
+                        <span data-icon="back" data-size="18"></span>
+                    </button>
+                    <div class="heading-wrap">
+                        <div class="heading">收藏夾</div>
+                        <div id="favSub" class="heading-sub">共 0 份規章</div>
                     </div>
                 </div>
             </div>
-
-            <div id="starredClausesContainer" class="doc-list"></div>
+            <div id="favTabs" class="seg"></div>
+            <div id="favList" class="list"></div>
         </section>
 
-        <!-- 視圖 D：法規與公文閱讀頁 -->
+        <!-- 閱讀頁 -->
         <section id="readerView" class="hidden">
             <div class="reader-header-card">
                 <div class="reader-toolbar-row">
-                    <button type="button" id="backFromReaderBtn" class="icon-btn" title="返回清單" aria-label="返回清單">
-                        <svg width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-                        </svg>
+                    <button type="button" id="backFromReaderBtn" class="icon-btn" title="返回" aria-label="返回">
+                        <span data-icon="back" data-size="18"></span>
                     </button>
 
                     <div class="reader-toolbar-right">
-                        <select id="readerFolderSelect" class="folder-move-select reader-select" title="移動至其他資料夾" aria-label="移動至其他資料夾"></select>
+                        <button type="button" id="readerStarBtn" class="icon-btn star-toggle" title="收藏整份規章" aria-label="收藏整份規章"></button>
 
-                        <button type="button" id="copyFullDocBtn" class="icon-btn primary" title="一鍵複製全文" aria-label="一鍵複製全文">
-                            <svg id="copyFullDocIcon" width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-                            </svg>
-                        </button>
+                        <button type="button" id="copyFullDocBtn" class="icon-btn" title="一鍵複製全文" aria-label="一鍵複製全文"></button>
 
-                        <button type="button" id="toggleEditDocBtn" class="icon-btn" title="編輯校正純文字" aria-label="編輯校正純文字">
-                            <svg width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                            </svg>
-                        </button>
-
-                        <div class="icon-btn brand-outline" title="更新覆蓋此法規" aria-label="更新覆蓋此法規">
-                            <svg width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                            </svg>
-                            <input
-                                type="file"
-                                id="singleUpdateInput"
-                                class="native-file-overlay"
-                                accept=".pdf,.txt,.md,.jpg,.jpeg,.png,.webp,application/pdf,text/plain,image/*"
-                                aria-label="更新覆蓋此法規"
-                            >
+                        <div class="menu-wrap">
+                            <button type="button" id="readerMenuBtn" class="icon-btn" title="更多功能" aria-label="更多功能">
+                                <span data-icon="dots" data-size="18"></span>
+                            </button>
+                            <div id="readerMenuPanel" class="menu-panel hidden">
+                                <div class="menu-row">
+                                    <span class="menu-label">所屬分類</span>
+                                    <select id="readerCategorySelect" class="menu-select" aria-label="所屬分類"></select>
+                                </div>
+                                <button type="button" id="toggleEditDocBtn" class="menu-item">編輯校正文字</button>
+                                <label class="menu-item">
+                                    更新覆蓋此法規
+                                    <input type="file" id="singleUpdateInput" class="menu-file"
+                                           accept=".pdf,.txt,.md,.jpg,.jpeg,.png,.webp,application/pdf,text/plain,image/*" aria-label="更新覆蓋此法規">
+                                </label>
+                                <button type="button" id="readerDeleteBtn" class="menu-item danger">整份刪除此法規</button>
+                            </div>
                         </div>
-
-                        <button type="button" id="readerDeleteBtn" class="icon-btn danger-outline" title="整份刪除此法規" aria-label="整份刪除此法規">
-                            <svg width="18" height="18" style="width:18px;height:18px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                            </svg>
-                        </button>
                     </div>
                 </div>
 
                 <div class="reader-title-block">
+                    <div id="readerCrumb" class="reader-crumb"></div>
                     <h1 id="readerDocTitle" class="reader-doc-title">文件名稱</h1>
                     <div class="reader-doc-meta">
                         <span id="readerDocMetaText">共 0 頁・更新日期：YYYY/MM/DD</span>
@@ -1361,26 +1211,14 @@
 
     </main>
 
-    <!-- 固定式底部搜尋橫條（不可移動、直接輸入、自動隨頁面切換跨資料夾或文內搜尋） -->
-    <div class="bottom-search-dock">
+    <div id="bottomSearchDock" class="bottom-search-dock">
         <div class="bottom-search-inner">
             <div class="dock-input-wrap">
-                <span class="dock-search-icon">
-                    <svg width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                </span>
-                <input
-                    type="text"
-                    id="dockSearchInput"
-                    class="dock-search-input"
-                    placeholder="跨資料夾搜尋法規、公文..."
-                    autocomplete="off"
-                >
+                <span class="dock-search-icon" data-icon="search" data-size="17"></span>
+                <input type="text" id="dockSearchInput" class="dock-search-input" placeholder="搜尋法規、公文..." autocomplete="off">
                 <button type="button" id="dockClearBtn" class="dock-clear-btn hidden" title="清除">✕</button>
             </div>
 
-            <!-- 閱讀模式下有輸入關鍵字時顯示筆數與上下筆跳轉 -->
             <div id="dockReaderNav" class="dock-reader-nav hidden">
                 <span id="dockMatchCounter" class="dock-counter">0/0</span>
                 <button type="button" id="dockPrevBtn" class="dock-step-btn" title="上一筆">▲</button>
@@ -1389,14 +1227,12 @@
         </div>
     </div>
 
-    <!-- Toast 短暫提示 -->
     <div id="toastBox" class="toast-box"></div>
 
-    <!-- 新增資料夾對話框 -->
     <div id="folderInputModal" class="modal-backdrop hidden">
         <div class="modal-dialog">
             <div id="folderModalTitle" class="modal-title">新增資料夾</div>
-            <div id="folderModalDesc" class="modal-desc">請輸入分類資料夾名稱：</div>
+            <div id="folderModalDesc" class="modal-desc">請輸入資料夾名稱：</div>
             <input type="text" id="folderNameInput" class="modal-input" placeholder="例如：06信託業務作業規章" autocomplete="off">
             <div class="modal-actions">
                 <button type="button" id="cancelFolderModalBtn" class="modal-btn cancel">取消</button>
@@ -1405,11 +1241,10 @@
         </div>
     </div>
 
-    <!-- 自訂確認對話框 -->
     <div id="confirmModal" class="modal-backdrop hidden">
         <div class="modal-dialog">
-            <div id="modalTitle" class="modal-title">確認刪除</div>
-            <div id="modalDesc" class="modal-desc">確定要刪除此項目嗎？</div>
+            <div id="modalTitle" class="modal-title">確認</div>
+            <div id="modalDesc" class="modal-desc">確定要執行嗎？</div>
             <div class="modal-actions">
                 <button type="button" id="modalCancelBtn" class="modal-btn cancel">取消</button>
                 <button type="button" id="modalConfirmBtn" class="modal-btn confirm-danger">確定</button>
@@ -1469,28 +1304,33 @@
         }
 
         /* =========================================================
-           2. 預設資料夾與初始範例（資料庫名稱 RegDocDB_v1）
+           2. 分類、預設資料夾與狀態
+           資料結構：
+             folder  { id, name, kind, domain: 's'(儲匯) | 'm'(郵務) }
+             doc     { id, domain, folderId(null=單一規章), title, starred(整份收藏), pages... }
            ========================================================= */
-        const UNCATEGORIZED_FOLDER_ID = 'folder-uncategorized';
+        const UNCATEGORIZED_FOLDER_ID = 'folder-uncategorized'; // 舊版「未分類」，只用於資料遷移
+        const DOMAIN_LABEL = { s: '儲匯', m: '郵務' };
 
         const DEFAULT_FOLDERS = [
-            { id: UNCATEGORIZED_FOLDER_ID, name: '未分類 / 一般法規', kind: 'default' },
-            { id: 'folder-01', name: '01儲金業務作業規章', kind: 'normal' },
-            { id: 'folder-02', name: '02劃撥業務作業規章', kind: 'normal' },
-            { id: 'folder-03', name: '03匯兌業務作業規章', kind: 'normal' },
-            { id: 'folder-04', name: '04代辦業務作業規章', kind: 'normal' },
-            { id: 'folder-05', name: '05自動化業務作業規章', kind: 'normal' },
-            { id: 'folder-official', name: '重要公文', kind: 'official' }
+            { id: 'folder-01', name: '01儲金業務作業規章', kind: 'normal', domain: 's' },
+            { id: 'folder-02', name: '02劃撥業務作業規章', kind: 'normal', domain: 's' },
+            { id: 'folder-03', name: '03匯兌業務作業規章', kind: 'normal', domain: 's' },
+            { id: 'folder-04', name: '04代辦業務作業規章', kind: 'normal', domain: 's' },
+            { id: 'folder-05', name: '05自動化業務作業規章', kind: 'normal', domain: 's' },
+            { id: 'folder-official', name: '重要公文', kind: 'official', domain: 's' },
+            { id: 'folder-official-postal', name: '重要公文', kind: 'official', domain: 'm' }
         ];
 
         const SAMPLE_DOCS = [
             {
                 id: 'sample-doc-1',
+                domain: 's',
                 folderId: 'folder-01',
                 title: '1-01郵政儲金匯兌法（範例）',
                 coreName: '郵政儲金匯兌法',
                 isOcr: false,
-                starredClauses: ['第一條'],
+                starred: false,
                 updatedAt: new Date().toLocaleDateString('zh-TW'),
                 isRecentlyUpdated: false,
                 pages: [
@@ -1508,9 +1348,10 @@
 
         let folders = [];
         let documents = [];
+        let activeDomain = 's';
         let activeFolderId = null;
         let activeDocId = null;
-        let isStarredPageActive = false;
+        let isFavPageActive = false;
         let globalQuery = '';
         let readerQuery = '';
         let readerMatches = [];
@@ -1680,15 +1521,16 @@
         }
 
         /* =========================================================
-           4. 瀏覽器歷史紀錄同步（按手機左鍵逐層返回，不跳出網頁）
+           4. 瀏覽器歷史紀錄同步（按手機返回鍵逐層返回，不跳出網頁）
            ========================================================= */
         function pushNavigationState() {
             if (isHandlingPopState) return;
             try {
                 window.history.pushState({
+                    activeDomain,
                     activeFolderId,
                     activeDocId,
-                    isStarredPageActive,
+                    isFavPageActive,
                     globalQuery
                 }, '');
             } catch (e) {}
@@ -1697,9 +1539,10 @@
         function initHistoryNavigation() {
             try {
                 window.history.replaceState({
+                    activeDomain,
                     activeFolderId: null,
                     activeDocId: null,
-                    isStarredPageActive: false,
+                    isFavPageActive: false,
                     globalQuery: ''
                 }, '');
             } catch (e) {}
@@ -1708,19 +1551,16 @@
                 isHandlingPopState = true;
                 try {
                     if (e.state) {
+                        activeDomain = e.state.activeDomain === 'm' ? 'm' : 's';
                         activeDocId = e.state.activeDocId || null;
                         activeFolderId = e.state.activeFolderId || null;
-                        isStarredPageActive = Boolean(e.state.isStarredPageActive);
+                        isFavPageActive = Boolean(e.state.isFavPageActive);
                         globalQuery = e.state.globalQuery || '';
                     } else {
-                        if (activeDocId) {
-                            activeDocId = null;
-                        } else if (isStarredPageActive) {
-                            isStarredPageActive = false;
-                        } else if (activeFolderId || globalQuery) {
-                            activeFolderId = null;
-                            globalQuery = '';
-                        }
+                        activeDocId = null;
+                        activeFolderId = null;
+                        isFavPageActive = false;
+                        globalQuery = '';
                     }
 
                     isEditingDocText = false;
@@ -1762,16 +1602,65 @@
         const SECTION_MINOR_REGEX = /^(第\s*[一二三四五六七八九十百千0-9]+\s*[節款目]\s*.*|附\s*則|總\s*則)$/;
         const ARTICLE_HEADER_REGEX = /^第\s*[一二三四五六七八九十百千0-9]+\s*條(?:之[一二三四五六七八九十0-9]+)?/;
 
+        /* ---------- 匯入文字清理：字距空格、目錄引導點 ---------- */
+        const SINGLE_TOK = '[\\u3400-\\u9fff\\uf900-\\ufaff0-9\\-－—（）()「」『』，。、；：！？]';
+        const SPACED_RUN_RE = new RegExp('(^|[ \\t])(' + SINGLE_TOK + '(?:[ \\t]+' + SINGLE_TOK + '){3,})(?=[ \\t]|$)', 'gm');
+        const TOC_MARK_RE = /⋯ p\.\d+/g;
+        const TOC_ENTRY_START_RE = /^(第\s*[一二三四五六七八九十百千0-9]+\s*[編章節款目條]|[一二三四五六七八九十]+、|附\s*則|附\s*錄|總\s*則)/;
+        const ARTICLE_ONLY_REGEX = /^第\s*[一二三四五六七八九十百千0-9]+\s*條(?:之[一二三四五六七八九十0-9]+)?$/;
+
+        function isTocText(t) {
+            return ((t || '').match(TOC_MARK_RE) || []).length >= 3;
+        }
+
+        function normalizeExtractedText(raw) {
+            let s = String(raw || '').replace(/ |　/g, ' ');
+
+            // 1. 目錄引導點（……、．．．、.....，可跨行）→ 單一標記
+            s = s.replace(/[ \t]*(?:[.．‧·…][ \t\n]*){4,}/g, ' ⋯ ');
+            // 2. 引導點後接的頁碼（- 7 - 或 7）→ p.7 並強制換行
+            s = s.replace(/⋯[ \t]*[-－—–][ \t]*(\d{1,4})[ \t]*[-－—–]/g, '⋯ p.$1\n');
+            s = s.replace(/⋯[ \t]*(\d{1,4})[ \t]*(?=\n|$)/gm, '⋯ p.$1');
+            // 3. 沒有頁碼的殘留標記直接拿掉
+            s = s.replace(/[ \t]*⋯(?! p\.\d)[ \t]*/g, ' ');
+
+            // 4. 字距排版造成的「字 與 字 之 間 都 有 空 格」：連續 4 個以上單字元才處理
+            s = s.replace(SPACED_RUN_RE, (m, pre, run) => pre + run.replace(/[ \t]+/g, ''));
+
+            // 5. 全形標點前後多餘空格、「1 、」→「1、」
+            s = s.replace(/[ \t]+([、，。；：！？）」』])/g, '$1');
+            s = s.replace(/([（「『])[ \t]+/g, '$1');
+            s = s.replace(/^(\d{1,3})[ \t]+([、.．])/gm, '$1$2');
+
+            // 6. 年月日、頁、條 與數字之間多餘的空格（115 年 9 月 → 115年9月）
+            s = s.replace(/(\d)[ \t]+(?=[年月日頁條項款目號元％%])/g, '$1');
+            s = s.replace(/([第共年月日])[ \t]+(?=\d)/g, '$1');
+
+            return s;
+        }
+
+        const reflowCache = new Map();
+
         function reflowRegulationText(rawText) {
             if (!rawText) return '';
-            const rawLines = rawText.replace(/\r\n/g, '\n').split('\n');
+            if (reflowCache.has(rawText)) return reflowCache.get(rawText);
+            const out = reflowRegulationTextCore(rawText);
+            if (reflowCache.size > 4000) reflowCache.clear();
+            reflowCache.set(rawText, out);
+            return out;
+        }
+
+        function reflowRegulationTextCore(rawText) {
+            const norm = normalizeExtractedText(rawText);
+            const tocMode = isTocText(norm);
+            const rawLines = norm.replace(/\r\n/g, '\n').split('\n');
             const cleanedLines = [];
 
             for (const line of rawLines) {
                 const trimmed = line.trim();
                 if (!trimmed) continue;
                 // 濾除頁碼雜訊（如 - 7 - 或 第 11 頁 / 共 331 頁）
-                if (/^[-－—]\s*\d+\s*[-－—]$/.test(trimmed)) continue;
+                if (/^[-－—–]\s*\d+\s*[-－—–]$/.test(trimmed)) continue;
                 if (/^第\s*\d+\s*頁(\s*\/\s*共\s*\d+\s*頁)?$/.test(trimmed)) continue;
                 cleanedLines.push(trimmed);
             }
@@ -1789,14 +1678,29 @@
                 }
 
                 const prev = cleanedLines[i - 1];
+                const needSpace = /[A-Za-z0-9]$/.test(prev) && /^[A-Za-z0-9]/.test(curr);
+
+                // 目錄頁：每個條目以「⋯ p.N」結尾；換行折斷的條目要接回同一行
+                if (tocMode) {
+                    if (/⋯ p\.\d+$/.test(prev) || TOC_ENTRY_START_RE.test(curr)) {
+                        result += '\n' + curr;
+                    } else {
+                        result += (needSpace ? ' ' : '') + curr;
+                    }
+                    continue;
+                }
+
                 const isNewPara = newParagraphRegex.test(curr);
-                const prevIsHeading = CHAPTER_MAJOR_REGEX.test(prev) || SECTION_MINOR_REGEX.test(prev) || ARTICLE_HEADER_REGEX.test(prev);
+                const prevIsHeading = prev.length <= 36 && (
+                    CHAPTER_MAJOR_REGEX.test(prev) ||
+                    SECTION_MINOR_REGEX.test(prev) ||
+                    ARTICLE_ONLY_REGEX.test(prev)
+                );
                 const prevEndedSentence = /[。；：！？]$/.test(prev);
 
                 if (isNewPara || prevIsHeading || prevEndedSentence) {
                     result += '\n' + curr;
                 } else {
-                    const needSpace = /[A-Za-z0-9]$/.test(prev) && /^[A-Za-z0-9]/.test(curr);
                     result += (needSpace ? ' ' : '') + curr;
                 }
             }
@@ -1807,6 +1711,11 @@
         /* 將一頁純文字拆解為「章節大標橫幅」與「條文卡片」兩種結構化單元 */
         function parsePageUnits(pageText) {
             const reflowed = reflowRegulationText(pageText);
+            // 目錄頁整頁當成一張卡片，不要被拆成一條一條
+            if (isTocText(reflowed)) {
+                return [{ type: 'clause', text: reflowed, isToc: true }];
+            }
+
             const lines = reflowed.split('\n');
             const units = [];
             let currentLines = [];
@@ -1851,39 +1760,52 @@
             return units.length > 0 ? units : [{ type: 'clause', text: reflowed }];
         }
 
-        /* 將單條法規的每一行套用對應的層級樣式（條號徽章、一、、（一）、1. 縮排） */
+        /* 將單條法規的每一行套用對應的層級樣式（目錄列、條號徽章、一、（一）1、（1）縮排） */
         function renderStructuredClauseHtml(blockText, keywords) {
             const lines = blockText.split('\n');
+            const hl = (t) => highlightKeywords(t, keywords);
             return lines.map((line, idx) => {
                 const trimmed = line.trim();
                 if (!trimmed) return '';
+
+                // 目錄條目：條目靠左、頁碼靠右
+                const tocM = trimmed.match(/^(.*?)\s*⋯\s*p\.(\d+)$/);
+                if (tocM) {
+                    const isChapter = /^第\s*[一二三四五六七八九十百千0-9]+\s*[編章]/.test(tocM[1]);
+                    return `<div class="toc-line${isChapter ? ' toc-chapter' : ''}"><span class="toc-title">${hl(tocM[1])}</span><span class="toc-page">${tocM[2]}</span></div>`;
+                }
 
                 // 第X條（若條號獨立成行或緊接內文，自動分離條號徽章）
                 if (idx === 0 && ARTICLE_HEADER_REGEX.test(trimmed)) {
                     const m = trimmed.match(/^(第\s*[一二三四五六七八九十百千0-9]+\s*條(?:之[一二三四五六七八九十0-9]+)?)\s*(.*)$/);
                     if (m) {
-                        const artTitleHtml = `<div class="clause-article-heading">${highlightKeywords(m[1], keywords)}</div>`;
-                        const restHtml = m[2] ? `<div class="clause-line-main">${highlightKeywords(m[2], keywords)}</div>` : '';
+                        const artTitleHtml = `<div class="clause-article-heading">${hl(m[1])}</div>`;
+                        const restHtml = m[2] ? `<div class="clause-line-main">${hl(m[2])}</div>` : '';
                         return artTitleHtml + restHtml;
                     }
                 }
 
-                // 第一層款目：一、二、三、
+                // 第一層：一、二、三、
                 if (/^[一二三四五六七八九十百]+、/.test(trimmed)) {
-                    return `<div class="clause-line-lvl1">${highlightKeywords(trimmed, keywords)}</div>`;
+                    return `<div class="clause-line-lvl1">${hl(trimmed)}</div>`;
                 }
 
-                // 第二層款目：（一）（二）或 (1)(2)
-                if (/^[（(][一二三四五六七八九十0-9]+[）)]/.test(trimmed)) {
-                    return `<div class="clause-line-lvl2">${highlightKeywords(trimmed, keywords)}</div>`;
+                // 第二層：（一）（二）
+                if (/^[（(][一二三四五六七八九十百]+[）)]/.test(trimmed)) {
+                    return `<div class="clause-line-lvl2">${hl(trimmed)}</div>`;
                 }
 
-                // 第三層細目：1. 2. 或 ① ②
+                // 第三層：1、 2. 或 ① ②
                 if (/^([0-9]+[、.．]|[①②③④⑤⑥⑦⑧⑨⑩])/.test(trimmed)) {
-                    return `<div class="clause-line-lvl3">${highlightKeywords(trimmed, keywords)}</div>`;
+                    return `<div class="clause-line-lvl3">${hl(trimmed)}</div>`;
                 }
 
-                return `<div class="clause-line-main">${highlightKeywords(trimmed, keywords)}</div>`;
+                // 第四層：（1）（2）
+                if (/^[（(][0-9]+[）)]/.test(trimmed)) {
+                    return `<div class="clause-line-lvl4">${hl(trimmed)}</div>`;
+                }
+
+                return `<div class="clause-line-main">${hl(trimmed)}</div>`;
             }).join('');
         }
 
@@ -2152,11 +2074,12 @@
             };
         }
 
-        async function processBatchFiles(fileList, targetFolderId, forceOverwriteDocId = null) {
+        async function processBatchFiles(fileList, targetFolderId, domain, forceOverwriteDocId = null) {
             const files = Array.from(fileList || []);
             if (files.length === 0) return;
 
-            const folderId = targetFolderId || UNCATEGORIZED_FOLDER_ID;
+            const folderId = targetFolderId || null;
+            const dm = domain === 'm' ? 'm' : 's';
             const todayStr = new Date().toLocaleDateString('zh-TW');
             let added = 0;
             let updated = 0;
@@ -2172,7 +2095,7 @@
                     if (forceOverwriteDocId) {
                         existing = documents.find(d => d.id === forceOverwriteDocId) || null;
                     } else {
-                        existing = documents.find(d => extractCoreName(d.title) === core) || null;
+                        existing = documents.find(d => d.domain === dm && extractCoreName(d.title) === core) || null;
                     }
 
                     if (existing) {
@@ -2187,11 +2110,12 @@
                     } else {
                         const newDoc = {
                             id: 'doc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+                            domain: dm,
                             folderId,
                             title: cleanedTitle,
                             coreName: core,
                             isOcr: parsed.isOcr,
-                            starredClauses: [],
+                            starred: false,
                             updatedAt: todayStr,
                             isRecentlyUpdated: false,
                             pages: parsed.pages
@@ -2215,11 +2139,11 @@
             }
 
             if (updated > 0 && added > 0) {
-                showToast(`新增 ${added} 份、覆蓋更新 ${updated} 份（已鎖定儲存）`, 'success');
+                showToast(`新增 ${added} 份、覆蓋更新 ${updated} 份`, 'success');
             } else if (updated > 0) {
-                showToast(`已覆蓋更新 ${updated} 份文件（法條星號已保留）`, 'success');
+                showToast(`已覆蓋更新 ${updated} 份文件`, 'success');
             } else if (added > 0) {
-                showToast(`成功匯入 ${added} 份文件（已鎖定儲存）`, 'success');
+                showToast(`成功匯入 ${added} 份文件`, 'success');
             }
         }
 
@@ -2240,59 +2164,79 @@
         }
 
         /* =========================================================
-           10. 蒐集所有已打星號的「單條法條」清單
+           10. 圖示與資料輔助
            ========================================================= */
-        function getAllStarredClauseItems() {
-            const items = [];
-            for (const doc of documents) {
-                const starredSet = new Set(Array.isArray(doc.starredClauses) ? doc.starredClauses : []);
-                if (starredSet.size === 0) continue;
+        const ICON_PATHS = {
+            folder: 'M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z',
+            file: 'M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8l-5-5zM14 3v5h5M9 13h6M9 17h6',
+            star: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3z',
+            search: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
+            chevron: 'M9 5l7 7-7 7',
+            back: 'M15 19l-7-7 7-7',
+            plus: 'M12 5v14M5 12h14',
+            copy: 'M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z',
+            check: 'M5 13l4 4L19 7',
+            trash: 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
+        };
 
-                for (const page of doc.pages) {
-                    const units = parsePageUnits(page.text);
-                    let clauseIdx = 0;
-                    for (const u of units) {
-                        if (u.type !== 'clause') continue;
-                        const clauseKey = extractClauseKey(u.text, page.pageNumber, clauseIdx);
-                        clauseIdx++;
-                        if (starredSet.has(clauseKey)) {
-                            items.push({
-                                docId: doc.id,
-                                docTitle: cleanDisplayTitle(doc.title),
-                                folderName: getFolderNameById(doc.folderId),
-                                pageNumber: page.pageNumber,
-                                clauseKey,
-                                text: u.text
-                            });
-                        }
-                    }
-                }
+        function svgIcon(name, size = 20, filled = false) {
+            if (name === 'dots') {
+                return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="flex-shrink:0"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>`;
             }
-            return items;
+            return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="${filled ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><path d="${ICON_PATHS[name]}"/></svg>`;
         }
 
-        function updateStarredCollectionCountBadges() {
-            const total = getAllStarredClauseItems().length;
-            const badge = document.getElementById('starredClauseTotalBadge');
-            if (badge) badge.textContent = `${total} 條`;
-            const headerStarBtn = document.getElementById('headerStarPageBtn');
-            if (headerStarBtn) {
-                headerStarBtn.classList.toggle('active', isStarredPageActive && !activeDocId);
-            }
+        function hydrateIcons() {
+            document.querySelectorAll('[data-icon]').forEach(el => {
+                el.innerHTML = svgIcon(el.getAttribute('data-icon'), Number(el.getAttribute('data-size') || 18));
+                el.style.display = 'inline-flex';
+            });
+        }
+
+        function getFolder(fid) {
+            return folders.find(f => f.id === fid) || null;
+        }
+
+        function getFolderNameById(fid) {
+            const f = getFolder(fid);
+            return f ? f.name : '';
+        }
+
+        function foldersOfDomain(dm) {
+            return folders.filter(f => f.domain === dm);
+        }
+
+        function normalizeFolder(f) {
+            return { ...f, domain: f.domain === 'm' ? 'm' : 's', kind: f.kind || 'normal' };
+        }
+
+        /* 舊資料遷移：逐條星號整個移除、未分類變單一規章、補上 domain */
+        function normalizeDoc(d) {
+            const n = { ...d };
+            delete n.starredClauses;
+            n.starred = Boolean(d.starred);
+            const f = (d.folderId && d.folderId !== UNCATEGORIZED_FOLDER_ID) ? getFolder(d.folderId) : null;
+            n.folderId = f ? f.id : null;
+            n.domain = f ? f.domain : (d.domain === 'm' ? 'm' : 's');
+            n.pages = Array.isArray(d.pages) ? d.pages : [];
+            return n;
         }
 
         /* =========================================================
-           11. 視圖渲染與固定式底部搜尋橫條同步
+           11. 視圖渲染
            ========================================================= */
-        function getFolderNameById(fid) {
-            const f = folders.find(item => item.id === fid);
-            return f ? f.name : '未分類 / 一般法規';
+        const VIEW_IDS = ['homeView', 'folderView', 'searchView', 'favView', 'readerView'];
+
+        function showOnlyView(id) {
+            VIEW_IDS.forEach(v => document.getElementById(v).classList.toggle('hidden', v !== id));
         }
 
-        function buildFolderOptionsHtml(selectedId) {
-            return folders.map(f =>
-                `<option value="${escapeHtml(f.id)}" ${f.id === selectedId ? 'selected' : ''}>${escapeHtml(f.name)}</option>`
-            ).join('');
+        function updateFavBadge() {
+            const n = documents.filter(d => d.domain === activeDomain && d.starred).length;
+            const badge = document.getElementById('favNavCount');
+            badge.textContent = String(n);
+            badge.classList.toggle('hidden', n === 0);
+            document.getElementById('favNavBtn').classList.toggle('active', isFavPageActive && !activeDocId);
         }
 
         function syncBottomDockWithMode() {
@@ -2301,232 +2245,110 @@
             const readerNav = document.getElementById('dockReaderNav');
 
             if (activeDocId) {
-                input.placeholder = '輸入文內關鍵字定位...';
+                input.placeholder = '只搜這份規章…';
                 input.value = readerQuery;
                 clearBtn.classList.toggle('hidden', readerQuery.trim().length === 0);
-
-                const hasKw = parseKeywords(readerQuery).length > 0;
-                readerNav.classList.toggle('hidden', !hasKw);
-            } else if (isStarredPageActive) {
-                input.placeholder = '篩選已收藏的重點法條...';
+                readerNav.classList.toggle('hidden', parseKeywords(readerQuery).length === 0);
+            } else if (isFavPageActive) {
+                input.placeholder = `搜尋${DOMAIN_LABEL[activeDomain]}收藏的規章…`;
                 input.value = globalQuery;
                 clearBtn.classList.toggle('hidden', globalQuery.trim().length === 0);
                 readerNav.classList.add('hidden');
             } else {
-                input.placeholder = '跨資料夾搜尋法規、公文...';
+                input.placeholder = `搜尋${DOMAIN_LABEL[activeDomain]}法規、公文…`;
                 input.value = globalQuery;
                 clearBtn.classList.toggle('hidden', globalQuery.trim().length === 0);
                 readerNav.classList.add('hidden');
             }
         }
 
+        function setActiveDomain(dm) {
+            if (dm === activeDomain) return;
+            activeDomain = dm;
+            savePreference('active_domain', dm);
+            renderCurrentView();
+        }
+
+        function renderDomainTabs(elId) {
+            const el = document.getElementById(elId);
+            el.innerHTML = ['s', 'm'].map(k =>
+                `<button type="button" class="${k === activeDomain ? 'on' : ''}" data-domain="${k}">${DOMAIN_LABEL[k]}<span class="seg-count">${documents.filter(d => d.domain === k).length}</span></button>`
+            ).join('');
+            el.querySelectorAll('button').forEach(b => {
+                b.addEventListener('click', () => setActiveDomain(b.getAttribute('data-domain')));
+            });
+        }
+
         function renderCurrentView() {
-            updateStarredCollectionCountBadges();
+            updateFavBadge();
             const hasSearch = globalQuery.trim().length > 0;
 
             if (activeDocId) {
-                document.getElementById('homeFolderView').classList.add('hidden');
-                document.getElementById('docListView').classList.add('hidden');
-                document.getElementById('starredClausesView').classList.add('hidden');
-                document.getElementById('readerView').classList.remove('hidden');
+                showOnlyView('readerView');
                 syncBottomDockWithMode();
                 return;
             }
 
-            document.getElementById('readerView').classList.add('hidden');
-
-            if (isStarredPageActive) {
-                document.getElementById('homeFolderView').classList.add('hidden');
-                document.getElementById('docListView').classList.add('hidden');
-                document.getElementById('starredClausesView').classList.remove('hidden');
-                renderStarredClausesView();
+            if (isFavPageActive) {
+                showOnlyView('favView');
+                renderFavView();
                 syncBottomDockWithMode();
                 return;
             }
-
-            document.getElementById('starredClausesView').classList.add('hidden');
 
             if (hasSearch) {
-                document.getElementById('homeFolderView').classList.add('hidden');
-                document.getElementById('docListView').classList.remove('hidden');
-                document.getElementById('folderHeaderBar').classList.add('hidden');
-                document.getElementById('searchResultBar').classList.remove('hidden');
-                renderFilteredDocList(null);
+                showOnlyView('searchView');
+                renderSearchView();
                 syncBottomDockWithMode();
                 return;
             }
 
             if (activeFolderId) {
-                const folder = folders.find(f => f.id === activeFolderId);
+                const folder = getFolder(activeFolderId);
                 if (!folder) {
                     activeFolderId = null;
                     renderCurrentView();
                     return;
                 }
-                document.getElementById('homeFolderView').classList.add('hidden');
-                document.getElementById('docListView').classList.remove('hidden');
-                document.getElementById('folderHeaderBar').classList.remove('hidden');
-                document.getElementById('searchResultBar').classList.add('hidden');
-
-                document.getElementById('activeFolderTitle').textContent = folder.name;
-                renderFilteredDocList(folder.id);
+                activeDomain = folder.domain;
+                showOnlyView('folderView');
+                renderFolderView(folder);
                 syncBottomDockWithMode();
                 return;
             }
 
-            document.getElementById('docListView').classList.add('hidden');
-            document.getElementById('homeFolderView').classList.remove('hidden');
-            renderFolderGrid();
+            showOnlyView('homeView');
+            renderHome();
             syncBottomDockWithMode();
         }
 
-        function renderFolderGrid() {
-            const grid = document.getElementById('folderGridContainer');
-            document.getElementById('folderSummaryText').textContent = `資料夾分類（共 ${folders.length} 個）`;
-            grid.innerHTML = '';
-
-            const folderSvg = `<svg width="20" height="20" style="width:20px;height:20px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>`;
-            const trashSvg = `<svg width="16" height="16" style="width:16px;height:16px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>`;
-
-            for (const folder of folders) {
-                const count = documents.filter(d => d.folderId === folder.id).length;
-                const isDefaultUncat = folder.id === UNCATEGORIZED_FOLDER_ID;
-                const badgeClass = isDefaultUncat ? 'default-cat' : (folder.kind === 'official' ? 'official' : '');
-
-                const card = document.createElement('div');
-                card.className = 'folder-card';
-
-                card.innerHTML = `
-                    <div class="folder-card-left">
-                        <div class="folder-icon-badge ${badgeClass}">${folderSvg}</div>
-                        <div class="folder-info">
-                            <div class="folder-name">${escapeHtml(folder.name)}</div>
-                            <div class="folder-count">${count} 份文件</div>
-                        </div>
-                    </div>
-                    ${!isDefaultUncat ? `<button type="button" class="folder-del-btn del-btn" title="刪除資料夾" aria-label="刪除資料夾">${trashSvg}</button>` : ''}
-                `;
-
-                card.addEventListener('click', () => {
-                    activeFolderId = folder.id;
-                    pushNavigationState();
-                    renderCurrentView();
-                });
-
-                const delBtn = card.querySelector('.del-btn');
-                if (delBtn) {
-                    delBtn.addEventListener('click', async (e) => {
-                        e.stopPropagation();
-                        const desc = count > 0
-                            ? `確定要刪除資料夾「${folder.name}」嗎？裡面的 ${count} 份文件會自動安全移至「未分類 / 一般法規」，不會遺失。`
-                            : `確定要刪除空白資料夾「${folder.name}」嗎？`;
-                        const ok = await showConfirmModal('刪除資料夾', desc, '確定刪除', true);
-                        if (ok) {
-                            for (const d of documents) {
-                                if (d.folderId === folder.id) {
-                                    d.folderId = UNCATEGORIZED_FOLDER_ID;
-                                    await dbPut(STORE_DOCS, d);
-                                }
-                            }
-                            await dbDelete(STORE_FOLDERS, folder.id);
-                            folders = folders.filter(f => f.id !== folder.id);
-                            renderCurrentView();
-                            showToast(count > 0 ? `已刪除資料夾，${count} 份文件已移至未分類` : `已刪除資料夾「${folder.name}」`);
-                        }
-                    });
-                }
-
-                grid.appendChild(card);
-            }
+        function emptyLine(text) {
+            const el = document.createElement('div');
+            el.className = 'empty-line';
+            el.textContent = text;
+            return el;
         }
 
-        function getFilteredStarredClauses() {
-            const all = getAllStarredClauseItems();
-            const keywords = parseKeywords(globalQuery);
-            if (keywords.length === 0) return all;
-            return all.filter(item => {
-                const hay = (item.docTitle + '\n' + item.folderName + '\n' + item.text).toLowerCase();
-                return keywords.every(kw => hay.includes(kw.toLowerCase()));
+        function createFolderRow(folder) {
+            const count = documents.filter(d => d.folderId === folder.id).length;
+            const row = document.createElement('div');
+            row.className = 'row folder';
+            row.setAttribute('role', 'button');
+            row.innerHTML = `
+                <span class="row-icon">${svgIcon('folder', 22)}</span>
+                <div class="row-main">
+                    <div class="row-title">${escapeHtml(folder.name)}</div>
+                    <div class="row-sub">${count} 份規章</div>
+                </div>
+                <span class="row-chevron">${svgIcon('chevron', 18)}</span>
+            `;
+            row.addEventListener('click', () => {
+                activeFolderId = folder.id;
+                pushNavigationState();
+                renderCurrentView();
+                window.scrollTo({ top: 0 });
             });
-        }
-
-        function renderStarredClausesView() {
-            const container = document.getElementById('starredClausesContainer');
-            const items = getFilteredStarredClauses();
-            const keywords = parseKeywords(globalQuery);
-
-            document.getElementById('starredClausesSub').textContent =
-                keywords.length > 0
-                    ? `篩選結果：共 ${items.length} 條收藏法條`
-                    : `共 ${items.length} 條已收藏法條（點擊法條可直接跳回原法規位置）`;
-
-            container.innerHTML = '';
-
-            if (items.length === 0) {
-                const empty = document.createElement('div');
-                empty.className = 'empty-state';
-                empty.textContent = keywords.length > 0
-                    ? '找不到符合關鍵字的已收藏法條'
-                    : '尚未收藏任何單條法條。\n進入任一法規閱讀頁後，點擊每條右上方「☆」即可加入此分頁！';
-                container.appendChild(empty);
-                return;
-            }
-
-            const copySvg = `<svg width="16" height="16" style="width:16px;height:16px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>`;
-            const checkSvg = `<svg width="16" height="16" style="width:16px;height:16px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`;
-
-            for (const item of items) {
-                const card = document.createElement('div');
-                card.className = 'starred-clause-card';
-                card.innerHTML = `
-                    <div class="starred-clause-header">
-                        <span class="starred-clause-source" title="點擊跳轉至此法規原位置">
-                            ${escapeHtml(item.docTitle)}（第 ${item.pageNumber} 頁）
-                        </span>
-                        <div class="starred-clause-actions">
-                            <button type="button" class="article-mini-btn copy-btn" title="複製此條">${copySvg}</button>
-                            <button type="button" class="article-mini-btn star-btn starred" title="取消收藏此條">★</button>
-                        </div>
-                    </div>
-                    <div class="starred-clause-text clause-structured-body">${renderStructuredClauseHtml(item.text, keywords)}</div>
-                `;
-
-                const jumpToOrigin = () => {
-                    openReaderView(item.docId, globalQuery, item.clauseKey);
-                };
-
-                card.querySelector('.starred-clause-source').addEventListener('click', jumpToOrigin);
-                card.querySelector('.starred-clause-text').addEventListener('click', jumpToOrigin);
-
-                const copyBtn = card.querySelector('.copy-btn');
-                copyBtn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    const ok = await copyToClipboard(item.text);
-                    if (ok) {
-                        copyBtn.innerHTML = checkSvg;
-                        copyBtn.classList.add('copied');
-                        showToast('已複製此條法規', 'success');
-                        setTimeout(() => {
-                            copyBtn.innerHTML = copySvg;
-                            copyBtn.classList.remove('copied');
-                        }, 1500);
-                    }
-                });
-
-                const unstarBtn = card.querySelector('.star-btn');
-                unstarBtn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    const doc = documents.find(d => d.id === item.docId);
-                    if (doc && Array.isArray(doc.starredClauses)) {
-                        doc.starredClauses = doc.starredClauses.filter(k => k !== item.clauseKey);
-                        await dbPut(STORE_DOCS, doc);
-                        renderCurrentView();
-                        showToast('已從重要法條收藏移除');
-                    }
-                });
-
-                container.appendChild(card);
-            }
+            return row;
         }
 
         function buildMatchSnippet(doc, keywords) {
@@ -2562,95 +2384,171 @@
             return highlightKeywords(slice, keywords);
         }
 
-        function getFilteredDocuments(folderIdOrNull) {
-            const keywords = parseKeywords(globalQuery);
+        function getFilteredDocuments({ domain, folderId, onlyStarred, query }) {
+            const keywords = parseKeywords(query || '');
             return documents.filter(doc => {
-                if (folderIdOrNull && doc.folderId !== folderIdOrNull) return false;
+                if (domain && doc.domain !== domain) return false;
+                if (folderId && doc.folderId !== folderId) return false;
+                if (onlyStarred && !doc.starred) return false;
                 if (keywords.length === 0) return true;
-                const folderName = getFolderNameById(doc.folderId);
-                const displayTitle = cleanDisplayTitle(doc.title);
-                const haystack = (folderName + '\n' + displayTitle + '\n' + doc.pages.map(p => reflowRegulationText(p.text)).join('\n')).toLowerCase();
-                return keywords.every(kw => haystack.includes(kw.toLowerCase()));
+                const hay = (getFolderNameById(doc.folderId) + '\n' + cleanDisplayTitle(doc.title) + '\n' +
+                    doc.pages.map(p => reflowRegulationText(p.text)).join('\n')).toLowerCase();
+                return keywords.every(kw => hay.includes(kw.toLowerCase()));
             });
         }
 
-        function renderFilteredDocList(folderIdOrNull) {
-            const container = document.getElementById('docListContainer');
-            const keywords = parseKeywords(globalQuery);
-            const filtered = getFilteredDocuments(folderIdOrNull);
+        async function toggleDocStar(doc) {
+            doc.starred = !doc.starred;
+            await dbPut(STORE_DOCS, doc);
+            updateFavBadge();
+            showToast(doc.starred ? '已加入收藏夾' : '已從收藏夾移除', doc.starred ? 'success' : 'normal');
+        }
 
-            if (folderIdOrNull) {
-                document.getElementById('activeFolderSub').textContent = `共 ${filtered.length} 份文件`;
-            } else {
-                document.getElementById('searchResultSummary').textContent = `跨資料夾搜尋結果：共 ${filtered.length} 筆`;
-            }
+        function createDocRow(doc, opts = {}) {
+            const keywords = opts.keywords || [];
+            const row = document.createElement('div');
+            row.className = 'row doc-row';
+            row.setAttribute('role', 'button');
 
-            container.innerHTML = '';
+            const snippetHtml = keywords.length > 0 ? buildMatchSnippet(doc, keywords) : '';
+            const folderTag = (opts.showFolderTag && doc.folderId)
+                ? `<span class="badge-tag badge-folder">${escapeHtml(getFolderNameById(doc.folderId))}</span>` : '';
 
-            if (filtered.length === 0) {
-                const empty = document.createElement('div');
-                empty.className = 'empty-state';
-                empty.textContent = folderIdOrNull
-                    ? '此資料夾尚無文件，可點擊右上角「批次上傳」或從其他資料夾移動過來'
-                    : '找不到符合條件的法規或公文';
-                container.appendChild(empty);
-                return;
-            }
-
-            for (const doc of filtered) {
-                const card = document.createElement('div');
-                card.className = 'doc-card';
-                const displayTitle = cleanDisplayTitle(doc.title);
-                const snippetHtml = buildMatchSnippet(doc, keywords);
-                const starCount = Array.isArray(doc.starredClauses) ? doc.starredClauses.length : 0;
-
-                card.innerHTML = `
-                    <div class="doc-card-body">
-                        <div class="doc-card-title">${highlightKeywords(displayTitle, keywords)}</div>
-                        <div class="doc-card-meta">
-                            <select class="folder-move-select" title="變更所屬資料夾" aria-label="變更所屬資料夾">
-                                ${buildFolderOptionsHtml(doc.folderId)}
-                            </select>
-                            ${starCount > 0 ? `<span class="badge-tag badge-star-count">★ ${starCount} 條收藏</span>` : ''}
-                            ${doc.isOcr ? '<span class="badge-tag badge-ocr">圖片轉純文字</span>' : ''}
-                            <span>${doc.pages.length} 頁</span>
-                            <span>・</span>
-                            <span>${escapeHtml(doc.updatedAt)}</span>
-                            ${doc.isRecentlyUpdated ? '<span class="badge-tag badge-updated">已更新</span>' : ''}
-                        </div>
-                        ${snippetHtml ? `<div class="doc-card-snippet">${snippetHtml}</div>` : ''}
+            row.innerHTML = `
+                <span class="row-icon">${svgIcon('file', 22)}</span>
+                <div class="row-main">
+                    <div class="row-title">${highlightKeywords(cleanDisplayTitle(doc.title), keywords)}</div>
+                    <div class="row-sub">
+                        ${folderTag}
+                        ${doc.isOcr ? '<span class="badge-tag badge-ocr">圖片轉純文字</span>' : ''}
+                        <span>${doc.pages.length} 頁・${escapeHtml(doc.updatedAt)}</span>
+                        ${doc.isRecentlyUpdated ? '<span class="badge-tag badge-updated">已更新</span>' : ''}
                     </div>
-                `;
+                    ${snippetHtml ? `<div class="row-snippet">${snippetHtml}</div>` : ''}
+                </div>
+                <button type="button" class="star-btn ${doc.starred ? 'on' : ''}" aria-label="${doc.starred ? '取消收藏' : '收藏整份規章'}">${svgIcon('star', 19, doc.starred)}</button>
+            `;
 
-                const moveSelect = card.querySelector('.folder-move-select');
-                moveSelect.addEventListener('click', (e) => e.stopPropagation());
-                moveSelect.addEventListener('change', async (e) => {
-                    e.stopPropagation();
-                    doc.folderId = e.target.value;
-                    await dbPut(STORE_DOCS, doc);
-                    renderCurrentView();
-                    showToast(`已移動至「${getFolderNameById(doc.folderId)}」`, 'success');
-                });
+            const starBtn = row.querySelector('.star-btn');
+            starBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                await toggleDocStar(doc);
+                if (opts.onStarChange) {
+                    opts.onStarChange();
+                } else {
+                    starBtn.classList.toggle('on', doc.starred);
+                    starBtn.innerHTML = svgIcon('star', 19, doc.starred);
+                }
+            });
 
-                card.addEventListener('click', () => {
-                    openReaderView(doc.id, globalQuery);
-                });
+            row.addEventListener('click', () => openReaderView(doc.id, opts.openWithQuery || ''));
+            return row;
+        }
 
-                container.appendChild(card);
+        function renderHome() {
+            renderDomainTabs('homeTabs');
+
+            const folderEl = document.getElementById('folderList');
+            folderEl.innerHTML = '';
+            const fl = foldersOfDomain(activeDomain);
+            if (fl.length === 0) {
+                folderEl.appendChild(emptyLine('還沒有資料夾。想整理的時候，點右上角「新增資料夾」。'));
+            } else {
+                fl.forEach(f => folderEl.appendChild(createFolderRow(f)));
+            }
+
+            const looseEl = document.getElementById('looseList');
+            looseEl.innerHTML = '';
+            const loose = documents.filter(d => d.domain === activeDomain && !d.folderId);
+            if (loose.length === 0) {
+                looseEl.appendChild(emptyLine('還沒有單一規章。\n點右上角「上傳規章」，直接放在這裡就好。'));
+            } else {
+                loose.forEach(d => looseEl.appendChild(createDocRow(d)));
             }
         }
 
+        function renderFolderView(folder) {
+            const list = document.getElementById('folderDocList');
+            list.innerHTML = '';
+            const docs = getFilteredDocuments({ folderId: folder.id });
+            document.getElementById('activeFolderTitle').textContent = `${DOMAIN_LABEL[folder.domain]}・${folder.name}`;
+            document.getElementById('activeFolderSub').textContent = `共 ${docs.length} 份規章`;
+            if (docs.length === 0) {
+                list.appendChild(emptyLine('這個資料夾還是空的。\n點右上角「上傳」，或在規章裡用「所屬分類」搬進來。'));
+                return;
+            }
+            docs.forEach(d => list.appendChild(createDocRow(d)));
+        }
+
+        function renderSearchView() {
+            renderDomainTabs('searchTabs');
+            const keywords = parseKeywords(globalQuery);
+            const docs = getFilteredDocuments({ domain: activeDomain, query: globalQuery });
+            document.getElementById('searchResultSummary').textContent = `${DOMAIN_LABEL[activeDomain]}搜尋結果：${docs.length} 筆`;
+            const list = document.getElementById('searchList');
+            list.innerHTML = '';
+            if (docs.length === 0) {
+                list.appendChild(emptyLine(`在${DOMAIN_LABEL[activeDomain]}裡找不到符合的法規或公文。`));
+                return;
+            }
+            docs.forEach(d => list.appendChild(createDocRow(d, {
+                keywords,
+                showFolderTag: true,
+                openWithQuery: globalQuery
+            })));
+        }
+
+        function renderFavView() {
+            renderDomainTabs('favTabs');
+            const keywords = parseKeywords(globalQuery);
+            const docs = getFilteredDocuments({ domain: activeDomain, onlyStarred: true, query: globalQuery });
+            document.getElementById('favSub').textContent =
+                `${DOMAIN_LABEL[activeDomain]}・共 ${docs.length} 份規章`;
+            const list = document.getElementById('favList');
+            list.innerHTML = '';
+            if (docs.length === 0) {
+                list.appendChild(emptyLine(keywords.length > 0
+                    ? `在${DOMAIN_LABEL[activeDomain]}收藏裡找不到符合的規章。`
+                    : `${DOMAIN_LABEL[activeDomain]}還沒有收藏。\n在規章旁邊按星號，就會出現在這裡。`));
+                return;
+            }
+            docs.forEach(d => list.appendChild(createDocRow(d, {
+                keywords,
+                showFolderTag: true,
+                openWithQuery: globalQuery,
+                onStarChange: () => renderCurrentView()
+            })));
+        }
+
         /* =========================================================
-           12. 閱讀頁（大標分層橫幅 + 條號徽章 + 款目縮排 + 單條收藏）
+           12. 閱讀頁
            ========================================================= */
-        function renderReaderContent(doc, searchStr, targetClauseKey = null) {
+        function updateReaderStarBtn(doc) {
+            const btn = document.getElementById('readerStarBtn');
+            btn.classList.toggle('on', doc.starred);
+            btn.innerHTML = svgIcon('star', 19, doc.starred);
+            btn.setAttribute('aria-label', doc.starred ? '取消收藏' : '收藏整份規章');
+            btn.title = doc.starred ? '取消收藏' : '收藏整份規章';
+        }
+
+        function updateReaderCrumb(doc) {
+            document.getElementById('readerCrumb').textContent =
+                `${DOMAIN_LABEL[doc.domain]} › ${doc.folderId ? getFolderNameById(doc.folderId) : '單一規章'}`;
+        }
+
+        function buildCategoryOptionsHtml(doc) {
+            const cur = doc.domain + '|' + (doc.folderId || '');
+            return ['s', 'm'].map(dm => {
+                const opts = [`<option value="${dm}|">單一規章（不放資料夾）</option>`]
+                    .concat(foldersOfDomain(dm).map(f => `<option value="${dm}|${escapeHtml(f.id)}">${escapeHtml(f.name)}</option>`));
+                return `<optgroup label="${DOMAIN_LABEL[dm]}">${opts.join('')}</optgroup>`;
+            }).join('').replace(`value="${cur}"`, `value="${cur}" selected`);
+        }
+
+        function renderReaderContent(doc, searchStr) {
             const container = document.getElementById('readerContentContainer');
             container.innerHTML = '';
             const keywords = parseKeywords(searchStr);
-            if (!Array.isArray(doc.starredClauses)) doc.starredClauses = [];
-
-            const copySvg = `<svg width="16" height="16" style="width:16px;height:16px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>`;
-            const checkSvg = `<svg width="16" height="16" style="width:16px;height:16px;flex-shrink:0;" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>`;
 
             if (isEditingDocText) {
                 const textareas = [];
@@ -2706,8 +2604,6 @@
                 return;
             }
 
-            let targetElementToScroll = null;
-
             for (const page of doc.pages) {
                 const pageSec = document.createElement('div');
                 pageSec.className = 'page-section';
@@ -2720,7 +2616,6 @@
                 }
 
                 const units = parsePageUnits(page.text);
-                let clauseIdx = 0;
 
                 for (const u of units) {
                     if (u.type === 'chapter') {
@@ -2732,55 +2627,24 @@
                     }
 
                     const blockText = u.text;
-                    const clauseKey = extractClauseKey(blockText, page.pageNumber, clauseIdx);
-                    clauseIdx++;
-                    const isClauseStarred = doc.starredClauses.includes(clauseKey);
-
                     const card = document.createElement('article');
-                    card.className = 'article-card' + (isClauseStarred ? ' clause-starred' : '');
-                    card.setAttribute('data-clause-key', clauseKey);
-
+                    card.className = 'article-card';
                     card.innerHTML = `
                         <div class="article-card-actions">
-                            <button type="button" class="article-mini-btn star-btn ${isClauseStarred ? 'starred' : ''}" title="收藏此條至重要法條分頁" aria-label="收藏此條">${isClauseStarred ? '★' : '☆'}</button>
-                            <button type="button" class="article-mini-btn copy-btn" title="複製此段" aria-label="複製此段">${copySvg}</button>
+                            <button type="button" class="article-mini-btn copy-btn" title="複製此段" aria-label="複製此段">${svgIcon('copy', 16)}</button>
                         </div>
                         <div class="clause-structured-body">${renderStructuredClauseHtml(blockText, keywords)}</div>
                     `;
-
-                    if (targetClauseKey && clauseKey === targetClauseKey) {
-                        targetElementToScroll = card;
-                    }
-
-                    const starBtn = card.querySelector('.star-btn');
-                    starBtn.addEventListener('click', async () => {
-                        const idx = doc.starredClauses.indexOf(clauseKey);
-                        if (idx === -1) {
-                            doc.starredClauses.push(clauseKey);
-                            starBtn.textContent = '★';
-                            starBtn.classList.add('starred');
-                            card.classList.add('clause-starred');
-                            showToast('已收錄至「重要法條收藏分頁」★', 'success');
-                        } else {
-                            doc.starredClauses.splice(idx, 1);
-                            starBtn.textContent = '☆';
-                            starBtn.classList.remove('starred');
-                            card.classList.remove('clause-starred');
-                            showToast('已取消此條收藏');
-                        }
-                        await dbPut(STORE_DOCS, doc);
-                        updateStarredCollectionCountBadges();
-                    });
 
                     const copyBtn = card.querySelector('.copy-btn');
                     copyBtn.addEventListener('click', async () => {
                         const ok = await copyToClipboard(blockText);
                         if (ok) {
-                            copyBtn.innerHTML = checkSvg;
+                            copyBtn.innerHTML = svgIcon('check', 16);
                             copyBtn.classList.add('copied');
                             showToast('已複製此段文字', 'success');
                             setTimeout(() => {
-                                copyBtn.innerHTML = copySvg;
+                                copyBtn.innerHTML = svgIcon('copy', 16);
                                 copyBtn.classList.remove('copied');
                             }, 1600);
                         }
@@ -2805,14 +2669,6 @@
                 currentMatchIdx = -1;
             }
             syncBottomDockWithMode();
-
-            if (targetElementToScroll) {
-                setTimeout(() => {
-                    targetElementToScroll.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    targetElementToScroll.classList.add('clause-jump-highlight');
-                    setTimeout(() => targetElementToScroll.classList.remove('clause-jump-highlight'), 2200);
-                }, 60);
-            }
         }
 
         function highlightActiveMatch(index, shouldScroll = true) {
@@ -2831,7 +2687,7 @@
             }
         }
 
-        function renderReaderPage(docId, initialQuery = '', targetClauseKey = null) {
+        function renderReaderPage(docId, initialQuery = '') {
             const doc = documents.find(d => d.id === docId);
             if (!doc) return;
 
@@ -2843,26 +2699,25 @@
             document.getElementById('readerDocMetaText').textContent = `共 ${doc.pages.length} 頁・更新日期：${doc.updatedAt}`;
             document.getElementById('readerOcrBadge').classList.toggle('hidden', !doc.isOcr);
             document.getElementById('readerUpdatedBadge').classList.toggle('hidden', !doc.isRecentlyUpdated);
-
-            const folderSelect = document.getElementById('readerFolderSelect');
-            folderSelect.innerHTML = buildFolderOptionsHtml(doc.folderId);
+            document.getElementById('readerMenuPanel').classList.add('hidden');
+            document.getElementById('readerCategorySelect').innerHTML = buildCategoryOptionsHtml(doc);
+            updateReaderStarBtn(doc);
+            updateReaderCrumb(doc);
 
             renderCurrentView();
-            renderReaderContent(doc, readerQuery, targetClauseKey);
+            renderReaderContent(doc, readerQuery);
 
-            if (!targetClauseKey) {
-                if (readerMatches.length > 0) {
-                    highlightActiveMatch(0, true);
-                } else {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
+            if (readerMatches.length > 0) {
+                highlightActiveMatch(0, true);
+            } else {
+                window.scrollTo({ top: 0 });
             }
         }
 
-        function openReaderView(docId, initialQuery = '', targetClauseKey = null) {
+        function openReaderView(docId, initialQuery = '') {
             activeDocId = docId;
             pushNavigationState();
-            renderReaderPage(docId, initialQuery, targetClauseKey);
+            renderReaderPage(docId, initialQuery);
         }
 
         function closeReaderView() {
@@ -2876,11 +2731,12 @@
         }
 
         /* =========================================================
-           13. JSON 備份匯出與還原匯入
+           13. 備份檔匯出／匯入（格式向下相容）
            ========================================================= */
         function exportJsonBackup() {
             const payload = {
                 exportedAt: new Date().toISOString(),
+                version: 2,
                 folders,
                 documents
             };
@@ -2894,7 +2750,7 @@
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            showToast('已匯出純文字備份檔', 'success');
+            showToast('已匯出備份檔', 'success');
         }
 
         async function importJsonBackup(file) {
@@ -2905,11 +2761,13 @@
 
                 if (Array.isArray(parsed.folders)) {
                     for (const f of parsed.folders) {
-                        if (f && f.id && f.name) {
-                            if (!folders.some(existing => existing.id === f.id)) {
-                                folders.push(f);
+                        if (f && f.id && f.name && f.id !== UNCATEGORIZED_FOLDER_ID) {
+                            const existing = folders.find(x => x.id === f.id);
+                            if (!existing) {
+                                const nf = normalizeFolder(f);
+                                folders.push(nf);
+                                await dbPut(STORE_FOLDERS, nf);
                             }
-                            await dbPut(STORE_FOLDERS, f);
                         }
                     }
                 }
@@ -2921,27 +2779,23 @@
                 let count = 0;
                 for (const item of docList) {
                     if (item && item.title && Array.isArray(item.pages)) {
-                        const targetFid = (item.folderId && folders.some(f => f.id === item.folderId))
-                            ? item.folderId
-                            : UNCATEGORIZED_FOLDER_ID;
-
                         const cleanPages = item.pages.map((p, idx) => ({
                             pageNumber: p.pageNumber || (idx + 1),
                             text: p.text || ''
                         }));
-
                         const cleanedTitle = cleanDisplayTitle(String(item.title));
-                        const doc = {
+                        const doc = normalizeDoc({
                             id: item.id || ('doc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7)),
-                            folderId: targetFid,
+                            folderId: item.folderId,
+                            domain: item.domain,
                             title: cleanedTitle,
                             coreName: item.coreName || extractCoreName(cleanedTitle),
                             isOcr: Boolean(item.isOcr || item.docType === 'image'),
-                            starredClauses: Array.isArray(item.starredClauses) ? item.starredClauses : [],
+                            starred: item.starred,
                             updatedAt: item.updatedAt || item.uploadedAt || new Date().toLocaleDateString('zh-TW'),
                             isRecentlyUpdated: Boolean(item.isRecentlyUpdated),
                             pages: cleanPages
-                        };
+                        });
 
                         const idx = documents.findIndex(d => d.id === doc.id);
                         if (idx !== -1) documents[idx] = doc;
@@ -2952,153 +2806,212 @@
                 }
                 sortDocuments();
                 renderCurrentView();
-                showToast(`已成功還原 ${count} 份文件（已鎖定儲存）`, 'success');
+                showToast(`已成功還原 ${count} 份文件`, 'success');
             } catch (e) {
                 showToast('備份檔案格式不正確', 'error');
             }
         }
 
         /* =========================================================
-           14. 應用程式初始化與所有事件綁定
+           14. 還原點（整體法規一份，儲匯與郵務一起存）
+           ========================================================= */
+        const RESTORE_KEY = 'restore_point';
+
+        async function dbClearStore(storeName) {
+            if (!idbAvailable) return;
+            const db = await openDB();
+            await new Promise((resolve, reject) => {
+                const tx = db.transaction(storeName, 'readwrite');
+                tx.objectStore(storeName).clear();
+                tx.oncomplete = () => resolve();
+                tx.onerror = () => reject(tx.error);
+            });
+        }
+
+        async function getRestorePoint() {
+            const snap = await loadPreference(RESTORE_KEY, null);
+            if (snap && Array.isArray(snap.documents) && Array.isArray(snap.folders)) return snap;
+            return null;
+        }
+
+        function formatSavedAt(iso) {
+            try {
+                return new Date(iso).toLocaleString('zh-TW', { hour12: false });
+            } catch (e) {
+                return String(iso || '');
+            }
+        }
+
+        async function refreshRestoreInfo() {
+            const snap = await getRestorePoint();
+            document.getElementById('restoreInfo').textContent = snap
+                ? `上次儲存：${formatSavedAt(snap.savedAt)}（${snap.documents.length} 份規章）`
+                : '尚未儲存過還原點';
+        }
+
+        async function saveRestorePoint() {
+            if (!idbAvailable) {
+                showToast('這個瀏覽器無法儲存還原點，請改用匯出備份檔', 'error');
+                return;
+            }
+            const prev = await getRestorePoint();
+            if (prev) {
+                const ok = await showConfirmModal(
+                    '儲存還原點',
+                    `會覆蓋上次儲存的還原點（${formatSavedAt(prev.savedAt)}）。`,
+                    '覆蓋儲存',
+                    false
+                );
+                if (!ok) return;
+            }
+            const snap = {
+                savedAt: new Date().toISOString(),
+                folders: JSON.parse(JSON.stringify(folders)),
+                documents: JSON.parse(JSON.stringify(documents))
+            };
+            try {
+                const db = await openDB();
+                await new Promise((resolve, reject) => {
+                    const tx = db.transaction(STORE_PREFS, 'readwrite');
+                    tx.objectStore(STORE_PREFS).put({ key: RESTORE_KEY, value: snap });
+                    tx.oncomplete = () => resolve();
+                    tx.onerror = () => reject(tx.error);
+                    tx.onabort = () => reject(tx.error);
+                });
+                showToast(`已儲存還原點（${snap.documents.length} 份規章）`, 'success');
+            } catch (e) {
+                showToast('儲存還原點失敗（空間可能不足）', 'error');
+            }
+            await refreshRestoreInfo();
+        }
+
+        async function loadRestorePoint() {
+            const snap = await getRestorePoint();
+            if (!snap) {
+                showToast('還沒有儲存過還原點');
+                return;
+            }
+            const ok = await showConfirmModal(
+                '還原到上次儲存',
+                `還原到 ${formatSavedAt(snap.savedAt)}（${snap.documents.length} 份規章）。現在的內容會被取代，而且無法復原。`,
+                '確定還原',
+                true
+            );
+            if (!ok) return;
+
+            setProgress(true, '還原中...', 30);
+            try {
+                await dbClearStore(STORE_DOCS);
+                await dbClearStore(STORE_FOLDERS);
+                folders = snap.folders
+                    .filter(f => f && f.id && f.id !== UNCATEGORIZED_FOLDER_ID)
+                    .map(normalizeFolder);
+                documents = snap.documents.map(d => normalizeDoc(d));
+                for (const f of folders) await dbPut(STORE_FOLDERS, f);
+                for (const d of documents) await dbPut(STORE_DOCS, d);
+                if (!idbAvailable) syncFallbackStorage();
+            } catch (e) {
+                setProgress(false);
+                showToast('還原失敗', 'error');
+                return;
+            }
+            setProgress(false);
+
+            sortDocuments();
+            activeDocId = null;
+            activeFolderId = null;
+            isFavPageActive = false;
+            globalQuery = '';
+            renderCurrentView();
+            showToast('已還原到上次儲存的內容', 'success');
+        }
+
+        /* =========================================================
+           15. 初始化與事件綁定
            ========================================================= */
         async function initApp() {
+            hydrateIcons();
             await requestPersistentStorage();
 
-            const savedFont = await loadPreference('font_scale', 'large');
-            applyFontScale(savedFont);
+            applyFontScale(await loadPreference('font_scale', 'large'));
+            activeDomain = (await loadPreference('active_domain', 's')) === 'm' ? 'm' : 's';
+            const migrated = await loadPreference('schema_v2', false);
 
             const storedFolders = await dbGetAll(STORE_FOLDERS);
-            if (storedFolders.length > 0) {
-                folders = storedFolders;
-                if (!folders.some(f => f.id === UNCATEGORIZED_FOLDER_ID)) {
-                    const uncat = DEFAULT_FOLDERS[0];
-                    folders.unshift(uncat);
-                    await dbPut(STORE_FOLDERS, uncat);
-                }
-            } else {
-                folders = [...DEFAULT_FOLDERS];
-                for (const f of folders) {
-                    await dbPut(STORE_FOLDERS, f);
-                }
-            }
-
             const storedDocs = await dbGetAll(STORE_DOCS);
-            if (storedDocs.length > 0) {
-                documents = [];
-                for (const d of storedDocs) {
-                    const cleanedTitle = cleanDisplayTitle(d.title);
-                    const normalizedDoc = {
-                        ...d,
-                        title: cleanedTitle,
-                        coreName: extractCoreName(cleanedTitle),
-                        starredClauses: Array.isArray(d.starredClauses) ? d.starredClauses : [],
-                        folderId: (d.folderId && folders.some(f => f.id === d.folderId)) ? d.folderId : UNCATEGORIZED_FOLDER_ID
-                    };
-                    if (cleanedTitle !== d.title) {
-                        await dbPut(STORE_DOCS, normalizedDoc);
-                    }
-                    documents.push(normalizedDoc);
-                }
+            const isFresh = storedFolders.length === 0 && storedDocs.length === 0 && !migrated;
+
+            if (isFresh) {
+                folders = DEFAULT_FOLDERS.map(f => ({ ...f }));
+                for (const f of folders) await dbPut(STORE_FOLDERS, f);
+                documents = SAMPLE_DOCS.map(d => ({ ...d }));
+                for (const d of documents) await dbPut(STORE_DOCS, d);
+                await savePreference('schema_v2', true);
             } else {
-                documents = [...SAMPLE_DOCS];
-                for (const d of documents) {
-                    await dbPut(STORE_DOCS, d);
+                folders = storedFolders
+                    .filter(f => f && f.id !== UNCATEGORIZED_FOLDER_ID)
+                    .map(normalizeFolder);
+
+                if (!migrated) {
+                    await dbDelete(STORE_FOLDERS, UNCATEGORIZED_FOLDER_ID);
+                    if (!folders.some(f => f.domain === 'm')) {
+                        folders.push({ ...DEFAULT_FOLDERS[DEFAULT_FOLDERS.length - 1] });
+                    }
+                    for (const f of folders) await dbPut(STORE_FOLDERS, f);
+                }
+
+                documents = storedDocs.map(d => {
+                    const nd = normalizeDoc({ ...d, title: cleanDisplayTitle(d.title) });
+                    nd.coreName = extractCoreName(nd.title);
+                    return nd;
+                });
+
+                if (!migrated) {
+                    for (const d of documents) await dbPut(STORE_DOCS, d);
+                    await savePreference('schema_v2', true);
                 }
             }
 
             sortDocuments();
             initHistoryNavigation();
             renderCurrentView();
+            refreshRestoreInfo();
 
-            // 頂部標題點擊回到封面
+            /* ----- 導覽 ----- */
             document.getElementById('brandHomeBtn').addEventListener('click', () => {
                 activeDocId = null;
                 activeFolderId = null;
-                isStarredPageActive = false;
+                isFavPageActive = false;
                 globalQuery = '';
                 pushNavigationState();
                 renderCurrentView();
+                window.scrollTo({ top: 0 });
             });
 
-            // 重要法條收藏分頁入口
-            const openStarredCollectionPage = () => {
-                activeDocId = null;
-                activeFolderId = null;
-                isStarredPageActive = true;
-                globalQuery = '';
-                pushNavigationState();
-                renderCurrentView();
-            };
-
-            document.getElementById('openStarredPageCard').addEventListener('click', openStarredCollectionPage);
-            document.getElementById('headerStarPageBtn').addEventListener('click', () => {
-                if (isStarredPageActive && !activeDocId) {
-                    isStarredPageActive = false;
-                    pushNavigationState();
-                    renderCurrentView();
+            document.getElementById('favNavBtn').addEventListener('click', () => {
+                if (isFavPageActive && !activeDocId) {
+                    isFavPageActive = false;
                 } else {
-                    openStarredCollectionPage();
+                    activeDocId = null;
+                    activeFolderId = null;
+                    isFavPageActive = true;
+                    globalQuery = '';
                 }
+                pushNavigationState();
+                renderCurrentView();
+                window.scrollTo({ top: 0 });
             });
 
-            document.getElementById('backFromStarredBtn').addEventListener('click', () => {
-                if (window.history.state && window.history.state.isStarredPageActive) {
+            document.getElementById('backFromFavBtn').addEventListener('click', () => {
+                if (window.history.state && window.history.state.isFavPageActive) {
                     window.history.back();
                 } else {
-                    isStarredPageActive = false;
+                    isFavPageActive = false;
                     renderCurrentView();
                 }
             });
 
-            // 搜尋結果列一鍵清除篩選
-            document.getElementById('resetGlobalFilterBtn').addEventListener('click', () => {
-                globalQuery = '';
-                renderCurrentView();
-            });
-
-            // 字級切換
-            document.querySelectorAll('.font-pill-btn').forEach(btn => {
-                btn.addEventListener('click', () => applyFontScale(btn.getAttribute('data-font-btn')));
-            });
-
-            // 匯出與匯入備份
-            document.getElementById('exportBackupBtn').addEventListener('click', exportJsonBackup);
-            document.getElementById('importBackupInput').addEventListener('change', async (e) => {
-                if (e.target.files && e.target.files[0]) {
-                    await importJsonBackup(e.target.files[0]);
-                }
-                e.target.value = '';
-            });
-
-            // 封面「新增資料夾」圖示按鈕
-            document.getElementById('openNewFolderModalBtn').addEventListener('click', async () => {
-                const name = await openFolderInputModal('新增資料夾', '請輸入新的分類資料夾名稱：');
-                if (name) {
-                    const newFolder = {
-                        id: 'folder-' + Date.now(),
-                        name,
-                        kind: name.includes('公文') ? 'official' : 'normal'
-                    };
-                    folders.push(newFolder);
-                    await dbPut(STORE_FOLDERS, newFolder);
-                    renderCurrentView();
-                    showToast(`已建立資料夾「${name}」`, 'success');
-                }
-            });
-
-            // 封面單一精簡批次上傳小圖示
-            document.getElementById('coverBatchFileInput').addEventListener('change', async (e) => {
-                if (e.target.files && e.target.files.length > 0) {
-                    await processBatchFiles(e.target.files, UNCATEGORIZED_FOLDER_ID);
-                    activeFolderId = UNCATEGORIZED_FOLDER_ID;
-                    pushNavigationState();
-                    renderCurrentView();
-                }
-                e.target.value = '';
-            });
-
-            // 資料夾內返回封面與批次上傳
-            document.getElementById('backToFoldersBtn').addEventListener('click', () => {
+            document.getElementById('backFromFolderBtn').addEventListener('click', () => {
                 if (window.history.state && window.history.state.activeFolderId) {
                     window.history.back();
                 } else {
@@ -3107,25 +3020,139 @@
                 }
             });
 
-            document.getElementById('batchFileInput').addEventListener('change', async (e) => {
-                if (e.target.files && e.target.files.length > 0) {
-                    await processBatchFiles(e.target.files, activeFolderId || UNCATEGORIZED_FOLDER_ID);
+            document.getElementById('resetSearchBtn').addEventListener('click', () => {
+                globalQuery = '';
+                renderCurrentView();
+            });
+
+            /* ----- 字級 ----- */
+            document.querySelectorAll('.font-pill-btn').forEach(btn => {
+                btn.addEventListener('click', () => applyFontScale(btn.getAttribute('data-font-btn')));
+            });
+
+            /* ----- 首頁選單：還原點、備份 ----- */
+            const appMenuBtn = document.getElementById('appMenuBtn');
+            const appMenuPanel = document.getElementById('appMenuPanel');
+            const readerMenuBtn = document.getElementById('readerMenuBtn');
+            const readerMenuPanel = document.getElementById('readerMenuPanel');
+            const closeMenus = () => {
+                appMenuPanel.classList.add('hidden');
+                readerMenuPanel.classList.add('hidden');
+            };
+
+            appMenuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                readerMenuPanel.classList.add('hidden');
+                appMenuPanel.classList.toggle('hidden');
+                if (!appMenuPanel.classList.contains('hidden')) refreshRestoreInfo();
+            });
+            appMenuPanel.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (e.target.closest('.menu-item')) setTimeout(() => appMenuPanel.classList.add('hidden'), 250);
+            });
+
+            readerMenuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                appMenuPanel.classList.add('hidden');
+                readerMenuPanel.classList.toggle('hidden');
+            });
+            readerMenuPanel.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (e.target.closest('.menu-item')) setTimeout(() => readerMenuPanel.classList.add('hidden'), 250);
+            });
+            document.addEventListener('click', closeMenus);
+
+            document.getElementById('saveRestoreBtn').addEventListener('click', saveRestorePoint);
+            document.getElementById('loadRestoreBtn').addEventListener('click', loadRestorePoint);
+            document.getElementById('exportBackupBtn').addEventListener('click', exportJsonBackup);
+            document.getElementById('importBackupInput').addEventListener('change', async (e) => {
+                if (e.target.files && e.target.files[0]) {
+                    await importJsonBackup(e.target.files[0]);
                 }
                 e.target.value = '';
             });
 
-            // 閱讀模式工具列事件
-            document.getElementById('backFromReaderBtn').addEventListener('click', closeReaderView);
-
-            document.getElementById('readerFolderSelect').addEventListener('change', async (e) => {
-                const doc = documents.find(d => d.id === activeDocId);
-                if (!doc) return;
-                doc.folderId = e.target.value;
-                activeFolderId = doc.folderId;
-                await dbPut(STORE_DOCS, doc);
-                showToast(`已移動至「${getFolderNameById(doc.folderId)}」`, 'success');
+            /* ----- 首頁：資料夾與上傳 ----- */
+            document.getElementById('newFolderBtn').addEventListener('click', async () => {
+                const name = await openFolderInputModal('新增資料夾', `新增到「${DOMAIN_LABEL[activeDomain]}」：`);
+                if (name) {
+                    const newFolder = {
+                        id: 'folder-' + Date.now(),
+                        name,
+                        kind: name.includes('公文') ? 'official' : 'normal',
+                        domain: activeDomain
+                    };
+                    folders.push(newFolder);
+                    await dbPut(STORE_FOLDERS, newFolder);
+                    renderCurrentView();
+                    showToast(`已建立資料夾「${name}」`, 'success');
+                }
             });
 
+            document.getElementById('homeUploadInput').addEventListener('change', async (e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                    await processBatchFiles(e.target.files, null, activeDomain);
+                }
+                e.target.value = '';
+            });
+
+            document.getElementById('folderUploadInput').addEventListener('change', async (e) => {
+                if (e.target.files && e.target.files.length > 0 && activeFolderId) {
+                    await processBatchFiles(e.target.files, activeFolderId, activeDomain);
+                }
+                e.target.value = '';
+            });
+
+            document.getElementById('deleteFolderBtn').addEventListener('click', async () => {
+                const folder = getFolder(activeFolderId);
+                if (!folder) return;
+                const count = documents.filter(d => d.folderId === folder.id).length;
+                const desc = count > 0
+                    ? `確定要刪除資料夾「${folder.name}」嗎？裡面的 ${count} 份規章不會刪除，會變成「${DOMAIN_LABEL[folder.domain]}」的單一規章。`
+                    : `確定要刪除空白資料夾「${folder.name}」嗎？`;
+                const ok = await showConfirmModal('刪除資料夾', desc, '確定刪除', true);
+                if (!ok) return;
+                for (const d of documents) {
+                    if (d.folderId === folder.id) {
+                        d.folderId = null;
+                        await dbPut(STORE_DOCS, d);
+                    }
+                }
+                await dbDelete(STORE_FOLDERS, folder.id);
+                folders = folders.filter(f => f.id !== folder.id);
+                activeFolderId = null;
+                if (window.history.state && window.history.state.activeFolderId) {
+                    window.history.back();
+                }
+                renderCurrentView();
+                showToast(count > 0 ? `已刪除資料夾，${count} 份規章變成單一規章` : `已刪除資料夾「${folder.name}」`);
+            });
+
+            /* ----- 閱讀頁 ----- */
+            document.getElementById('backFromReaderBtn').addEventListener('click', closeReaderView);
+
+            document.getElementById('readerStarBtn').addEventListener('click', async () => {
+                const doc = documents.find(d => d.id === activeDocId);
+                if (!doc) return;
+                await toggleDocStar(doc);
+                updateReaderStarBtn(doc);
+            });
+
+            document.getElementById('readerCategorySelect').addEventListener('change', async (e) => {
+                const doc = documents.find(d => d.id === activeDocId);
+                if (!doc) return;
+                const parts = e.target.value.split('|');
+                const dm = parts[0] === 'm' ? 'm' : 's';
+                const fid = parts[1] || null;
+                doc.domain = dm;
+                doc.folderId = fid;
+                await dbPut(STORE_DOCS, doc);
+                updateReaderCrumb(doc);
+                updateFavBadge();
+                showToast(`已移到「${DOMAIN_LABEL[dm]}・${fid ? getFolderNameById(fid) : '單一規章'}」`, 'success');
+            });
+
+            document.getElementById('copyFullDocBtn').innerHTML = svgIcon('copy', 18);
             document.getElementById('copyFullDocBtn').addEventListener('click', async () => {
                 const doc = documents.find(d => d.id === activeDocId);
                 if (!doc) return;
@@ -3133,15 +3160,12 @@
                 const ok = await copyToClipboard(fullText);
                 if (ok) {
                     const btn = document.getElementById('copyFullDocBtn');
-                    const icon = document.getElementById('copyFullDocIcon');
-                    btn.classList.remove('primary');
-                    btn.classList.add('success-solid');
-                    icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>';
+                    btn.innerHTML = svgIcon('check', 18);
+                    btn.classList.add('active');
                     showToast('已複製全文', 'success');
                     setTimeout(() => {
-                        btn.classList.remove('success-solid');
-                        btn.classList.add('primary');
-                        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>';
+                        btn.innerHTML = svgIcon('copy', 18);
+                        btn.classList.remove('active');
                     }, 1800);
                 }
             });
@@ -3156,7 +3180,7 @@
             document.getElementById('singleUpdateInput').addEventListener('change', async (e) => {
                 const doc = documents.find(d => d.id === activeDocId);
                 if (doc && e.target.files && e.target.files[0]) {
-                    await processBatchFiles([e.target.files[0]], doc.folderId, doc.id);
+                    await processBatchFiles([e.target.files[0]], doc.folderId, doc.domain, doc.id);
                 }
                 e.target.value = '';
             });
@@ -3166,7 +3190,7 @@
                 if (!doc) return;
                 const ok = await showConfirmModal(
                     '整份刪除此法規',
-                    `確定要刪除《${cleanDisplayTitle(doc.title)}》嗎？刪除後無法復原。`,
+                    `確定要刪除《${cleanDisplayTitle(doc.title)}》嗎？刪除後無法復原（除非你先儲存過還原點）。`,
                     '確定刪除',
                     true
                 );
@@ -3178,7 +3202,7 @@
                 }
             });
 
-            // 固定式底部搜尋橫條事件
+            /* ----- 底部搜尋列 ----- */
             const dockInput = document.getElementById('dockSearchInput');
             dockInput.addEventListener('input', () => {
                 if (activeDocId) {
@@ -3207,13 +3231,8 @@
                 dockInput.focus();
             });
 
-            document.getElementById('dockPrevBtn').addEventListener('click', () => {
-                highlightActiveMatch(currentMatchIdx - 1, true);
-            });
-
-            document.getElementById('dockNextBtn').addEventListener('click', () => {
-                highlightActiveMatch(currentMatchIdx + 1, true);
-            });
+            document.getElementById('dockPrevBtn').addEventListener('click', () => highlightActiveMatch(currentMatchIdx - 1, true));
+            document.getElementById('dockNextBtn').addEventListener('click', () => highlightActiveMatch(currentMatchIdx + 1, true));
 
             ensurePdfJsLoaded();
         }
