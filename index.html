@@ -1043,6 +1043,17 @@
 .chapter-banner,.article-card{scroll-margin-top:76px}
 @keyframes jflash{0%{box-shadow:0 0 0 3px rgba(29,90,154,.55)}100%{box-shadow:0 0 0 3px rgba(29,90,154,0)}}
 .jump-flash{animation:jflash 1.6s ease-out}
+
+#readerUpdatedBadge,.badge-updated{display:none !important}
+
+.drag-handle{touch-action:none;cursor:grab;display:inline-flex;align-items:center;justify-content:center;width:34px;height:44px;margin-left:-8px;color:var(--text-muted,#999);flex-shrink:0;-webkit-user-select:none;user-select:none}
+.row.dragging{background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.18);position:relative;z-index:5;border-radius:10px}
+.row.dragging .drag-handle{color:#1d5a9a}
+
+.bottom-search-dock{left:10px;right:10px;bottom:10px;top:auto;max-width:760px;margin:0 auto;border:1px solid var(--border-color);border-radius:16px;padding:7px 10px 7px 4px;box-shadow:0 6px 20px rgba(0,0,0,.18);touch-action:none}
+.dock-grip{touch-action:none;cursor:grab;width:26px;height:38px;display:inline-flex;align-items:center;justify-content:center;color:#9a9a9a;flex-shrink:0;-webkit-user-select:none;user-select:none}
+.bottom-search-dock.moving{box-shadow:0 10px 28px rgba(0,0,0,.28)}
+.bottom-search-dock.moving .dock-grip{color:#1d5a9a}
     </style>
 </head>
 <body>
@@ -1219,6 +1230,7 @@
 
     <div id="bottomSearchDock" class="bottom-search-dock">
         <div class="bottom-search-inner">
+            <span id="dockGrip" class="dock-grip" data-icon="grip" data-size="20" title="按住拖曳移動，點兩下回到最下面" aria-label="拖曳移動搜尋列"></span>
             <div class="dock-input-wrap">
                 <span class="dock-search-icon" data-icon="search" data-size="17"></span>
                 <input type="text" id="dockSearchInput" class="dock-search-input" placeholder="搜尋法規、公文..." autocomplete="off">
@@ -2186,6 +2198,9 @@
         };
 
         function svgIcon(name, size = 20, filled = false) {
+            if (name === 'grip') {
+                return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="flex-shrink:0"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>`;
+            }
             if (name === 'dots') {
                 return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="flex-shrink:0"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>`;
             }
@@ -2238,10 +2253,7 @@
         }
 
         function updateFavBadge() {
-            const n = documents.filter(d => d.domain === activeDomain && d.starred).length;
-            const badge = document.getElementById('favNavCount');
-            badge.textContent = String(n);
-            badge.classList.toggle('hidden', n === 0);
+            document.getElementById('favNavCount').classList.add('hidden');
             document.getElementById('favNavBtn').classList.toggle('active', isFavPageActive && !activeDocId);
         }
 
@@ -2275,10 +2287,10 @@
             renderCurrentView();
         }
 
-        function renderDomainTabs(elId) {
+        function renderDomainTabs(elId, showCount = true) {
             const el = document.getElementById(elId);
             el.innerHTML = ['s', 'm'].map(k =>
-                `<button type="button" class="${k === activeDomain ? 'on' : ''}" data-domain="${k}">${DOMAIN_LABEL[k]}<span class="seg-count">${documents.filter(d => d.domain === k).length}</span></button>`
+                `<button type="button" class="${k === activeDomain ? 'on' : ''}" data-domain="${k}">${DOMAIN_LABEL[k]}${showCount ? `<span class="seg-count">${documents.filter(d => d.domain === k).length}</span>` : ''}</button>`
             ).join('');
             el.querySelectorAll('button').forEach(b => {
                 b.addEventListener('click', () => setActiveDomain(b.getAttribute('data-domain')));
@@ -2405,6 +2417,10 @@
 
         async function toggleDocStar(doc) {
             doc.starred = !doc.starred;
+            if (doc.starred) {
+                const maxOrder = documents.reduce((m, d) => (d.domain === doc.domain && d.starred && typeof d.favOrder === 'number' && d !== doc) ? Math.max(m, d.favOrder) : m, -1);
+                doc.favOrder = maxOrder + 1;
+            }
             await dbPut(STORE_DOCS, doc);
             updateFavBadge();
             showToast(doc.starred ? '已加入收藏夾' : '已從收藏夾移除', doc.starred ? 'success' : 'normal');
@@ -2417,10 +2433,10 @@
             row.setAttribute('role', 'button');
 
             const snippetHtml = keywords.length > 0 ? buildMatchSnippet(doc, keywords) : '';
-            const folderTag = (opts.showFolderTag && doc.folderId)
-                ? `<span class="badge-tag badge-folder">${escapeHtml(getFolderNameById(doc.folderId))}</span>` : '';
+            const folderTag = '';
 
             row.innerHTML = `
+                ${opts.draggable ? `<span class="drag-handle" aria-label="按住拖曳排序">${svgIcon('grip', 20)}</span>` : ''}
                 <span class="row-icon">${svgIcon('file', 22)}</span>
                 <div class="row-main">
                     <div class="row-title">${highlightKeywords(cleanDisplayTitle(doc.title), keywords)}</div>
@@ -2428,7 +2444,6 @@
                         ${folderTag}
                         ${doc.isOcr ? '<span class="badge-tag badge-ocr">圖片轉純文字</span>' : ''}
                         <span>${docPageCount(doc)} 頁・${escapeHtml(doc.updatedAt)}</span>
-                        ${doc.isRecentlyUpdated ? '<span class="badge-tag badge-updated">已更新</span>' : ''}
                     </div>
                     ${snippetHtml ? `<div class="row-snippet">${snippetHtml}</div>` : ''}
                 </div>
@@ -2504,12 +2519,82 @@
             })));
         }
 
+        function sortByFavOrder(arr) {
+            return arr.slice().sort((a, b) => {
+                const x = typeof a.favOrder === 'number' ? a.favOrder : 1e9;
+                const y = typeof b.favOrder === 'number' ? b.favOrder : 1e9;
+                return x - y;
+            });
+        }
+
+        function enableFavDrag(list, handleRowMap) {
+            list.querySelectorAll('.drag-handle').forEach(handle => {
+                const row = handle.closest('.row');
+                handle.addEventListener('click', e => e.stopPropagation());
+                handle.addEventListener('pointerdown', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    row.classList.add('dragging');
+                    let scrollTimer = null;
+                    let lastY = e.clientY;
+
+                    const reposition = () => {
+                        const rows = Array.from(list.querySelectorAll('.row')).filter(r => r !== row);
+                        for (const r of rows) {
+                            const rect = r.getBoundingClientRect();
+                            if (lastY >= rect.top && lastY <= rect.bottom) {
+                                const before = lastY < rect.top + rect.height / 2;
+                                if (before) list.insertBefore(row, r);
+                                else list.insertBefore(row, r.nextSibling);
+                                break;
+                            }
+                        }
+                    };
+
+                    const onMove = (ev) => {
+                        lastY = ev.clientY;
+                        reposition();
+                        const vh = window.innerHeight;
+                        let dy = 0;
+                        if (lastY < 110) dy = -12;
+                        else if (lastY > vh - 140) dy = 12;
+                        if (dy !== 0 && !scrollTimer) {
+                            scrollTimer = setInterval(() => { window.scrollBy(0, dy); reposition(); }, 30);
+                        } else if (dy === 0 && scrollTimer) {
+                            clearInterval(scrollTimer);
+                            scrollTimer = null;
+                        }
+                    };
+
+                    const onEnd = async () => {
+                        window.removeEventListener('pointermove', onMove);
+                        window.removeEventListener('pointerup', onEnd);
+                        window.removeEventListener('pointercancel', onEnd);
+                        if (scrollTimer) clearInterval(scrollTimer);
+                        row.classList.remove('dragging');
+                        const ids = Array.from(list.querySelectorAll('.row')).map(r => handleRowMap.get(r)).filter(Boolean);
+                        for (let i = 0; i < ids.length; i++) {
+                            const d = documents.find(x => x.id === ids[i]);
+                            if (d && d.favOrder !== i) {
+                                d.favOrder = i;
+                                await dbPut(STORE_DOCS, d);
+                            }
+                        }
+                    };
+
+                    window.addEventListener('pointermove', onMove);
+                    window.addEventListener('pointerup', onEnd);
+                    window.addEventListener('pointercancel', onEnd);
+                });
+            });
+        }
+
         function renderFavView() {
-            renderDomainTabs('favTabs');
+            renderDomainTabs('favTabs', false);
             const keywords = parseKeywords(globalQuery);
-            const docs = getFilteredDocuments({ domain: activeDomain, onlyStarred: true, query: globalQuery });
+            const docs = sortByFavOrder(getFilteredDocuments({ domain: activeDomain, onlyStarred: true, query: globalQuery }));
             document.getElementById('favSub').textContent =
-                `${DOMAIN_LABEL[activeDomain]}・共 ${docs.length} 份規章`;
+                `${DOMAIN_LABEL[activeDomain]}・共 ${docs.length} 份規章` + (keywords.length === 0 && docs.length > 1 ? '・按住左邊把手可拖曳排序' : '');
             const list = document.getElementById('favList');
             list.innerHTML = '';
             if (docs.length === 0) {
@@ -2518,12 +2603,19 @@
                     : `${DOMAIN_LABEL[activeDomain]}還沒有收藏。\n在規章旁邊按星號，就會出現在這裡。`));
                 return;
             }
-            docs.forEach(d => list.appendChild(createDocRow(d, {
-                keywords,
-                showFolderTag: true,
-                openWithQuery: globalQuery,
-                onStarChange: () => renderCurrentView()
-            })));
+            const canDrag = keywords.length === 0 && docs.length > 1;
+            const rowMap = new Map();
+            docs.forEach(d => {
+                const r = createDocRow(d, {
+                    keywords,
+                    openWithQuery: globalQuery,
+                    draggable: canDrag,
+                    onStarChange: () => renderCurrentView()
+                });
+                rowMap.set(r, d.id);
+                list.appendChild(r);
+            });
+            if (canDrag) enableFavDrag(list, rowMap);
         }
 
         /* =========================================================
@@ -2951,6 +3043,7 @@
                             updatedAt: item.updatedAt || item.uploadedAt || new Date().toLocaleDateString('zh-TW'),
                             isRecentlyUpdated: Boolean(item.isRecentlyUpdated),
                             ...(item.pageCount ? { pageCount: item.pageCount } : {}),
+                            ...(typeof item.favOrder === 'number' ? { favOrder: item.favOrder } : {}),
                             pages: cleanPages
                         });
 
@@ -3390,6 +3483,60 @@
 
             document.getElementById('dockPrevBtn').addEventListener('click', () => highlightActiveMatch(currentMatchIdx - 1, true));
             document.getElementById('dockNextBtn').addEventListener('click', () => highlightActiveMatch(currentMatchIdx + 1, true));
+
+            /* ----- 可移動的搜尋列 ----- */
+            const dock = document.getElementById('bottomSearchDock');
+            const dockGrip = document.getElementById('dockGrip');
+            let dockRatio = await loadPreference('dock_top_ratio', null);
+            if (typeof dockRatio !== 'number') dockRatio = null;
+
+            const positionDock = () => {
+                const vv = window.visualViewport;
+                const vh = vv ? vv.height : window.innerHeight;
+                const off = vv ? vv.offsetTop : 0;
+                const h = dock.offsetHeight;
+                let top;
+                if (dockRatio === null) top = vh - h - 10;
+                else top = Math.min(Math.max(8, dockRatio * vh), vh - h - 8);
+                dock.style.top = (top + off) + 'px';
+                dock.style.bottom = 'auto';
+            };
+            positionDock();
+            window.addEventListener('resize', positionDock);
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', positionDock);
+                window.visualViewport.addEventListener('scroll', positionDock);
+            }
+            document.getElementById('dockSearchInput').addEventListener('focus', () => setTimeout(positionDock, 150));
+
+            dockGrip.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                dock.classList.add('moving');
+                const onMove = (ev) => {
+                    const vv = window.visualViewport;
+                    const vh = vv ? vv.height : window.innerHeight;
+                    const off = vv ? vv.offsetTop : 0;
+                    const h = dock.offsetHeight;
+                    const top = Math.min(Math.max(8, ev.clientY - off - h / 2), vh - h - 8);
+                    dockRatio = top / vh;
+                    positionDock();
+                };
+                const onEnd = () => {
+                    window.removeEventListener('pointermove', onMove);
+                    window.removeEventListener('pointerup', onEnd);
+                    window.removeEventListener('pointercancel', onEnd);
+                    dock.classList.remove('moving');
+                    savePreference('dock_top_ratio', dockRatio);
+                };
+                window.addEventListener('pointermove', onMove);
+                window.addEventListener('pointerup', onEnd);
+                window.addEventListener('pointercancel', onEnd);
+            });
+            dockGrip.addEventListener('dblclick', () => {
+                dockRatio = null;
+                savePreference('dock_top_ratio', null);
+                positionDock();
+            });
 
             ensurePdfJsLoaded();
         }
