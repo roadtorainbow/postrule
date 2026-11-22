@@ -1080,6 +1080,13 @@
 
 .dock-collapse{display:none !important}
 .bottom-search-dock{max-width:none;margin:0;padding:7px 10px}
+
+.bottom-search-inner{flex-wrap:wrap;row-gap:6px;column-gap:6px}
+.bottom-search-inner .dock-input-wrap{flex:1 1 110px;min-width:110px}
+.bottom-search-inner .dock-reader-nav{flex:0 0 auto;margin-left:auto;gap:4px}
+.bottom-search-inner .dock-reader-nav.hidden{display:none}
+.bottom-search-inner .dock-counter{min-width:38px;text-align:center;font-size:13px}
+.bottom-search-inner .dock-step-btn{width:36px;height:36px}
     </style>
 </head>
 <body>
@@ -2394,6 +2401,7 @@
         function syncBottomDockWithMode() {
             updateFabDot();
             updateFabNav();
+            if (placeFabHook) setTimeout(placeFabHook, 0);
             const input = document.getElementById('dockSearchInput');
             const clearBtn = document.getElementById('dockClearBtn');
             const readerNav = document.getElementById('dockReaderNav');
