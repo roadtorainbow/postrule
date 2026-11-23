@@ -2513,7 +2513,19 @@
             return row;
         }
 
+        const snippetCache = new Map();
+
         function buildMatchSnippet(doc, keywords) {
+            if (!keywords || keywords.length === 0) return '';
+            const ck = docSignature(doc) + '|' + keywords.join('\u0001');
+            if (snippetCache.has(ck)) return snippetCache.get(ck);
+            const out = buildMatchSnippetRaw(doc, keywords);
+            if (snippetCache.size > 3000) snippetCache.clear();
+            snippetCache.set(ck, out);
+            return out;
+        }
+
+        function buildMatchSnippetRaw(doc, keywords) {
             if (!keywords || keywords.length === 0) return '';
             const units = buildDocUnits(doc);
             let bestText = '';
@@ -2546,16 +2558,29 @@
             return highlightKeywords(slice, keywords);
         }
 
+        const docSearchTextCache = new Map();
+
+        function getDocSearchText(doc) {
+            const sig = docSignature(doc) + '|' + doc.title;
+            let t = docSearchTextCache.get(sig);
+            if (t === undefined) {
+                t = (cleanDisplayTitle(doc.title) + '\n' + doc.pages.map(p => reflowRegulationText(p.text)).join('\n')).toLowerCase();
+                if (docSearchTextCache.size > 400) docSearchTextCache.clear();
+                docSearchTextCache.set(sig, t);
+            }
+            return t;
+        }
+
         function getFilteredDocuments({ domain, folderId, onlyStarred, query }) {
             const keywords = parseKeywords(query || '');
+            const keywordsLower = keywords.map(k => k.toLowerCase());
             return documents.filter(doc => {
                 if (domain && doc.domain !== domain) return false;
                 if (folderId && doc.folderId !== folderId) return false;
                 if (onlyStarred && !doc.starred) return false;
                 if (keywords.length === 0) return true;
-                const hay = (getFolderNameById(doc.folderId) + '\n' + cleanDisplayTitle(doc.title) + '\n' +
-                    doc.pages.map(p => reflowRegulationText(p.text)).join('\n')).toLowerCase();
-                return keywords.every(kw => hay.includes(kw.toLowerCase()));
+                const hay = getFolderNameById(doc.folderId).toLowerCase() + '\n' + getDocSearchText(doc);
+                return keywordsLower.every(kw => hay.includes(kw));
             });
         }
 
@@ -3601,23 +3626,40 @@
 
             /* ----- 底部搜尋列 ----- */
             const dockInput = document.getElementById('dockSearchInput');
-            dockInput.addEventListener('input', () => {
+            let composing = false;
+            let searchTimer = null;
+
+            const runSearch = () => {
+                searchTimer = null;
                 if (activeDocId) {
-                    readerQuery = dockInput.value;
-                    updateFabDot();
                     const doc = documents.find(d => d.id === activeDocId);
                     if (doc) {
                         renderReaderContent(doc, readerQuery);
                         if (readerMatches.length > 0) highlightActiveMatch(0, true);
                     }
                 } else {
-                    globalQuery = dockInput.value;
-                    updateFabDot();
                     renderCurrentView();
                 }
+            };
+
+            const onSearchInput = () => {
+                if (activeDocId) readerQuery = dockInput.value;
+                else globalQuery = dockInput.value;
+                updateFabDot();
+                document.getElementById('dockClearBtn').classList.toggle('hidden', dockInput.value.trim().length === 0);
+                if (searchTimer) clearTimeout(searchTimer);
+                searchTimer = setTimeout(runSearch, 220);
+            };
+
+            dockInput.addEventListener('compositionstart', () => { composing = true; });
+            dockInput.addEventListener('compositionend', () => { composing = false; onSearchInput(); });
+            dockInput.addEventListener('input', (e) => {
+                if (composing || e.isComposing) return;
+                onSearchInput();
             });
 
             document.getElementById('dockClearBtn').addEventListener('click', () => {
+                if (searchTimer) { clearTimeout(searchTimer); searchTimer = null; }
                 dockInput.value = '';
                 if (activeDocId) {
                     readerQuery = '';
@@ -3803,6 +3845,21 @@
                     closeSearch();
                 }
             });
+
+            /* 閒置時預先整理好每份規章的搜尋用文字，第一次搜尋才不會卡 */
+            (function warmSearchCache() {
+                let i = 0;
+                const idle = window.requestIdleCallback || ((fn) => setTimeout(() => fn({ timeRemaining: () => 8 }), 30));
+                const step = (deadline) => {
+                    while (i < documents.length && deadline.timeRemaining() > 4) {
+                        getDocSearchText(documents[i]);
+                        buildDocUnits(documents[i]);
+                        i++;
+                    }
+                    if (i < documents.length) idle(step);
+                };
+                idle(step);
+            })();
 
             ensurePdfJsLoaded();
         }
