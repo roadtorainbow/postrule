@@ -2440,7 +2440,7 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
         }
 
         /* ----- 再搜尋（第二關鍵字：只標目前第一關鍵字之後的內容） ----- */
-        let readerQuery2 = '';
+        let query2 = '';
         let row2Open = false;
         let matches2 = [];
         let idx2 = -1;
@@ -2449,14 +2449,19 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
             const el = document.getElementById('dockCounter2');
             if (!el) return;
             const n = matches2.length;
-            if (!readerQuery2.trim()) el.textContent = '–';
+            if (!query2.trim()) el.textContent = '–';
             else if (n === 0) el.textContent = '0 處';
             else el.textContent = idx2 < 0 ? `之後${n}處` : `${idx2 + 1}/${n}`;
         }
 
         function refreshSecond() {
-            const c = document.getElementById('readerContentContainer');
+            const c = document.getElementById(activeDocId ? 'readerContentContainer' : (isFavPageActive ? 'favList' : 'searchList'));
             if (!c) return;
+            document.querySelectorAll('mark.hl-2').forEach(m => {
+                const p = m.parentNode;
+                p.replaceChild(document.createTextNode(m.textContent), m);
+                p.normalize();
+            });
             c.querySelectorAll('mark.hl-2').forEach(m => {
                 const p = m.parentNode;
                 p.replaceChild(document.createTextNode(m.textContent), m);
@@ -2464,14 +2469,19 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
             });
             matches2 = [];
             idx2 = -1;
-            const kws = activeDocId && !isEditingDocText ? parseKeywords(readerQuery2) : [];
+            const kws = (activeDocId ? !isEditingDocText : parseKeywords(globalQuery).length > 0) ? parseKeywords(query2) : [];
             if (kws.length) {
-                const anchor = (parseKeywords(readerQuery).length > 0 && currentMatchIdx >= 0 && readerMatches[currentMatchIdx]) ? readerMatches[currentMatchIdx] : null;
+                let anchor = null;
+                if (activeDocId) {
+                    if (parseKeywords(readerQuery).length > 0 && currentMatchIdx >= 0 && readerMatches[currentMatchIdx]) anchor = readerMatches[currentMatchIdx];
+                } else if (listNavIdx >= 0) {
+                    anchor = listNavRows()[listNavIdx] || null;
+                }
                 const re = new RegExp('(' + kws.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi');
                 const walker = document.createTreeWalker(c, NodeFilter.SHOW_TEXT, {
                     acceptNode(n) {
                         const p = n.parentElement;
-                        if (!p || p.closest('button,.article-card-actions,textarea,mark.hl-match')) return NodeFilter.FILTER_REJECT;
+                        if (!p || p.closest('button,.article-card-actions,.drag-handle,textarea,mark.hl-match')) return NodeFilter.FILTER_REJECT;
                         if (!/\S/.test(n.nodeValue)) return NodeFilter.FILTER_SKIP;
                         if (anchor) {
                             if (anchor.contains(n)) return NodeFilter.FILTER_REJECT;
@@ -2627,6 +2637,7 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
             rows.forEach((r, i) => r.classList.toggle('active-match', i === listNavIdx));
             rows[listNavIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
             updateFabNav();
+            if (query2) refreshSecond();
         }
 
         function navCounterText() {
@@ -2663,14 +2674,14 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
 
             const row2 = document.getElementById('dockRow2');
             const tg2 = document.getElementById('dockToggle2');
-            const can2 = Boolean(activeDocId) && !isEditingDocText;
+            const can2 = activeDocId ? !isEditingDocText : parseKeywords(globalQuery).length > 0;
             row2.classList.toggle('hidden', !can2 || !row2Open);
             tg2.classList.toggle('hidden', !can2);
             tg2.classList.toggle('open', row2Open);
-            tg2.classList.toggle('has-q', Boolean(readerQuery2.trim()));
+            tg2.classList.toggle('has-q', Boolean(query2.trim()));
             const in2 = document.getElementById('dockSearchInput2');
-            if (in2.value !== readerQuery2 && document.activeElement !== in2) in2.value = readerQuery2;
-            document.getElementById('dockClear2').classList.toggle('hidden', !readerQuery2.trim());
+            if (in2.value !== query2 && document.activeElement !== in2) in2.value = query2;
+            document.getElementById('dockClear2').classList.toggle('hidden', !query2.trim());
 
             if (activeDocId) {
                 input.placeholder = '只搜這份規章…';
@@ -2783,15 +2794,16 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
 
         function buildMatchSnippet(doc, keywords) {
             if (!keywords || keywords.length === 0) return '';
-            const ck = docSignature(doc) + '|' + keywords.join('\u0001');
+            const k2 = parseKeywords(query2);
+            const ck = docSignature(doc) + '|' + keywords.join('\u0001') + '|' + k2.join('\u0001');
             if (snippetCache.has(ck)) return snippetCache.get(ck);
-            const out = buildMatchSnippetRaw(doc, keywords);
+            const out = buildMatchSnippetRaw(doc, keywords, k2);
             if (snippetCache.size > 3000) snippetCache.clear();
             snippetCache.set(ck, out);
             return out;
         }
 
-        function buildMatchSnippetRaw(doc, keywords) {
+        function buildMatchSnippetRaw(doc, keywords, k2 = []) {
             if (!keywords || keywords.length === 0) return '';
             const units = buildDocUnits(doc);
             let bestText = '';
@@ -2803,8 +2815,10 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
                 for (const kw of keywords) {
                     if (lower.includes(kw.toLowerCase())) hits++;
                 }
-                if (hits > maxHits) {
-                    maxHits = hits;
+                let has2 = 0;
+                if (hits > 0 && k2.length) { for (const kw of k2) { if (lower.includes(kw.toLowerCase())) { has2 = 0.5; break; } } }
+                if (hits + has2 > maxHits) {
+                    maxHits = hits + has2;
                     bestText = u.text;
                 }
             }
@@ -2819,7 +2833,15 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
             if (firstIdx === -1) return '';
 
             const start = Math.max(0, firstIdx - 28);
-            const end = Math.min(targetText.length, firstIdx + 95);
+            let end = Math.min(targetText.length, firstIdx + 95);
+            if (k2.length) {
+                let i2 = -1, l2 = 0;
+                for (const kw of k2) {
+                    const ix = lowerTarget.indexOf(kw.toLowerCase(), firstIdx);
+                    if (ix !== -1 && (i2 === -1 || ix < i2)) { i2 = ix; l2 = kw.length; }
+                }
+                if (i2 !== -1 && i2 + l2 > end) end = Math.min(targetText.length, i2 + l2 + 24, start + 280);
+            }
             const slice = (start > 0 ? '...' : '') + targetText.slice(start, end) + (end < targetText.length ? '...' : '');
             return highlightKeywords(slice, keywords);
         }
@@ -2953,6 +2975,7 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
                 showFolderTag: true,
                 openWithQuery: globalQuery
             })));
+            if (query2) refreshSecond();
         }
 
         function sortByFavOrder(arr) {
@@ -3053,6 +3076,7 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
                 list.appendChild(r);
             });
             if (canDrag) enableFavDrag(list, rowMap);
+            if (query2) refreshSecond();
         }
 
         /* =========================================================
@@ -3362,7 +3386,7 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
             } else {
                 currentMatchIdx = -1;
             }
-            if (readerQuery2) refreshSecond(); else updateCounter2();
+            if (query2) refreshSecond(); else updateCounter2();
             syncBottomDockWithMode();
         }
 
@@ -3377,7 +3401,7 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
 
             document.getElementById('dockMatchCounter').textContent = `${currentMatchIdx + 1}/${total}`;
             updateFabNav();
-            if (readerQuery2) refreshSecond();
+            if (query2) refreshSecond();
 
             if (shouldScroll) {
                 readerMatches[currentMatchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -3391,7 +3415,6 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
             activeDocId = docId;
             isEditingDocText = false;
             readerQuery = initialQuery || '';
-            if (activeDocId !== window.__lastReaderDoc) { readerQuery2 = ''; row2Open = false; window.__lastReaderDoc = activeDocId; }
 
             document.getElementById('readerDocTitle').textContent = cleanDisplayTitle(doc.title);
             document.getElementById('readerDocMetaText').textContent = `共 ${docPageCount(doc)} 頁・更新日期：${doc.updatedAt}`;
@@ -3957,19 +3980,39 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
             const in2 = document.getElementById('dockSearchInput2');
             let comp2 = false, timer2 = null;
             const on2 = () => {
-                readerQuery2 = in2.value;
-                document.getElementById('dockClear2').classList.toggle('hidden', !readerQuery2.trim());
+                query2 = in2.value;
+                document.getElementById('dockClear2').classList.toggle('hidden', !query2.trim());
                 if (timer2) clearTimeout(timer2);
-                timer2 = setTimeout(refreshSecond, 150);
+                timer2 = setTimeout(() => {
+                    if (activeDocId) { refreshSecond(); return; }
+                    const keep = listNavIdx;
+                    renderCurrentView();
+                    const rows = listNavRows();
+                    if (keep >= 0 && rows.length) {
+                        listNavIdx = Math.min(keep, rows.length - 1);
+                        rows.forEach((r, i) => r.classList.toggle('active-match', i === listNavIdx));
+                        refreshSecond();
+                    }
+                    updateFabNav();
+                }, 150);
             };
             in2.addEventListener('compositionstart', () => { comp2 = true; });
             in2.addEventListener('compositionend', () => { comp2 = false; on2(); });
             in2.addEventListener('input', (e) => { if (comp2 || e.isComposing) return; on2(); });
             in2.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); stepSecond(e.shiftKey ? -1 : 1); } });
             document.getElementById('dockClear2').addEventListener('click', () => {
-                in2.value = ''; readerQuery2 = '';
+                in2.value = ''; query2 = '';
                 document.getElementById('dockClear2').classList.add('hidden');
-                refreshSecond();
+                if (activeDocId) refreshSecond();
+                else {
+                    const keep = listNavIdx;
+                    renderCurrentView();
+                    const rows = listNavRows();
+                    if (keep >= 0 && rows.length) {
+                        listNavIdx = Math.min(keep, rows.length - 1);
+                        rows.forEach((r, i) => r.classList.toggle('active-match', i === listNavIdx));
+                    }
+                }
                 in2.focus();
             });
             document.getElementById('dockToggle2').addEventListener('click', () => {
