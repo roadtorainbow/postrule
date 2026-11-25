@@ -1087,6 +1087,40 @@
 .bottom-search-inner .dock-reader-nav.hidden{display:none}
 .bottom-search-inner .dock-counter{min-width:38px;text-align:center;font-size:13px}
 .bottom-search-inner .dock-step-btn{width:36px;height:36px}
+
+.top-btn{position:fixed;left:14px;bottom:90px;width:48px;height:48px;border-radius:50%;border:1px solid var(--border-color);background:#fff;color:#1d5a9a;box-shadow:0 4px 14px rgba(0,0,0,.22);z-index:85;display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer}
+.top-btn.hidden{display:none}
+.top-btn:active{background:#eef3f8}
+
+.table-view-btn{display:inline-flex;align-items:center;margin-top:10px;padding:7px 12px;border:1px solid #1d5a9a;border-radius:8px;background:#fff;color:#1d5a9a;font-size:14px;font-weight:600;cursor:pointer}
+.table-view-btn:active{background:#eaf1f8}
+.table-viewer{position:fixed;inset:0;z-index:9000;background:#f6f5f2;display:flex;flex-direction:column}
+.tv-bar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fff;border-bottom:1px solid #ddd}
+.tv-title{flex:1;font-weight:700;font-size:15px}
+.tv-btn{padding:7px 12px;border:1px solid #ccc;border-radius:8px;background:#fff;font-size:14px;cursor:pointer}
+.tv-close{border-color:#1d5a9a;color:#1d5a9a;font-weight:600}
+.tv-scroll{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y pinch-zoom;background:#fff}
+.tv-scroll img{display:block;max-width:none;height:auto}
+
+.dock-row2{flex:0 0 100%;order:5;display:flex;align-items:center;gap:4px}
+.dock-row2.hidden{display:none}
+.dock-input2{padding-left:12px !important;border-color:#9dbbd8}
+.dock-counter2{color:#1d5a9a;background:#eaf1f8;border-color:#c5d8ea;min-width:56px;justify-content:center;font-size:13px}
+.dock-row2 .dock-step-btn{width:36px;height:36px}
+mark.hl-2{background:#bfdbfe;color:inherit;padding:0 2px;border-radius:3px}
+mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
+.bottom-search-inner .dock-row2 .dock-input-wrap{order:0;flex:1 1 90px;min-width:90px}
+.bottom-search-inner .dock-row2 .dock-counter2{order:1}
+.bottom-search-inner .dock-row2 .dock-step-btn{order:2}
+
+.bottom-search-inner .dock-toggle2{order:3;width:46px;font-size:13px;color:#1d5a9a}
+.dock-toggle2.hidden{display:none}
+.dock-toggle2.open{background:#eaf1f8;border-color:#1d5a9a}
+.dock-toggle2.has-q::after{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:#1d5a9a;margin-left:3px}
+.bottom-search-inner .dock-toggle2{width:40px;padding:0;flex:0 0 auto}
+.dock-toggle2.has-q::after{display:none}
+.dock-toggle2.has-q{background:#d6e6f5;border-color:#1d5a9a}
+.bottom-search-dock .bottom-search-inner .dock-input-wrap{flex:1 1 84px;min-width:84px}
     </style>
 </head>
 <body>
@@ -1261,6 +1295,8 @@
 
     </main>
 
+    <button type="button" id="topBtn" class="top-btn hidden" aria-label="回到頂端"><span data-icon="up" data-size="22"></span></button>
+
     <button type="button" id="searchFab" class="search-fab" aria-label="搜尋"><span data-icon="search" data-size="24"></span><span id="fabDot" class="fab-dot hidden"></span></button>
 
     <div id="fabNav" class="fab-nav hidden">
@@ -1282,6 +1318,16 @@
                 <span id="dockMatchCounter" class="dock-counter">0/0</span>
                 <button type="button" id="dockPrevBtn" class="dock-step-btn" title="上一筆">▲</button>
                 <button type="button" id="dockNextBtn" class="dock-step-btn" title="下一筆">▼</button>
+            </div>
+            <button type="button" id="dockToggle2" class="dock-step-btn dock-toggle2 hidden" title="再搜尋（第二關鍵字）">再搜</button>
+            <div id="dockRow2" class="dock-row2 hidden">
+                <div class="dock-input-wrap">
+                    <input type="text" id="dockSearchInput2" class="dock-search-input dock-input2" placeholder="再搜尋：只找目前位置之後" autocomplete="off">
+                    <button type="button" id="dockClear2" class="dock-clear-btn hidden" title="清除">✕</button>
+                </div>
+                <span id="dockCounter2" class="dock-counter dock-counter2">–</span>
+                <button type="button" id="dockPrev2" class="dock-step-btn" title="上一處">▲</button>
+                <button type="button" id="dockNext2" class="dock-step-btn" title="下一處">▼</button>
             </div>
         </div>
     </div>
@@ -2114,6 +2160,7 @@
                 const arrayBuffer = await file.arrayBuffer();
                 const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
                 const pages = [];
+                const tableImgs = [];
                 let usedOcr = false;
 
                 for (let p = 1; p <= pdf.numPages; p++) {
@@ -2137,7 +2184,9 @@
                     if (lineText.trim()) lines.push(lineText.trim());
                     let extracted = lines.join('\n').trim();
 
+                    let usedOcrThisPage = false;
                     if (extracted.length < 15) {
+                        usedOcrThisPage = true;
                         const ocrReady = await ensureTesseractLoaded();
                         if (ocrReady && window.Tesseract) {
                             usedOcr = true;
@@ -2153,12 +2202,18 @@
                         }
                     }
 
+                    if (extracted.length >= 15 && !usedOcrThisPage) {
+                        try {
+                            const tb = detectTablePage(content.items);
+                            if (tb) tableImgs.push({ page: p, anchors: tb.anchors, img: await renderPageJpeg(page) });
+                        } catch (e) { console.warn('表格頁圖片略過', e); }
+                    }
                     pages.push({
                         pageNumber: p,
                         text: extracted || '（此頁無文字內容）'
                     });
                 }
-                return { isOcr: usedOcr, pages };
+                return { isOcr: usedOcr, pages, tableImgs };
             }
 
             setProgress(true, `${prefix} 讀取純文字內容...`, 60);
@@ -2201,6 +2256,7 @@
                         existing.coreName = core;
                         existing.isOcr = parsed.isOcr;
                         existing.pages = parsed.pages; delete existing.pageCount;
+                        if (parsed.tableImgs && parsed.tableImgs.length) existing.tableImgs = parsed.tableImgs; else delete existing.tableImgs;
                         existing.updatedAt = todayStr;
                         existing.isRecentlyUpdated = true;
                         await dbPut(STORE_DOCS, existing);
@@ -2216,7 +2272,8 @@
                             starred: false,
                             updatedAt: todayStr,
                             isRecentlyUpdated: false,
-                            pages: parsed.pages
+                            pages: parsed.pages,
+                            ...(parsed.tableImgs && parsed.tableImgs.length ? { tableImgs: parsed.tableImgs } : {})
                         };
                         documents.push(newDoc);
                         await dbPut(STORE_DOCS, newDoc);
@@ -2250,6 +2307,127 @@
         }
 
         /* =========================================================
+           表格頁：偵測並保留原頁圖
+           ========================================================= */
+        function detectTablePage(items) {
+            const rows = [];
+            for (const it of items) {
+                if (!it.str || !it.str.trim() || !it.transform) continue;
+                const y = it.transform[5], x = it.transform[4], w = it.width || 0;
+                const fs = Math.abs(it.transform[0]) || 12;
+                let r = rows.find(r => Math.abs(r.y - y) <= 3);
+                if (!r) { r = { y, its: [] }; rows.push(r); }
+                r.its.push({ x, w, fs, s: it.str });
+            }
+            rows.sort((a, b) => b.y - a.y);
+            const tab = [];
+            for (const r of rows) {
+                r.its.sort((a, b) => a.x - b.x);
+                const segs = [];
+                let cur = null;
+                for (const it of r.its) {
+                    if (cur && it.x - (cur.x + cur.w) <= Math.max(6, it.fs * 0.6)) {
+                        cur.w = Math.max(cur.w, it.x + it.w - cur.x);
+                        cur.s += it.s;
+                    } else {
+                        cur = { x: it.x, w: it.w, s: it.s };
+                        segs.push(cur);
+                    }
+                }
+                if (segs.length >= 3 && segs.filter(s => s.s.trim().length <= 14).length >= 3) tab.push(segs);
+            }
+            if (tab.length < 3) return null;
+            const anchors = [];
+            tab.slice(0, 2).forEach(segs => segs.slice(0, 3).forEach(s => {
+                const k = s.s.replace(/\s+/g, '');
+                if (k.length >= 3 && !anchors.includes(k)) anchors.push(k);
+            }));
+            return { anchors };
+        }
+
+        async function renderPageJpeg(page) {
+            const viewport = page.getViewport({ scale: 1.8 });
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.round(viewport.width);
+            canvas.height = Math.round(viewport.height);
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            await page.render({ canvasContext: ctx, viewport }).promise;
+            let url = canvas.toDataURL('image/jpeg', 0.6);
+            if (url.length > 700000) url = canvas.toDataURL('image/jpeg', 0.45);
+            canvas.width = 0; canvas.height = 0;
+            return url;
+        }
+
+        /* 把各表格頁對應到閱讀流裡的條文方框：回傳 Map(單元序號 → [表格圖]) */
+        function assignTableImgs(doc, units) {
+            const out = new Map();
+            const list = Array.isArray(doc.tableImgs) ? doc.tableImgs : [];
+            if (!list.length) return out;
+            const rng = [];
+            let last = 1;
+            units.forEach(u => {
+                const ps = (u.pages || []).filter(n => typeof n === 'number');
+                if (ps.length) { rng.push([Math.min(...ps), Math.max(...ps)]); last = Math.max(...ps); }
+                else rng.push([last, last]);
+            });
+            const flat = units.map(u => (u.text || '').replace(/\s+/g, ''));
+            for (const t of list) {
+                const N = t.page;
+                let best = -1, bestScore = 0;
+                units.forEach((u, i) => {
+                    if (u.type === 'chapter') return;
+                    if (rng[i][0] > N + 1 || rng[i][1] < N - 1) return;
+                    let sc = 0;
+                    (t.anchors || []).forEach(a => { if (flat[i].includes(a)) sc++; });
+                    if (sc > bestScore) { bestScore = sc; best = i; }
+                });
+                if (best === -1) {
+                    for (let i = 0; i < units.length; i++) {
+                        if (units[i].type !== 'chapter' && rng[i][0] <= N && rng[i][1] >= N) best = i;
+                    }
+                }
+                if (best === -1) {
+                    for (let i = 0; i < units.length; i++) { if (units[i].type !== 'chapter' && rng[i][0] <= N) best = i; }
+                }
+                if (best === -1) best = 0;
+                if (!out.has(best)) out.set(best, []);
+                out.get(best).push(t);
+            }
+            return out;
+        }
+
+        function openTableViewer(t, docTitle) {
+            let ov = document.getElementById('tableViewer');
+            if (ov) ov.remove();
+            ov = document.createElement('div');
+            ov.id = 'tableViewer';
+            ov.className = 'table-viewer';
+            ov.innerHTML = `
+                <div class="tv-bar">
+                    <span class="tv-title">原表格・第 ${t.page} 頁</span>
+                    <button type="button" class="tv-btn" data-z="-1">縮小</button>
+                    <button type="button" class="tv-btn" data-z="1">放大</button>
+                    <button type="button" class="tv-btn tv-close">關閉</button>
+                </div>
+                <div class="tv-scroll"><img alt="原表格"></div>`;
+            ov.querySelector('img').src = t.img;
+            document.body.appendChild(ov);
+            const img = ov.querySelector('img');
+            let z = 100;
+            const setZ = () => { img.style.width = z + '%'; };
+            setZ();
+            ov.querySelectorAll('[data-z]').forEach(b => b.addEventListener('click', () => {
+                z = Math.min(400, Math.max(60, z + Number(b.dataset.z) * 40));
+                setZ();
+            }));
+            const close = () => { ov.remove(); document.removeEventListener('keydown', onKey); };
+            const onKey = (e) => { if (e.key === 'Escape') close(); };
+            document.addEventListener('keydown', onKey);
+            ov.querySelector('.tv-close').addEventListener('click', close);
+        }
+        /* =========================================================
            9. 字級切換控制
            ========================================================= */
         function applyFontScale(scale) {
@@ -2259,6 +2437,82 @@
             document.querySelectorAll('.font-pill-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.getAttribute('data-font-btn') === valid);
             });
+        }
+
+        /* ----- 再搜尋（第二關鍵字：只標目前第一關鍵字之後的內容） ----- */
+        let readerQuery2 = '';
+        let row2Open = false;
+        let matches2 = [];
+        let idx2 = -1;
+
+        function updateCounter2() {
+            const el = document.getElementById('dockCounter2');
+            if (!el) return;
+            const n = matches2.length;
+            if (!readerQuery2.trim()) el.textContent = '–';
+            else if (n === 0) el.textContent = '0 處';
+            else el.textContent = idx2 < 0 ? `之後${n}處` : `${idx2 + 1}/${n}`;
+        }
+
+        function refreshSecond() {
+            const c = document.getElementById('readerContentContainer');
+            if (!c) return;
+            c.querySelectorAll('mark.hl-2').forEach(m => {
+                const p = m.parentNode;
+                p.replaceChild(document.createTextNode(m.textContent), m);
+                p.normalize();
+            });
+            matches2 = [];
+            idx2 = -1;
+            const kws = activeDocId && !isEditingDocText ? parseKeywords(readerQuery2) : [];
+            if (kws.length) {
+                const anchor = (parseKeywords(readerQuery).length > 0 && currentMatchIdx >= 0 && readerMatches[currentMatchIdx]) ? readerMatches[currentMatchIdx] : null;
+                const re = new RegExp('(' + kws.map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'gi');
+                const walker = document.createTreeWalker(c, NodeFilter.SHOW_TEXT, {
+                    acceptNode(n) {
+                        const p = n.parentElement;
+                        if (!p || p.closest('button,.article-card-actions,textarea,mark.hl-match')) return NodeFilter.FILTER_REJECT;
+                        if (!/\S/.test(n.nodeValue)) return NodeFilter.FILTER_SKIP;
+                        if (anchor) {
+                            if (anchor.contains(n)) return NodeFilter.FILTER_REJECT;
+                            if (!(anchor.compareDocumentPosition(n) & Node.DOCUMENT_POSITION_FOLLOWING)) return NodeFilter.FILTER_REJECT;
+                        }
+                        return NodeFilter.FILTER_ACCEPT;
+                    }
+                });
+                const nodes = [];
+                while (walker.nextNode()) nodes.push(walker.currentNode);
+                for (const n of nodes) {
+                    const txt = n.nodeValue;
+                    re.lastIndex = 0;
+                    if (!re.test(txt)) continue;
+                    re.lastIndex = 0;
+                    const frag = document.createDocumentFragment();
+                    let last = 0, m;
+                    while ((m = re.exec(txt)) !== null) {
+                        if (m[0] === '') { re.lastIndex++; continue; }
+                        if (m.index > last) frag.appendChild(document.createTextNode(txt.slice(last, m.index)));
+                        const mk = document.createElement('mark');
+                        mk.className = 'hl-2';
+                        mk.textContent = m[0];
+                        frag.appendChild(mk);
+                        last = m.index + m[0].length;
+                    }
+                    if (last < txt.length) frag.appendChild(document.createTextNode(txt.slice(last)));
+                    n.parentNode.replaceChild(frag, n);
+                }
+                matches2 = Array.from(c.querySelectorAll('mark.hl-2'));
+            }
+            updateCounter2();
+        }
+
+        function stepSecond(delta) {
+            const n = matches2.length;
+            if (n === 0) return;
+            idx2 = idx2 < 0 ? (delta > 0 ? 0 : n - 1) : (((idx2 + delta) % n) + n) % n;
+            matches2.forEach((el, i) => el.classList.toggle('active-2', i === idx2));
+            matches2[idx2].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            updateCounter2();
         }
 
         /* =========================================================
@@ -2276,6 +2530,7 @@
             check: 'M5 13l4 4L19 7',
             chevdown: 'M6 9l6 6 6-6',
             close: 'M6 6l12 12M18 6L6 18',
+            up: 'M12 19V5M5 12l7-7 7 7',
             trash: 'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
         };
 
@@ -2405,6 +2660,17 @@
             const input = document.getElementById('dockSearchInput');
             const clearBtn = document.getElementById('dockClearBtn');
             const readerNav = document.getElementById('dockReaderNav');
+
+            const row2 = document.getElementById('dockRow2');
+            const tg2 = document.getElementById('dockToggle2');
+            const can2 = Boolean(activeDocId) && !isEditingDocText;
+            row2.classList.toggle('hidden', !can2 || !row2Open);
+            tg2.classList.toggle('hidden', !can2);
+            tg2.classList.toggle('open', row2Open);
+            tg2.classList.toggle('has-q', Boolean(readerQuery2.trim()));
+            const in2 = document.getElementById('dockSearchInput2');
+            if (in2.value !== readerQuery2 && document.activeElement !== in2) in2.value = readerQuery2;
+            document.getElementById('dockClear2').classList.toggle('hidden', !readerQuery2.trim());
 
             if (activeDocId) {
                 input.placeholder = '只搜這份規章…';
@@ -3024,8 +3290,9 @@
             const flow = document.createElement('div');
             flow.className = 'page-section';
 
-            for (const u of units) {
-                if (!u.text) continue;
+            const tblMap = assignTableImgs(doc, units);
+            units.forEach((u, uIdx) => {
+                if (!u.text) return;
                 const dataAttrs = (el) => {
                     el.setAttribute('data-body', '1');
                     el.dataset.pages = (u.pages || []).join(' ');
@@ -3038,7 +3305,7 @@
                     banner.innerHTML = highlightKeywords(u.text, keywords);
                     dataAttrs(banner);
                     flow.appendChild(banner);
-                    continue;
+                    return;
                 }
 
                 const blockText = u.text;
@@ -3070,8 +3337,17 @@
                     row.addEventListener('click', () => jumpFromToc(row.dataset.tocTitle, Number(row.dataset.tocPage)));
                 });
 
+                (tblMap.get(uIdx) || []).forEach(t => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'table-view-btn';
+                    btn.textContent = `看原表格（第 ${t.page} 頁）`;
+                    btn.addEventListener('click', () => openTableViewer(t, doc.title));
+                    card.appendChild(btn);
+                });
+
                 flow.appendChild(card);
-            }
+            });
             container.appendChild(flow);
 
             readerMatches = Array.from(container.querySelectorAll('mark.hl-match'));
@@ -3086,6 +3362,7 @@
             } else {
                 currentMatchIdx = -1;
             }
+            if (readerQuery2) refreshSecond(); else updateCounter2();
             syncBottomDockWithMode();
         }
 
@@ -3100,6 +3377,7 @@
 
             document.getElementById('dockMatchCounter').textContent = `${currentMatchIdx + 1}/${total}`;
             updateFabNav();
+            if (readerQuery2) refreshSecond();
 
             if (shouldScroll) {
                 readerMatches[currentMatchIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -3113,6 +3391,7 @@
             activeDocId = docId;
             isEditingDocText = false;
             readerQuery = initialQuery || '';
+            if (activeDocId !== window.__lastReaderDoc) { readerQuery2 = ''; row2Open = false; window.__lastReaderDoc = activeDocId; }
 
             document.getElementById('readerDocTitle').textContent = cleanDisplayTitle(doc.title);
             document.getElementById('readerDocMetaText').textContent = `共 ${docPageCount(doc)} 頁・更新日期：${doc.updatedAt}`;
@@ -3216,6 +3495,7 @@
                             isRecentlyUpdated: Boolean(item.isRecentlyUpdated),
                             ...(item.pageCount ? { pageCount: item.pageCount } : {}),
                             ...(typeof item.favOrder === 'number' ? { favOrder: item.favOrder } : {}),
+                            ...(Array.isArray(item.tableImgs) && item.tableImgs.length ? { tableImgs: item.tableImgs } : {}),
                             pages: cleanPages
                         });
 
@@ -3674,6 +3954,32 @@
 
             document.getElementById('fabPrevBtn').addEventListener('click', () => navStep(-1));
             document.getElementById('fabNextBtn').addEventListener('click', () => navStep(1));
+            const in2 = document.getElementById('dockSearchInput2');
+            let comp2 = false, timer2 = null;
+            const on2 = () => {
+                readerQuery2 = in2.value;
+                document.getElementById('dockClear2').classList.toggle('hidden', !readerQuery2.trim());
+                if (timer2) clearTimeout(timer2);
+                timer2 = setTimeout(refreshSecond, 150);
+            };
+            in2.addEventListener('compositionstart', () => { comp2 = true; });
+            in2.addEventListener('compositionend', () => { comp2 = false; on2(); });
+            in2.addEventListener('input', (e) => { if (comp2 || e.isComposing) return; on2(); });
+            in2.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); stepSecond(e.shiftKey ? -1 : 1); } });
+            document.getElementById('dockClear2').addEventListener('click', () => {
+                in2.value = ''; readerQuery2 = '';
+                document.getElementById('dockClear2').classList.add('hidden');
+                refreshSecond();
+                in2.focus();
+            });
+            document.getElementById('dockToggle2').addEventListener('click', () => {
+                row2Open = !row2Open;
+                syncBottomDockWithMode();
+                if (row2Open) in2.focus();
+            });
+            document.getElementById('dockPrev2').addEventListener('click', () => stepSecond(-1));
+            document.getElementById('dockNext2').addEventListener('click', () => stepSecond(1));
+
             document.getElementById('dockPrevBtn').addEventListener('click', () => navStep(-1));
             document.getElementById('dockNextBtn').addEventListener('click', () => navStep(1));
 
@@ -3844,6 +4150,18 @@
                 } else if (Date.now() - lastOpenAt > 700) {
                     closeSearch();
                 }
+            });
+
+            /* ----- 回到頂端 ----- */
+            const topBtn = document.getElementById('topBtn');
+            const updateTopBtn = () => {
+                const dockOpen = !document.getElementById('bottomSearchDock').classList.contains('hidden');
+                topBtn.classList.toggle('hidden', window.scrollY < 500 || dockOpen);
+            };
+            window.addEventListener('scroll', updateTopBtn, { passive: true });
+            setInterval(updateTopBtn, 400);
+            topBtn.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             });
 
             /* 閒置時預先整理好每份規章的搜尋用文字，第一次搜尋才不會卡 */
