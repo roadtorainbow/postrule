@@ -1121,6 +1121,12 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
 .dock-toggle2.has-q::after{display:none}
 .dock-toggle2.has-q{background:#d6e6f5;border-color:#1d5a9a}
 .bottom-search-dock .bottom-search-inner .dock-input-wrap{flex:1 1 84px;min-width:84px}
+
+.fab-nav{flex-direction:column;align-items:stretch;gap:4px;padding:4px 6px 4px 8px;border-radius:26px}
+.fab-nav-row{display:flex;align-items:center;gap:4px}
+.fab-nav-row.hidden{display:none}
+.fab-nav-row2 .fab-nav-counter{color:#1d5a9a;font-size:13px;white-space:nowrap}
+.fab-nav-row2 .fab-nav-btn{background:#eaf1f8}
     </style>
 </head>
 <body>
@@ -1300,9 +1306,16 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
     <button type="button" id="searchFab" class="search-fab" aria-label="搜尋"><span data-icon="search" data-size="24"></span><span id="fabDot" class="fab-dot hidden"></span></button>
 
     <div id="fabNav" class="fab-nav hidden">
-        <span id="fabNavCounter" class="fab-nav-counter">0/0</span>
-        <button type="button" id="fabPrevBtn" class="fab-nav-btn" aria-label="上一筆">▲</button>
-        <button type="button" id="fabNextBtn" class="fab-nav-btn" aria-label="下一筆">▼</button>
+        <div id="fabNavRow1" class="fab-nav-row">
+            <span id="fabNavCounter" class="fab-nav-counter">0/0</span>
+            <button type="button" id="fabPrevBtn" class="fab-nav-btn" aria-label="上一筆">▲</button>
+            <button type="button" id="fabNextBtn" class="fab-nav-btn" aria-label="下一筆">▼</button>
+        </div>
+        <div id="fabNavRow2" class="fab-nav-row fab-nav-row2 hidden">
+            <span id="fabNavCounter2" class="fab-nav-counter">–</span>
+            <button type="button" id="fabPrev2" class="fab-nav-btn" aria-label="再搜上一處">▲</button>
+            <button type="button" id="fabNext2" class="fab-nav-btn" aria-label="再搜下一處">▼</button>
+        </div>
     </div>
 
     <div id="bottomSearchDock" class="bottom-search-dock hidden">
@@ -2452,6 +2465,7 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
             if (!query2.trim()) el.textContent = '–';
             else if (n === 0) el.textContent = '0 處';
             else el.textContent = idx2 < 0 ? `之後${n}處` : `${idx2 + 1}/${n}`;
+            if (typeof updateFabNav === 'function') updateFabNav();
         }
 
         function refreshSecond() {
@@ -2650,11 +2664,15 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
             const nav = document.getElementById('fabNav');
             const dockOpen = !document.getElementById('bottomSearchDock').classList.contains('hidden');
             const total = navTotal();
-            const show = !dockOpen && total > 0;
+            const has2 = Boolean(query2.trim()) && matches2.length > 0;
+            const show = !dockOpen && (total > 0 || has2);
             nav.classList.toggle('hidden', !show);
+            document.getElementById('fabNavRow1').classList.toggle('hidden', total === 0);
+            document.getElementById('fabNavRow2').classList.toggle('hidden', !has2);
             document.getElementById('dockMatchCounter').textContent = navCounterText();
             if (show) {
                 document.getElementById('fabNavCounter').textContent = navCounterText();
+                document.getElementById('fabNavCounter2').textContent = document.getElementById('dockCounter2').textContent;
                 if (placeFabHook) placeFabHook();
             }
         }
@@ -3975,6 +3993,8 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
                 dockInput.focus();
             });
 
+            document.getElementById('fabPrev2').addEventListener('click', () => stepSecond(-1));
+            document.getElementById('fabNext2').addEventListener('click', () => stepSecond(1));
             document.getElementById('fabPrevBtn').addEventListener('click', () => navStep(-1));
             document.getElementById('fabNextBtn').addEventListener('click', () => navStep(1));
             const in2 = document.getElementById('dockSearchInput2');
