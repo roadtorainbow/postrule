@@ -1127,6 +1127,9 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
 .fab-nav-row.hidden{display:none}
 .fab-nav-row2 .fab-nav-counter{color:#1d5a9a;font-size:13px;white-space:nowrap}
 .fab-nav-row2 .fab-nav-btn{background:#eaf1f8}
+
+.badge-pending{background:#f1efe9;color:#8a7f66;border:1px solid #ddd6c3}
+.doc-row:has(.badge-pending) .row-title{color:#777}
     </style>
 </head>
 <body>
@@ -1155,6 +1158,8 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
                         <button type="button" id="saveRestoreBtn" class="menu-item">儲存目前整體法規（還原點）</button>
                         <button type="button" id="loadRestoreBtn" class="menu-item">還原到上次儲存</button>
                         <div id="restoreInfo" class="menu-note">尚未儲存過還原點</div>
+                        <div class="menu-sep"></div>
+                        <button type="button" id="seedPostalBtn" class="menu-item">郵務：建立「郵件業務作業規章彙編(二)」資料夾</button>
                         <div class="menu-sep"></div>
                         <button type="button" id="exportBackupBtn" class="menu-item">匯出備份檔</button>
                         <label class="menu-item">
@@ -1708,7 +1713,7 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
 
         function extractCoreName(filename) {
             let name = cleanDisplayTitle(filename);
-            name = name.replace(/^[\d]+[-_.\s]+[\d]*[-_.\s]*/, '');
+            name = name.replace(/^\d+(?:[-_.]\d+)*[-_.\s]*/, '');
             name = name.replace(/[-_（(](範例|修正|最新|\d{6,8}).*$/g, '');
             return name.trim() || cleanDisplayTitle(filename);
         }
@@ -2270,6 +2275,7 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
                         existing.isOcr = parsed.isOcr;
                         existing.pages = parsed.pages; delete existing.pageCount;
                         if (parsed.tableImgs && parsed.tableImgs.length) existing.tableImgs = parsed.tableImgs; else delete existing.tableImgs;
+                        delete existing.placeholder;
                         existing.updatedAt = todayStr;
                         existing.isRecentlyUpdated = true;
                         await dbPut(STORE_DOCS, existing);
@@ -2786,6 +2792,51 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
             return el;
         }
 
+        /* ----- 郵務：郵件業務作業規章彙編(二) 一鍵建立（含待匯入的檔名佔位） ----- */
+        const POSTAL_SEED_FOLDER = { id: 'folder-m-02', name: '郵件業務作業規章彙編(二)' };
+        const POSTAL_SEED_TITLES = ["2-01大宗函件處理須知", "2-02航空郵件處理須知", "2-03限時郵件處理須知", "2-04掛號函件處理須知", "2-05報值郵件處理須知", "2-06保價郵件處理須知", "2-07代收貨款郵件處理須知", "2-08廣告回信處理須知", "2-09廣告回信寄遞收費簡則", "2-10存證信函處理須知", "2-11傳真郵件業務實施要點", "2-12國內傳真郵件處理須知", "2-13郵件回執處理須知", "2-14民間印製國內郵簡及國際航空郵簡簡則", "2-15-0郵政專用信箱處理須知", "2-15-1 i郵箱郵件處理須知", "2-16各地郵局防止利用郵政專用信箱作違法行為實施要點", "2-17公眾使用郵資機簡則", "2-18郵資機郵件處理須知", "2-19-0郵務自助機具設置管理要點", "2-19-1郵展使用郵資票品印製管理要點", "2-20欠資郵件處理須知", "2-21無著郵件處理要點", "2-23郵政公事郵件處理須知", "2-24-0國內包裹處理須知", "2-24-1中華郵政股份有限公司簡易倉儲作業規範", "2-25-0國內快捷郵件處理須知", "2-25-1國內優鮮配冷凍冷藏郵件處理須知(目前已停辦)", "2-26-0國內包裹及快捷郵件上門收件作業應行注意事項", "2-26-1國內函件特約戶上門收件作業應行注意事項補充規定", "2-27國際函件處理須知", "2-28國際包裹處理須知", "2-29國際快捷郵件處理須知", "2-30外交部外交及公務郵袋作業要點", "2-31電子函件處理須知", "2-32大宗函件電腦列印封裝服務作業須知", "2-33郵務電腦作業處理須知", "2-34大陸函件處理須知", "2-35大陸包裹處理須知", "2-36大陸快捷郵件處理須知", "2-37國內包裹及快捷郵件特約戶上門收件應行注意事項補充規定", "2-38逆物流業務（上收、臨櫃）作業要點", "2-39兩岸郵政速遞(快捷)處理須知", "2-40「未來郵件」作業要點", "2-41兩岸「郵政e小包」郵件處理須知", "2-42試辦貨轉郵業務郵件處理須知", "2-43國際郵件出口代辦報關處理須知", "2-44國際e小包郵件處理須知", "2-45投標郵件處理須知"];
+
+        async function seedPostalFolder() {
+            let folder = folders.find(f => f.domain === 'm' && f.name === POSTAL_SEED_FOLDER.name);
+            if (!folder) {
+                folder = { id: POSTAL_SEED_FOLDER.id, name: POSTAL_SEED_FOLDER.name, kind: 'normal', domain: 'm' };
+                folders.push(folder);
+                await dbPut(STORE_FOLDERS, folder);
+            }
+            let added = 0;
+            const todayStr = new Date().toLocaleDateString('zh-TW');
+            for (const t of POSTAL_SEED_TITLES) {
+                const core = extractCoreName(t);
+                if (documents.some(d => d.domain === 'm' && extractCoreName(d.title) === core)) continue;
+                const doc = {
+                    id: 'doc-seed-' + Date.now() + '-' + added,
+                    domain: 'm',
+                    folderId: folder.id,
+                    title: t,
+                    coreName: core,
+                    isOcr: false,
+                    starred: false,
+                    placeholder: true,
+                    updatedAt: todayStr,
+                    isRecentlyUpdated: false,
+                    pages: [{ pageNumber: 1, text: '' }]
+                };
+                documents.push(doc);
+                await dbPut(STORE_DOCS, doc);
+                added++;
+            }
+            sortDocuments();
+            activeDomain = 'm';
+            savePreference('active_domain', 'm');
+            activeFolderId = folder.id;
+            activeDocId = null;
+            isFavPageActive = false;
+            pushNavigationState();
+            renderCurrentView();
+            window.scrollTo({ top: 0 });
+            showToast(added > 0 ? `已建立資料夾，新增 ${added} 份待匯入` : '資料夾已存在，沒有需要新增的檔名', 'success');
+        }
+
         function createFolderRow(folder) {
             const count = documents.filter(d => d.folderId === folder.id).length;
             const row = document.createElement('div');
@@ -2885,6 +2936,7 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
                 if (folderId && doc.folderId !== folderId) return false;
                 if (onlyStarred && !doc.starred) return false;
                 if (keywords.length === 0) return true;
+                if (doc.placeholder) return false;
                 const hay = getFolderNameById(doc.folderId).toLowerCase() + '\n' + getDocSearchText(doc);
                 return keywordsLower.every(kw => hay.includes(kw));
             });
@@ -2907,7 +2959,7 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
             row.className = 'row doc-row';
             row.setAttribute('role', 'button');
 
-            const snippetHtml = keywords.length > 0 ? buildMatchSnippet(doc, keywords) : '';
+            const snippetHtml = (keywords.length > 0 && !doc.placeholder) ? buildMatchSnippet(doc, keywords) : '';
             const folderTag = '';
 
             row.innerHTML = `
@@ -2918,14 +2970,18 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
                     <div class="row-sub">
                         ${folderTag}
                         ${doc.isOcr ? '<span class="badge-tag badge-ocr">圖片轉純文字</span>' : ''}
-                        <span>${docPageCount(doc)} 頁・${escapeHtml(doc.updatedAt)}</span>
+                        ${doc.placeholder ? '<span class="badge-tag badge-pending">尚未匯入</span>' : `<span>${docPageCount(doc)} 頁・${escapeHtml(doc.updatedAt)}</span>`}
                     </div>
                     ${snippetHtml ? `<div class="row-snippet">${snippetHtml}</div>` : ''}
                 </div>
-                <button type="button" class="star-btn ${doc.starred ? 'on' : ''}" aria-label="${doc.starred ? '取消收藏' : '收藏整份規章'}">${svgIcon('star', 19, doc.starred)}</button>
+                ${doc.placeholder ? '' : `<button type="button" class="star-btn ${doc.starred ? 'on' : ''}" aria-label="${doc.starred ? '取消收藏' : '收藏整份規章'}">${svgIcon('star', 19, doc.starred)}</button>`}
             `;
 
             const starBtn = row.querySelector('.star-btn');
+            if (doc.placeholder) {
+                row.addEventListener('click', () => showToast('尚未匯入：把同名的 PDF 上傳就會自動放進來', 'normal'));
+                return row;
+            }
             starBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 await toggleDocStar(doc);
@@ -3536,6 +3592,7 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
                             isRecentlyUpdated: Boolean(item.isRecentlyUpdated),
                             ...(item.pageCount ? { pageCount: item.pageCount } : {}),
                             ...(typeof item.favOrder === 'number' ? { favOrder: item.favOrder } : {}),
+                            ...(item.placeholder ? { placeholder: true } : {}),
                             ...(Array.isArray(item.tableImgs) && item.tableImgs.length ? { tableImgs: item.tableImgs } : {}),
                             pages: cleanPages
                         });
@@ -3805,6 +3862,7 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
             });
             document.addEventListener('click', closeMenus);
 
+            document.getElementById('seedPostalBtn').addEventListener('click', seedPostalFolder);
             document.getElementById('saveRestoreBtn').addEventListener('click', saveRestorePoint);
             document.getElementById('loadRestoreBtn').addEventListener('click', loadRestorePoint);
             document.getElementById('exportBackupBtn').addEventListener('click', exportJsonBackup);
