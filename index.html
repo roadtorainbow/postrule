@@ -1130,6 +1130,11 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
 
 .badge-pending{background:#f1efe9;color:#8a7f66;border:1px solid #ddd6c3}
 .doc-row:has(.badge-pending) .row-title{color:#777}
+
+.folder-crumb{display:flex;flex-wrap:wrap;align-items:center;gap:2px 4px;margin:6px 4px 2px;font-size:14px;color:#6b6659}
+.crumb-link{border:0;background:none;padding:4px 2px;color:#1d5a9a;font-size:14px;cursor:pointer}
+.crumb-cur{font-weight:700;color:#333;padding:4px 2px}
+.crumb-sep{color:#aaa}
     </style>
 </head>
 <body>
@@ -1159,7 +1164,6 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
                         <button type="button" id="loadRestoreBtn" class="menu-item">還原到上次儲存</button>
                         <div id="restoreInfo" class="menu-note">尚未儲存過還原點</div>
                         <div class="menu-sep"></div>
-                        <button type="button" id="seedPostalBtn" class="menu-item">郵務：建立「郵件業務作業規章彙編(二)」資料夾</button>
                         <div class="menu-sep"></div>
                         <button type="button" id="exportBackupBtn" class="menu-item">匯出備份檔</button>
                         <label class="menu-item">
@@ -1225,6 +1229,15 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
                         <span data-icon="trash" data-size="17"></span>
                     </button>
                 </div>
+            </div>
+            <div id="folderCrumb" class="folder-crumb"></div>
+            <div class="section-head">
+                <span class="section-label">資料夾</span>
+                <button type="button" id="newSubFolderBtn" class="text-btn">＋ 新增資料夾</button>
+            </div>
+            <div id="subFolderList" class="list"></div>
+            <div class="section-head">
+                <span class="section-label">規章</span>
             </div>
             <div id="folderDocList" class="list"></div>
         </section>
@@ -2585,9 +2598,49 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
             return folders.find(f => f.id === fid) || null;
         }
 
+        function folderPath(fid) {
+            const path = [];
+            let cur = getFolder(fid);
+            let guard = 0;
+            while (cur && guard++ < 30) {
+                path.unshift(cur);
+                cur = cur.parentId ? getFolder(cur.parentId) : null;
+            }
+            return path;
+        }
+
         function getFolderNameById(fid) {
-            const f = getFolder(fid);
-            return f ? f.name : '';
+            const p = folderPath(fid);
+            return p.map(f => f.name).join(' › ');
+        }
+
+        const NAME_COLLATE = (a, b) => a.name.localeCompare(b.name, 'zh-Hant', { numeric: true });
+
+        function childFolders(pid, dm) {
+            return folders.filter(f => (dm ? f.domain === dm : true) && (f.parentId || null) === (pid || null))
+                .sort(pid ? NAME_COLLATE : () => 0);
+        }
+
+        function descendantDocCount(fid) {
+            let n = 0;
+            const stack = [fid];
+            let guard = 0;
+            while (stack.length && guard++ < 2000) {
+                const id = stack.pop();
+                n += documents.filter(d => d.folderId === id).length;
+                folders.forEach(f => { if (f.parentId === id) stack.push(f.id); });
+            }
+            return n;
+        }
+
+        function orderedFolders(dm) {
+            const out = [];
+            const walk = (pid, depth) => childFolders(pid, dm).forEach(f => {
+                out.push({ folder: f, depth });
+                walk(f.id, depth + 1);
+            });
+            walk(null, 0);
+            return out;
         }
 
         function foldersOfDomain(dm) {
@@ -2595,7 +2648,9 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
         }
 
         function normalizeFolder(f) {
-            return { ...f, domain: f.domain === 'm' ? 'm' : 's', kind: f.kind || 'normal' };
+            const n = { ...f, domain: f.domain === 'm' ? 'm' : 's', kind: f.kind || 'normal' };
+            if (!n.parentId) delete n.parentId;
+            return n;
         }
 
         /* 舊資料遷移：逐條星號整個移除、未分類變單一規章、補上 domain */
@@ -2792,53 +2847,9 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
             return el;
         }
 
-        /* ----- 郵務：郵件業務作業規章彙編(二) 一鍵建立（含待匯入的檔名佔位） ----- */
-        const POSTAL_SEED_FOLDER = { id: 'folder-m-02', name: '郵件業務作業規章彙編(二)' };
-        const POSTAL_SEED_TITLES = ["2-01大宗函件處理須知", "2-02航空郵件處理須知", "2-03限時郵件處理須知", "2-04掛號函件處理須知", "2-05報值郵件處理須知", "2-06保價郵件處理須知", "2-07代收貨款郵件處理須知", "2-08廣告回信處理須知", "2-09廣告回信寄遞收費簡則", "2-10存證信函處理須知", "2-11傳真郵件業務實施要點", "2-12國內傳真郵件處理須知", "2-13郵件回執處理須知", "2-14民間印製國內郵簡及國際航空郵簡簡則", "2-15-0郵政專用信箱處理須知", "2-15-1 i郵箱郵件處理須知", "2-16各地郵局防止利用郵政專用信箱作違法行為實施要點", "2-17公眾使用郵資機簡則", "2-18郵資機郵件處理須知", "2-19-0郵務自助機具設置管理要點", "2-19-1郵展使用郵資票品印製管理要點", "2-20欠資郵件處理須知", "2-21無著郵件處理要點", "2-23郵政公事郵件處理須知", "2-24-0國內包裹處理須知", "2-24-1中華郵政股份有限公司簡易倉儲作業規範", "2-25-0國內快捷郵件處理須知", "2-25-1國內優鮮配冷凍冷藏郵件處理須知(目前已停辦)", "2-26-0國內包裹及快捷郵件上門收件作業應行注意事項", "2-26-1國內函件特約戶上門收件作業應行注意事項補充規定", "2-27國際函件處理須知", "2-28國際包裹處理須知", "2-29國際快捷郵件處理須知", "2-30外交部外交及公務郵袋作業要點", "2-31電子函件處理須知", "2-32大宗函件電腦列印封裝服務作業須知", "2-33郵務電腦作業處理須知", "2-34大陸函件處理須知", "2-35大陸包裹處理須知", "2-36大陸快捷郵件處理須知", "2-37國內包裹及快捷郵件特約戶上門收件應行注意事項補充規定", "2-38逆物流業務（上收、臨櫃）作業要點", "2-39兩岸郵政速遞(快捷)處理須知", "2-40「未來郵件」作業要點", "2-41兩岸「郵政e小包」郵件處理須知", "2-42試辦貨轉郵業務郵件處理須知", "2-43國際郵件出口代辦報關處理須知", "2-44國際e小包郵件處理須知", "2-45投標郵件處理須知"];
-
-        async function seedPostalFolder() {
-            let folder = folders.find(f => f.domain === 'm' && f.name === POSTAL_SEED_FOLDER.name);
-            if (!folder) {
-                folder = { id: POSTAL_SEED_FOLDER.id, name: POSTAL_SEED_FOLDER.name, kind: 'normal', domain: 'm' };
-                folders.push(folder);
-                await dbPut(STORE_FOLDERS, folder);
-            }
-            let added = 0;
-            const todayStr = new Date().toLocaleDateString('zh-TW');
-            for (const t of POSTAL_SEED_TITLES) {
-                const core = extractCoreName(t);
-                if (documents.some(d => d.domain === 'm' && extractCoreName(d.title) === core)) continue;
-                const doc = {
-                    id: 'doc-seed-' + Date.now() + '-' + added,
-                    domain: 'm',
-                    folderId: folder.id,
-                    title: t,
-                    coreName: core,
-                    isOcr: false,
-                    starred: false,
-                    placeholder: true,
-                    updatedAt: todayStr,
-                    isRecentlyUpdated: false,
-                    pages: [{ pageNumber: 1, text: '' }]
-                };
-                documents.push(doc);
-                await dbPut(STORE_DOCS, doc);
-                added++;
-            }
-            sortDocuments();
-            activeDomain = 'm';
-            savePreference('active_domain', 'm');
-            activeFolderId = folder.id;
-            activeDocId = null;
-            isFavPageActive = false;
-            pushNavigationState();
-            renderCurrentView();
-            window.scrollTo({ top: 0 });
-            showToast(added > 0 ? `已建立資料夾，新增 ${added} 份待匯入` : '資料夾已存在，沒有需要新增的檔名', 'success');
-        }
-
         function createFolderRow(folder) {
-            const count = documents.filter(d => d.folderId === folder.id).length;
+            const count = descendantDocCount(folder.id);
+            const subN = childFolders(folder.id).length;
             const row = document.createElement('div');
             row.className = 'row folder';
             row.setAttribute('role', 'button');
@@ -2846,7 +2857,7 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
                 <span class="row-icon">${svgIcon('folder', 22)}</span>
                 <div class="row-main">
                     <div class="row-title">${escapeHtml(folder.name)}</div>
-                    <div class="row-sub">${count} 份規章</div>
+                    <div class="row-sub">${subN > 0 ? `${subN} 個資料夾・` : ''}${count} 份規章</div>
                 </div>
                 <span class="row-chevron">${svgIcon('chevron', 18)}</span>
             `;
@@ -3002,7 +3013,7 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
 
             const folderEl = document.getElementById('folderList');
             folderEl.innerHTML = '';
-            const fl = foldersOfDomain(activeDomain);
+            const fl = childFolders(null, activeDomain);
             if (fl.length === 0) {
                 folderEl.appendChild(emptyLine('還沒有資料夾。想整理的時候，點右上角「新增資料夾」。'));
             } else {
@@ -3023,10 +3034,46 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
             const list = document.getElementById('folderDocList');
             list.innerHTML = '';
             const docs = getFilteredDocuments({ folderId: folder.id });
-            document.getElementById('activeFolderTitle').textContent = `${DOMAIN_LABEL[folder.domain]}・${folder.name}`;
-            document.getElementById('activeFolderSub').textContent = `共 ${docs.length} 份規章`;
+            const subs = childFolders(folder.id, folder.domain);
+
+            const crumb = document.getElementById('folderCrumb');
+            crumb.innerHTML = '';
+            const addCrumb = (label, fid, last) => {
+                const s = document.createElement(last ? 'span' : 'button');
+                if (!last) s.type = 'button';
+                s.className = last ? 'crumb-cur' : 'crumb-link';
+                s.textContent = label;
+                if (!last) s.addEventListener('click', () => {
+                    activeFolderId = fid;
+                    pushNavigationState();
+                    renderCurrentView();
+                    window.scrollTo({ top: 0 });
+                });
+                crumb.appendChild(s);
+                if (!last) {
+                    const sep = document.createElement('span');
+                    sep.className = 'crumb-sep';
+                    sep.textContent = '›';
+                    crumb.appendChild(sep);
+                }
+            };
+            addCrumb(DOMAIN_LABEL[folder.domain], null, false);
+            const path = folderPath(folder.id);
+            path.forEach((f, i) => addCrumb(f.name, f.id, i === path.length - 1));
+
+            document.getElementById('activeFolderTitle').textContent = folder.name;
+            document.getElementById('activeFolderSub').textContent =
+                `${subs.length > 0 ? subs.length + ' 個資料夾・' : ''}共 ${docs.length} 份規章`;
+
+            const subEl = document.getElementById('subFolderList');
+            subEl.innerHTML = '';
+            if (subs.length === 0) subEl.appendChild(emptyLine('還沒有子資料夾。'));
+            else subs.forEach(f => subEl.appendChild(createFolderRow(f)));
+
             if (docs.length === 0) {
-                list.appendChild(emptyLine('這個資料夾還是空的。\n點右上角「上傳」，或在規章裡用「所屬分類」搬進來。'));
+                list.appendChild(emptyLine(subs.length > 0
+                    ? '這一層沒有直接放規章，請點進下面的資料夾。'
+                    : '這個資料夾還是空的。\n點右上角「上傳」，或在規章裡用「所屬分類」搬進來。'));
                 return;
             }
             docs.forEach(d => list.appendChild(createDocRow(d)));
@@ -3173,7 +3220,7 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
             const cur = doc.domain + '|' + (doc.folderId || '');
             return ['s', 'm'].map(dm => {
                 const opts = [`<option value="${dm}|">單一規章（不放資料夾）</option>`]
-                    .concat(foldersOfDomain(dm).map(f => `<option value="${dm}|${escapeHtml(f.id)}">${escapeHtml(f.name)}</option>`));
+                    .concat(orderedFolders(dm).map(({ folder: f, depth }) => `<option value="${dm}|${escapeHtml(f.id)}">${'　'.repeat(depth)}${escapeHtml(f.name)}</option>`));
                 return `<optgroup label="${DOMAIN_LABEL[dm]}">${opts.join('')}</optgroup>`;
             }).join('').replace(`value="${cur}"`, `value="${cur}" selected`);
         }
@@ -3766,6 +3813,18 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
                     return nd;
                 });
 
+                /* 清掉舊版一鍵建立留下的「尚未匯入」佔位，以及那個空的示範資料夾 */
+                const stale = documents.filter(d => d.placeholder);
+                if (stale.length) {
+                    for (const d of stale) await dbDelete(STORE_DOCS, d.id);
+                    documents = documents.filter(d => !d.placeholder);
+                    const seeded = folders.find(f => f.id === 'folder-m-02' && f.name === '郵件業務作業規章彙編(二)');
+                    if (seeded && !documents.some(d => d.folderId === seeded.id) && !folders.some(f => f.parentId === seeded.id)) {
+                        await dbDelete(STORE_FOLDERS, seeded.id);
+                        folders = folders.filter(f => f.id !== seeded.id);
+                    }
+                }
+
                 if (!migrated) {
                     for (const d of documents) await dbPut(STORE_DOCS, d);
                     await savePreference('schema_v2', true);
@@ -3815,7 +3874,8 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
                 if (window.history.state && window.history.state.activeFolderId) {
                     window.history.back();
                 } else {
-                    activeFolderId = null;
+                    const cur = getFolder(activeFolderId);
+                    activeFolderId = cur && cur.parentId ? cur.parentId : null;
                     renderCurrentView();
                 }
             });
@@ -3862,7 +3922,6 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
             });
             document.addEventListener('click', closeMenus);
 
-            document.getElementById('seedPostalBtn').addEventListener('click', seedPostalFolder);
             document.getElementById('saveRestoreBtn').addEventListener('click', saveRestorePoint);
             document.getElementById('loadRestoreBtn').addEventListener('click', loadRestorePoint);
             document.getElementById('exportBackupBtn').addEventListener('click', exportJsonBackup);
@@ -3890,6 +3949,25 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
                 }
             });
 
+            document.getElementById('newSubFolderBtn').addEventListener('click', async () => {
+                const parent = getFolder(activeFolderId);
+                if (!parent) return;
+                const name = await openFolderInputModal('新增資料夾', `新增到「${getFolderNameById(parent.id)}」裡面：`);
+                if (name) {
+                    const nf = {
+                        id: 'folder-' + Date.now() + '-' + Math.random().toString(36).slice(2, 5),
+                        name,
+                        kind: 'normal',
+                        domain: parent.domain,
+                        parentId: parent.id
+                    };
+                    folders.push(nf);
+                    await dbPut(STORE_FOLDERS, nf);
+                    renderCurrentView();
+                    showToast(`已建立資料夾「${name}」`, 'success');
+                }
+            });
+
             document.getElementById('homeUploadInput').addEventListener('change', async (e) => {
                 if (e.target.files && e.target.files.length > 0) {
                     await processBatchFiles(e.target.files, null, activeDomain);
@@ -3907,26 +3985,32 @@ mark.hl-2.active-2{background:#1d5a9a;color:#fff;font-weight:700}
             document.getElementById('deleteFolderBtn').addEventListener('click', async () => {
                 const folder = getFolder(activeFolderId);
                 if (!folder) return;
-                const count = documents.filter(d => d.folderId === folder.id).length;
-                const desc = count > 0
-                    ? `確定要刪除資料夾「${folder.name}」嗎？裡面的 ${count} 份規章不會刪除，會變成「${DOMAIN_LABEL[folder.domain]}」的單一規章。`
+                const parentId = folder.parentId || null;
+                const ids = new Set([folder.id]);
+                let grew = true;
+                while (grew) {
+                    grew = false;
+                    folders.forEach(f => { if (f.parentId && ids.has(f.parentId) && !ids.has(f.id)) { ids.add(f.id); grew = true; } });
+                }
+                const subN = ids.size - 1;
+                const count = documents.filter(d => ids.has(d.folderId)).length;
+                const desc = (count > 0 || subN > 0)
+                    ? `確定要刪除資料夾「${folder.name}」嗎？底下的 ${subN} 個資料夾會一起刪除。裡面的 ${count} 份規章也會一起刪除，無法復原。`
                     : `確定要刪除空白資料夾「${folder.name}」嗎？`;
                 const ok = await showConfirmModal('刪除資料夾', desc, '確定刪除', true);
                 if (!ok) return;
-                for (const d of documents) {
-                    if (d.folderId === folder.id) {
-                        d.folderId = null;
-                        await dbPut(STORE_DOCS, d);
-                    }
+                for (const d of documents.filter(d => ids.has(d.folderId))) {
+                    await dbDelete(STORE_DOCS, d.id);
                 }
-                await dbDelete(STORE_FOLDERS, folder.id);
-                folders = folders.filter(f => f.id !== folder.id);
-                activeFolderId = null;
+                documents = documents.filter(d => !ids.has(d.folderId));
+                for (const id of ids) await dbDelete(STORE_FOLDERS, id);
+                folders = folders.filter(f => !ids.has(f.id));
+                activeFolderId = parentId;
                 if (window.history.state && window.history.state.activeFolderId) {
                     window.history.back();
                 }
                 renderCurrentView();
-                showToast(count > 0 ? `已刪除資料夾，${count} 份規章變成單一規章` : `已刪除資料夾「${folder.name}」`);
+                showToast(`已刪除資料夾${subN > 0 ? `和底下 ${subN} 個資料夾` : ''}${count > 0 ? `、${count} 份規章` : ''}`);
             });
 
             /* ----- 閱讀頁 ----- */
